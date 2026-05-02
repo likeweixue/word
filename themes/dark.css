@@ -1,0 +1,43 @@
+/* 暗夜黑主题 */
+.sidebar-menu,
+.detail-chapters,
+.tabs-container,
+.book-detail-header,
+.detail-editor,
+.editor-content,
+.book-page,
+.page,
+.stats-container .stat-card,
+.calendar-container,
+.writing-detail,
+.goal-setting,
+.settings-item,
+.about-content {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+.sidebar-menu { background: #0d0d1a; color: #e0e0e0; }
+.sidebar-menu .menu-item { color: #a0a0b0; }
+.sidebar-menu .menu-item.active { background: #007aff; color: #1e1e2e; }
+.tab.active { background: #1e1e2e; color: #e0e0e0; }
+.tab { background: #2a2a3a; color: #a0a0b0; }
+.stat-card, .calendar-container, .writing-detail, .goal-setting, .settings-item, .about-content {
+  background: #2a2a3a;
+  border-color: rgba(255,255,255,0.1);
+}
+/* 抽屉面板跟随主题 */
+.drawer-panel {
+  background: inherit;
+  color: inherit;
+}
+.drawer-header {
+  border-bottom-color: rgba(0,0,0,0.1);
+}
+.drawer-input {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(0,0,0,0.2);
+  color: inherit;
+}
+.drawer-input:focus {
+  border-color: #007aff;
+}

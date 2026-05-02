@@ -1,0 +1,42 @@
+/* 默认主题 - 白色 */
+.sidebar-menu,
+.detail-chapters,
+.tabs-container,
+.book-detail-header,
+.detail-editor,
+.editor-content,
+.book-page,
+.page,
+.stats-container .stat-card,
+.calendar-container,
+.writing-detail,
+.goal-setting,
+.settings-item,
+.about-content {
+  background: #ffffff;
+  color: #333;
+}
+.sidebar-menu { background: #1a1a2e; color: #eee; }
+.sidebar-menu .menu-item { color: #ccc; }
+.sidebar-menu .menu-item.active { background: #00d2ff; color: #1a1a2e; }
+.tab.active { background: #ffffff; color: #333; }
+.tab { background: #f0f0f0; color: #666; }
+.stat-card, .calendar-container, .writing-detail, .goal-setting, .settings-item, .about-content {
+  background: #ffffff;
+}
+/* 抽屉面板跟随主题 */
+.drawer-panel {
+  background: inherit;
+  color: inherit;
+}
+.drawer-header {
+  border-bottom-color: rgba(0,0,0,0.1);
+}
+.drawer-input {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(0,0,0,0.2);
+  color: inherit;
+}
+.drawer-input:focus {
+  border-color: #007aff;
+}
