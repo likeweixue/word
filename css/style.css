@@ -746,3 +746,471 @@ body {
   display: none;
 }
 .modal-overlay.show { display: block; }
+/* 网格线样式 */
+.editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px);
+  background-size: 100% 30px;
+}
+
+/* 主题适配 */
+body.theme-eye .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+}
+
+body.theme-warm .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+}
+
+body.theme-dark .editor-content.show-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+}
+
+/* 修复网格线间距 - 与行高匹配 */
+.editor-content {
+  line-height: 1.8 !important;
+}
+
+.editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px);
+  background-size: 100% 1.8em !important;
+  background-position: 0 0;
+  background-repeat: repeat-y;
+}
+
+/* 不同主题的网格线颜色 */
+body.theme-eye .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+}
+
+body.theme-warm .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+}
+
+body.theme-dark .editor-content.show-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+}
+
+/* 确保段落边距一致 */
+.editor-content p {
+  margin: 0 0 0.2em 0;
+  line-height: 1.8;
+}
+
+/* 确保所有元素行高一致 */
+.editor-content * {
+  line-height: 1.8;
+}
+
+/* 修复：让文字在网格线中间 */
+.editor-content {
+  line-height: 1.8 !important;
+}
+
+/* 网格线背景 - 使用重复的线性渐变，偏移半个行高实现居中 */
+.editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.15) 1px, transparent 1px);
+  background-size: 100% 1.8em !important;
+  background-position: 0 0.9em !important;
+  background-repeat: repeat-y;
+}
+
+/* 不同主题的网格线颜色和位置 */
+body.theme-eye .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.2) 1px, transparent 1px);
+  background-position: 0 0.9em !important;
+}
+
+body.theme-warm .editor-content.show-grid {
+  background-image: linear-gradient(rgba(0,0,0,0.2) 1px, transparent 1px);
+  background-position: 0 0.9em !important;
+}
+
+body.theme-dark .editor-content.show-grid {
+  background-image: linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px);
+  background-position: 0 0.9em !important;
+}
+
+/* 段落样式 - 确保文字在行内垂直居中 */
+.editor-content p {
+  margin: 0;
+  line-height: 1.8;
+  vertical-align: middle;
+}
+
+/* 文字行内元素 */
+.editor-content span, 
+.editor-content div,
+.editor-content {
+  line-height: 1.8;
+  vertical-align: middle;
+}
+
+/* ========== 右侧功能栏优化样式 ========== */
+.detail-sidebar {
+  width: 200px;
+  background: rgba(0,0,0,0.03);
+  border-left: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.detail-sidebar.hidden {
+  width: 0;
+  overflow: hidden;
+  border-left: none;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#toggleSidebarBtn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: inherit;
+}
+
+#toggleSidebarBtn:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: rgba(255,255,255,0.6);
+  font-size: 13px;
+}
+
+.sidebar-item:hover {
+  background: rgba(0,0,0,0.08);
+  transform: translateX(-2px);
+}
+
+.sidebar-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.sidebar-label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 主题适配 */
+body.theme-dark .sidebar-item {
+  background: rgba(255,255,255,0.08);
+}
+
+body.theme-dark .sidebar-item:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+body.theme-eye .sidebar-item {
+  background: rgba(255,255,255,0.3);
+}
+
+body.theme-warm .sidebar-item {
+  background: rgba(255,255,255,0.3);
+}
+
+/* ========== 大纲面板样式 ========== */
+.outline-panel {
+  position: fixed;
+  right: -600px;
+  top: 0;
+  width: 600px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 12px rgba(0,0,0,0.15);
+  transition: right 0.3s ease;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+}
+
+.outline-panel.open {
+  right: 0;
+}
+
+.outline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+
+.outline-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.close-panel {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0 8px;
+}
+
+.close-panel:hover {
+  color: #333;
+}
+
+.outline-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.outline-tree {
+  width: 250px;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.outline-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.outline-editor-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.outline-title-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.outline-editor-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.outline-content-textarea {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: inherit;
+}
+
+.outline-editor-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.save-status {
+  font-size: 12px;
+  color: #888;
+}
+
+/* 树形结构样式 */
+.tree-node {
+  margin-left: 16px;
+  list-style: none;
+}
+
+.tree-node-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 2px 0;
+}
+
+.tree-node-item:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.tree-node-item.active {
+  background: rgba(0,122,255,0.1);
+  color: #007aff;
+}
+
+.tree-expand-icon {
+  width: 20px;
+  cursor: pointer;
+  color: #888;
+}
+
+.tree-node-label {
+  flex: 1;
+  font-size: 13px;
+}
+
+.tree-children {
+  margin-left: 20px;
+}
+
+/* 主题适配 */
+body.theme-dark .outline-panel {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+
+body.theme-dark .outline-header {
+  background: #2a2a3a;
+  border-bottom-color: #3a3a4a;
+}
+
+body.theme-dark .outline-tree {
+  background: #2a2a3a;
+  border-right-color: #3a3a4a;
+}
+
+body.theme-dark .outline-title-input {
+  background: #2a2a3a;
+  border-color: #3a3a4a;
+  color: #e0e0e0;
+}
+
+body.theme-dark .outline-content-textarea {
+  background: #1e1e2e;
+  color: #e0e0e0;
+}
+
+/* ========== 时间线样式 ========== */
+.timeline-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeline-event-item {
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: rgba(0,0,0,0.03);
+  border-left: 3px solid #007aff;
+  transition: all 0.2s;
+}
+
+.timeline-event-item:hover {
+  background: rgba(0,0,0,0.08);
+  transform: translateX(3px);
+}
+
+.timeline-event-item.active {
+  background: rgba(0,122,255,0.1);
+  border-left-color: #007aff;
+}
+
+.timeline-event-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.timeline-event-meta {
+  font-size: 11px;
+  color: #888;
+  display: flex;
+  gap: 12px;
+}
+
+.timeline-event-chapter {
+  color: #007aff;
+}
+
+/* 主题适配 */
+body.theme-dark .timeline-event-item {
+  background: rgba(255,255,255,0.05);
+}
+
+body.theme-dark .timeline-event-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+body.theme-dark .timeline-event-meta {
+  color: #aaa;
+}
+
+/* 地图面板样式 */
+#mapPanel .outline-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#mapCanvas {
+  cursor: crosshair;
+}
+
+.region-tag {
+  display: inline-block;
+  background: rgba(0,122,255,0.1);
+  border: 1px solid rgba(0,122,255,0.3);
+  border-radius: 16px;
+  padding: 4px 12px;
+  margin: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.region-tag:hover {
+  background: rgba(0,122,255,0.2);
+  transform: scale(1.02);
+}
+
+.region-tag.selected {
+  background: #007aff;
+  color: white;
+}

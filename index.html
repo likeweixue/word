@@ -188,4 +188,213 @@
   </div>
 </div>
 </body>
-</html>
+</html><!-- 大纲面板 -->
+<div id="outlinePanel" class="outline-panel">
+  <div class="outline-header">
+    <h3>📋 大纲管理</h3>
+    <button id="closeOutlinePanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body">
+    <div class="outline-tree" id="outlineTree">
+      <!-- 树形结构将动态生成 -->
+      <div class="tree-loading">加载中...</div>
+    </div>
+    <div class="outline-editor">
+      <div class="outline-editor-header">
+        <input type="text" id="outlineNodeTitle" placeholder="节点标题" class="outline-title-input">
+        <div class="outline-editor-tools">
+          <button id="addChildNodeBtn" class="small-btn">+ 添加子节点</button>
+          <button id="deleteNodeBtn" class="small-btn" style="background:#dc3545;">删除</button>
+        </div>
+      </div>
+      <textarea id="outlineNodeContent" placeholder="大纲内容..." class="outline-content-textarea"></textarea>
+      <div class="outline-editor-footer">
+        <button id="saveOutlineNodeBtn" class="primary-btn">保存</button>
+        <span id="outlineSaveStatus" class="save-status">已保存</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 设定面板 -->
+<div id="settingPanel" class="outline-panel">
+  <div class="outline-header">
+    <h3>⚙️ 设定管理</h3>
+    <button id="closeSettingPanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body">
+    <div class="outline-tree" id="settingTree">
+      <div class="tree-loading">加载中...</div>
+    </div>
+    <div class="outline-editor">
+      <div class="outline-editor-header">
+        <input type="text" id="settingNodeTitle" placeholder="设定标题" class="outline-title-input">
+        <div class="outline-editor-tools">
+          <button id="addSettingChildBtn" class="small-btn">+ 添加子设定</button>
+          <button id="deleteSettingNodeBtn" class="small-btn" style="background:#dc3545;">删除</button>
+        </div>
+      </div>
+      <textarea id="settingNodeContent" placeholder="设定详细内容..." class="outline-content-textarea"></textarea>
+      <div class="outline-editor-footer">
+        <button id="saveSettingNodeBtn" class="primary-btn">保存</button>
+        <span id="settingSaveStatus" class="save-status">已保存</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 角色面板 -->
+<div id="characterPanel" class="outline-panel">
+  <div class="outline-header">
+    <h3>👥 角色管理</h3>
+    <button id="closeCharacterPanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body">
+    <div class="outline-tree" id="characterTree">
+      <div class="tree-loading">加载中...</div>
+    </div>
+    <div class="outline-editor">
+      <div class="outline-editor-header">
+        <input type="text" id="characterNodeTitle" placeholder="角色名称" class="outline-title-input">
+        <div class="outline-editor-tools">
+          <button id="addCharacterChildBtn" class="small-btn">+ 添加子角色</button>
+          <button id="deleteCharacterNodeBtn" class="small-btn" style="background:#dc3545;">删除</button>
+        </div>
+      </div>
+      <div class="character-fields" style="padding: 12px; border-bottom: 1px solid #eee; background: #f9f9f9;">
+        <div style="display: flex; gap: 12px; margin-bottom: 8px;">
+          <input type="text" id="characterAge" placeholder="年龄" style="flex:1; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+          <input type="text" id="characterGender" placeholder="性别" style="flex:1; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <input type="text" id="characterRace" placeholder="种族" style="flex:1; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+          <input type="text" id="characterOccupation" placeholder="职业" style="flex:1; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+        </div>
+      </div>
+      <textarea id="characterNodeContent" placeholder="角色介绍、背景故事、性格特点..." class="outline-content-textarea"></textarea>
+      <div class="outline-editor-footer">
+        <button id="saveCharacterNodeBtn" class="primary-btn">保存</button>
+        <span id="characterSaveStatus" class="save-status">已保存</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 取名面板 -->
+<div id="namegenPanel" class="outline-panel" style="width: 500px;">
+  <div class="outline-header">
+    <h3>✨ 取名助手</h3>
+    <button id="closeNamegenPanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body" style="flex-direction: column;">
+    <div style="padding: 16px; border-bottom: 1px solid #eee;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <select id="nameCategory" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+          <option value="person">👤 人物名</option>
+          <option value="place">🏔️ 地名</option>
+          <option value="power">⚡ 实力等级</option>
+          <option value="skill">⚔️ 招式/功法</option>
+          <option value="equipment">🛡️ 装备/武器</option>
+          <option value="monster">👹 怪物/妖兽</option>
+          <option value="item">📦 道具/物品</option>
+        </select>
+        <button id="generateNameBtn" class="primary-btn">🎲 随机生成</button>
+        <button id="copyNameBtn" class="small-btn">📋 复制</button>
+      </div>
+    </div>
+    <div style="flex: 1; padding: 20px; overflow-y: auto;">
+      <div id="nameResult" style="font-size: 24px; font-weight: bold; text-align: center; padding: 40px; background: rgba(0,0,0,0.03); border-radius: 12px; margin-bottom: 20px;">
+        点击生成
+      </div>
+      <div id="nameHistory" style="border-top: 1px solid #eee; padding-top: 16px;">
+        <h4 style="margin-bottom: 12px;">历史记录</h4>
+        <div id="historyList" style="max-height: 200px; overflow-y: auto;"></div>
+        <button id="clearHistoryBtn" class="small-btn" style="margin-top: 8px; background: #888;">清空历史</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 时间线面板 -->
+<div id="timelinePanel" class="outline-panel" style="width: 550px;">
+  <div class="outline-header">
+    <h3>⏱️ 时间线</h3>
+    <button id="closeTimelinePanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body">
+    <div class="timeline-sidebar" style="width: 200px; border-right: 1px solid #eee; overflow-y: auto; padding: 12px;">
+      <button id="addTimelineEventBtn" class="small-btn" style="width: 100%; margin-bottom: 12px;">+ 添加事件</button>
+      <div id="timelineEventList" class="timeline-event-list"></div>
+    </div>
+    <div class="timeline-editor" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+      <div class="outline-editor-header">
+        <input type="text" id="timelineEventTitle" placeholder="事件标题" class="outline-title-input">
+        <div style="display: flex; gap: 12px; margin-top: 8px;">
+          <input type="text" id="timelineEventChapter" placeholder="所属章节" style="flex:1; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+          <input type="text" id="timelineEventOrder" placeholder="顺序 (1,2,3...)" style="width: 80px; padding: 6px; border:1px solid #ddd; border-radius:4px;">
+        </div>
+      </div>
+      <textarea id="timelineEventContent" placeholder="事件详细描述..." class="outline-content-textarea"></textarea>
+      <div class="outline-editor-footer">
+        <div style="display: flex; gap: 8px;">
+          <button id="saveTimelineEventBtn" class="primary-btn">保存</button>
+          <button id="deleteTimelineEventBtn" class="small-btn" style="background: #dc3545;">删除事件</button>
+        </div>
+        <span id="timelineSaveStatus" class="save-status">已保存</span>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 校对面板 -->
+<div id="proofreadPanel" class="outline-panel" style="width: 500px;">
+  <div class="outline-header">
+    <h3>📝 文稿校对</h3>
+    <button id="closeProofreadPanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body" style="flex-direction: column;">
+    <div style="padding: 12px; border-bottom: 1px solid #eee; display: flex; gap: 8px;">
+      <button id="checkTextBtn" class="primary-btn">🔍 开始校对</button>
+      <button id="addCustomWordBtn" class="small-btn">+ 添加自定义词</button>
+      <button id="manageWordsBtn" class="small-btn">📋 管理词库</button>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 16px;">
+      <div id="proofreadResult" style="background: rgba(0,0,0,0.02); border-radius: 8px; padding: 16px; min-height: 300px;">
+        <div style="text-align: center; color: #888; padding: 40px;">点击"开始校对"检查当前章节</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 自定义词库管理弹窗 -->
+<div id="wordManagerModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1100; align-items: center; justify-content: center;">
+  <div style="background: white; border-radius: 12px; width: 400px; max-height: 80vh; overflow: hidden;">
+    <div style="padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+      <h3>自定义词库</h3>
+      <button id="closeWordModal" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+    <div style="padding: 16px; overflow-y: auto; max-height: 400px;">
+      <div style="margin-bottom: 16px;">
+        <input type="text" id="newCustomWord" placeholder="输入新词" style="width: 70%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        <button id="addWordBtn" class="small-btn">添加</button>
+      </div>
+      <div id="customWordList" style="max-height: 300px; overflow-y: auto;"></div>
+    </div>
+  </div>
+</div>
+<!-- 地图面板 -->
+<div id="mapPanel" class="outline-panel" style="width: 80vw; max-width: 1000px;">
+  <div class="outline-header">
+    <h3>🗺️ 地图生成器</h3>
+    <button id="closeMapPanel" class="close-panel">✕</button>
+  </div>
+  <div class="outline-body" style="padding: 0;">
+    <div style="display: flex; border-bottom: 1px solid #eee;">
+      <button id="mapGenerateBtn" class="primary-btn" style="margin: 12px;">🎲 随机生成地图</button>
+      <button id="mapExportBtn" class="small-btn" style="margin: 12px;">💾 导出图片</button>
+      <button id="mapSaveToBookBtn" class="small-btn" style="margin: 12px;">📚 保存到当前书籍</button>
+    </div>
+    <div style="height: 60vh; min-height: 400px; position: relative; background: #1a1a2e;">
+      <canvas id="mapCanvas" width="800" height="500" style="width: 100%; height: 100%; background: #1a1a2e;"></canvas>
+      <div id="mapLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">点击生成地图</div>
+    </div>
+    <div id="mapRegionList" style="padding: 12px; border-top: 1px solid #eee; max-height: 150px; overflow-y: auto;">
+      <div style="font-size: 12px; color: #888;">点击地图区域可以自定义名称</div>
+    </div>
+  </div>
+</div>

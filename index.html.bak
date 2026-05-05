@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>写作帮手 - 自由的写作软件</title>
+  <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="themes/default.css" id="themeStyle">
+</head>
+<body>
+<div class="app-container">
+  <!-- 标签页栏 - 放在最顶部 -->
+<div class="tabs-container" id="tabsContainer">
+  <div class="window-controls">
+    <div class="window-btn close" title="关闭"></div>
+    <div class="window-btn minimize" title="最小化"></div>
+    <div class="window-btn maximize" title="最大化"></div>
+  </div>
+  <div class="tab active" data-tab="home">
+    <span class="tab-title">首页</span>
+  </div>
+  <button class="new-tab-btn" id="newTabBtn">+</button>
+</div>
+
+  <!-- 主内容包装器 -->
+  <div class="main-wrapper">
+    <!-- 左侧菜单栏 -->
+    <div class="sidebar-menu" id="sidebarMenu">
+      <div class="logo-area">
+        <h3>写作帮手</h3>
+        <p class="slogan">自由的写作软件</p>
+      </div>
+      <nav class="menu-nav">
+        <button class="menu-item active" data-page="books">全部书籍</button>
+        <button class="menu-item" data-page="stats">码字统计</button>
+        <button class="menu-item" data-page="settings">软件设置</button>
+        <button class="menu-item" data-page="about">关于</button>
+      </nav>
+      <div class="menu-footer">数据本地存储</div>
+    </div>
+
+    <!-- 右侧内容区 -->
+    <div class="main-content">
+      <div class="pages-container" id="pagesContainer">
+        <!-- 首页 - 全部书籍 -->
+<div class="book-page active" data-page="home">
+  <div class="books-header" style="padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.1);">
+  <h2 style="margin:0;">我的书籍</h2>
+  <div style="display: flex; gap: 12px;">
+    <button id="newGroupBtn" class="primary-btn" style="background: #6c757d;">+ 新建分组</button>
+    <button id="newBookBtn" class="primary-btn">+ 新建书籍</button>
+    <button id="trashBtn" class="primary-btn" style="background: #dc3545;">🗑️ 回收站</button>
+  </div>
+</div>
+  <div id="booksContainer" class="books-container"></div>
+</div>
+
+<!-- 设置滑出面板 -->
+<div id="slideMenu" class="slide-menu">
+  <div class="slide-menu-header">
+    <h3>写作设置</h3>
+    <button id="closeSlideMenu">✕</button>
+  </div>
+  <div class="slide-menu-content">
+    <div class="menu-section">
+      <h4>背景主题</h4>
+      <div class="color-presets">
+        <div class="color-preset" style="background: #ffffff; border:1px solid #ddd;" data-theme="default" title="默认白"></div>
+        <div class="color-preset" style="background: #C8DBC5;" data-theme="eye" title="护眼绿"></div>
+        <div class="color-preset" style="background: #DFD5BD;" data-theme="warm" title="经典黄"></div>
+        <div class="color-preset" style="background: #1e1e2e;" data-theme="dark" title="暗夜黑"></div>
+      </div>
+    </div>
+    <div class="menu-section">
+      <h4>字体设置</h4>
+      <div class="font-option" data-font="system-ui">系统默认</div>
+      <div class="font-option" data-font="Georgia, serif">宋体风格</div>
+      <div class="font-option" data-font="'Courier New', monospace">等宽字体</div>
+      <div class="font-option" data-font="'PingFang SC', 'Microsoft YaHei'">苹方/雅黑</div>
+    </div>
+    <div class="menu-section">
+      <h4>编辑器</h4>
+      <div class="setting-row">
+        <span>网格线</span>
+        <input type="checkbox" id="gridLinesCheckbox">
+      </div>
+      <div class="setting-row">
+        <span>行高</span>
+        <select id="lineHeightSelect">
+          <option value="1.5">紧凑</option>
+          <option value="1.8" selected>标准</option>
+          <option value="2.0">宽松</option>
+          <option value="2.5">超宽</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 导出滑出面板 -->
+<div id="exportPanel" class="slide-menu">
+  <div class="slide-menu-header">
+    <h3>导出选项</h3>
+    <button id="closeExportPanel" class="close-panel-btn">✕</button>
+  </div>
+  <div class="slide-menu-content" style="padding: 20px;">
+    <button id="exportChapterBtn" style="display:block; width:100%; padding:12px; margin-bottom:8px; background:#007aff; color:white; border:none; border-radius:8px; cursor:pointer;">📄 导出当前章节</button>
+    <button id="exportBookBtn" style="display:block; width:100%; padding:12px; background:#007aff; color:white; border:none; border-radius:8px; cursor:pointer;">📚 导出全书</button>
+  </div>
+</div>
+
+<!-- 查找替换面板 -->
+<div id="findPanel" class="slide-menu">
+  <div class="slide-menu-header">
+    <h3>查找替换</h3>
+    <button id="closeFindPanel" class="close-panel-btn">✕</button>
+  </div>
+  <div class="slide-menu-content">
+    <input type="text" id="findText" placeholder="查找内容" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:8px;">
+    <input type="text" id="replaceText" placeholder="替换为" style="width:100%; padding:8px; margin-bottom:12px; border:1px solid #ddd; border-radius:8px;">
+    <div style="display: flex; gap: 8px;">
+      <button id="findNextBtn" style="flex:1; padding:8px; background:#007aff; color:white; border:none; border-radius:6px;">查找</button>
+      <button id="replaceBtn" style="flex:1; padding:8px; background:#007aff; color:white; border:none; border-radius:6px;">替换</button>
+      <button id="replaceAllBtn" style="flex:1; padding:8px; background:#007aff; color:white; border:none; border-radius:6px;">全部替换</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建书籍抽屉面板 -->
+<div id="newBookDrawer" class="drawer-panel">
+  <div class="drawer-header">
+    <h3>新建书籍</h3>
+    <button id="closeDrawerBtn" class="close-drawer">✕</button>
+  </div>
+  <div class="drawer-content">
+    <label>书籍名称</label>
+    <input type="text" id="newBookName" placeholder="请输入书籍名称" class="drawer-input">
+    
+    <label>书籍封面（可选）</label>
+    <input type="file" id="bookCoverInput" accept="image/*" class="drawer-input">
+    <div id="coverPreview" style="width: 80px; height: 80px; margin: 10px auto; border-radius: 8px; background: #f0f0f0; display: none; background-size: cover;"></div>
+    
+    <button id="confirmNewBookBtn" class="drawer-btn">创建书籍</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/settings.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // 封面预览功能
+  var coverInput = document.getElementById('bookCoverInput');
+  if (coverInput) {
+    coverInput.onchange = function(e) {
+      var file = e.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+          var preview = document.getElementById('coverPreview');
+          if (preview) {
+            preview.style.backgroundImage = 'url(' + ev.target.result + ')';
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+            preview.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+  }
+</script>
+<!-- 新建分组抽屉面板 -->
+<div id="newGroupDrawer" class="drawer-panel">
+  <div class="drawer-header">
+    <h3>新建分组</h3>
+    <button id="closeGroupDrawerBtn" class="close-drawer">✕</button>
+  </div>
+  <div class="drawer-content">
+    <label>分组名称</label>
+    <input type="text" id="newGroupName" placeholder="请输入分组名称" class="drawer-input">
+    
+    <label>分组封面（可选）</label>
+    <input type="file" id="groupCoverInput" accept="image/*" class="drawer-input">
+    <div id="groupCoverPreview" style="width: 80px; height: 80px; margin: 10px auto; border-radius: 8px; background: #f0f0f0; display: none; background-size: cover;"></div>
+    
+    <button id="confirmNewGroupBtn" class="drawer-btn">创建分组</button>
+  </div>
+</div>
+</body>
+</html>

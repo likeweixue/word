@@ -172,3 +172,110 @@ applyTheme = function(theme) {
 
 // 暴露到全局
 window.applyTheme = applyTheme;
+
+// 同步行高和网格线
+function applyLineHeight(height) {
+  var editor = document.getElementById('editor');
+  if (editor) {
+    editor.style.lineHeight = height;
+    // 如果网格线开启，刷新网格线
+    var gridCheck = document.getElementById('gridLinesCheckbox');
+    if (gridCheck && gridCheck.checked) {
+      // 重新应用网格线以更新间距
+      var show = gridCheck.checked;
+      applyGridLine(false);
+      setTimeout(function() {
+        applyGridLine(show);
+      }, 10);
+    }
+  }
+  var select = document.getElementById('lineHeightSelect');
+  if (select) select.value = height;
+  if (typeof settings !== 'undefined') {
+    settings.lineHeight = height;
+    if (typeof saveAllData === 'function') saveAllData();
+  }
+}
+
+// 重新定义 applyGridLine 使用 em 单位
+var originalApplyGridLine = applyGridLine;
+applyGridLine = function(show) {
+  var editor = document.getElementById('editor');
+  if (editor) {
+    if (show) {
+      editor.classList.add('show-grid');
+      // 获取当前行高并设置背景大小
+      var lineHeight = parseFloat(getComputedStyle(editor).lineHeight);
+      var fontSize = parseFloat(getComputedStyle(editor).fontSize);
+      var gridHeight = lineHeight / fontSize;
+      editor.style.backgroundSize = '100% ' + gridHeight + 'em';
+    } else {
+      editor.classList.remove('show-grid');
+      editor.style.backgroundSize = '';
+    }
+  }
+  var checkbox = document.getElementById('gridLinesCheckbox');
+  if (checkbox) checkbox.checked = show;
+  if (typeof settings !== 'undefined') {
+    settings.showGrid = show;
+    if (typeof saveAllData === 'function') saveAllData();
+  }
+  console.log('网格线设置:', show ? '开启' : '关闭');
+};
+
+window.applyGridLine = applyGridLine;
+window.applyLineHeight = applyLineHeight;
+
+// 重新定义 applyGridLine，让网格线居中
+window.applyGridLine = function(show) {
+  var editor = document.getElementById('editor');
+  if (editor) {
+    if (show) {
+      editor.classList.add('show-grid');
+      // 获取当前行高
+      var lineHeightPx = parseFloat(getComputedStyle(editor).lineHeight);
+      var fontSizePx = parseFloat(getComputedStyle(editor).fontSize);
+      var lineHeightEm = lineHeightPx / fontSizePx;
+      // 网格线间隔为行高，偏移半个行高实现居中
+      editor.style.backgroundSize = '100% ' + lineHeightEm + 'em';
+      editor.style.backgroundPosition = '0 ' + (lineHeightEm / 2) + 'em';
+      editor.style.backgroundRepeat = 'repeat-y';
+      console.log('网格线已开启，行高:', lineHeightEm + 'em');
+    } else {
+      editor.classList.remove('show-grid');
+      editor.style.backgroundSize = '';
+      editor.style.backgroundPosition = '';
+    }
+  }
+  var checkbox = document.getElementById('gridLinesCheckbox');
+  if (checkbox) checkbox.checked = show;
+  if (typeof settings !== 'undefined') {
+    settings.showGrid = show;
+    if (typeof saveAllData === 'function') saveAllData();
+  }
+};
+
+// 重新定义行高设置，同时更新网格线
+window.applyLineHeight = function(height) {
+  var editor = document.getElementById('editor');
+  if (editor) {
+    editor.style.lineHeight = height;
+    // 如果网格线开启，重新计算网格线位置
+    var gridCheck = document.getElementById('gridLinesCheckbox');
+    if (gridCheck && gridCheck.checked) {
+      var fontSizePx = parseFloat(getComputedStyle(editor).fontSize);
+      var lineHeightPx = parseFloat(height) * fontSizePx;
+      var lineHeightEm = lineHeightPx / fontSizePx;
+      editor.style.backgroundSize = '100% ' + lineHeightEm + 'em';
+      editor.style.backgroundPosition = '0 ' + (lineHeightEm / 2) + 'em';
+    }
+  }
+  var select = document.getElementById('lineHeightSelect');
+  if (select) select.value = height;
+  if (typeof settings !== 'undefined') {
+    settings.lineHeight = height;
+    if (typeof saveAllData === 'function') saveAllData();
+  }
+};
+
+console.log('网格线居中功能已启用');

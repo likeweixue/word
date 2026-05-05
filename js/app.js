@@ -111,7 +111,7 @@ function openBookTab(bookId) {
     '<button id="focusBtn" class="tool-icon">⍁ 闭关</button>' +
     '<button id="importBtn" class="tool-icon">↙ 导入</button>' +
     '<button id="exportBtn" class="tool-icon">↗ 导出</button>' +
-    '<button id="styleBtn" class="tool-icon">◑ 主题</button>' +
+    '<button id="styleBtn" class="tool-icon">◑ 主题</button><button id="sidebarToggleBtn" class="tool-icon" style="margin-left: 4px;">📑 侧栏</button>' +
     '</div>' +
     '</div>' +
     '<div class="detail-main">' +
@@ -134,6 +134,23 @@ function openBookTab(bookId) {
     '<span id="saveStatus">已保存</span>' +
     '</div>' +
     '</div>' +
+    '<div class="detail-sidebar" id="detailSidebar">' +
+    '<div class="sidebar-header">' +
+    '<h3>写作助手</h3>' +
+    '<button id="toggleSidebarBtn" class="tool-icon">✕</button>' +
+    '</div>' +
+    '<div class="sidebar-content">' +
+    '<div class="sidebar-section">' +
+    '<div class="sidebar-item" data-tool="outline"><span class="sidebar-icon">📋</span><span class="sidebar-label">大纲</span></div>' +
+    '<div class="sidebar-item" data-tool="timeline"><span class="sidebar-icon">⏱️</span><span class="sidebar-label">时间线</span></div>' +
+    '<div class="sidebar-item" data-tool="characters"><span class="sidebar-icon">👥</span><span class="sidebar-label">角色</span></div>' +
+    '<div class="sidebar-item" data-tool="setting"><span class="sidebar-icon">⚙️</span><span class="sidebar-label">设定</span></div>' +
+    '<div class="sidebar-item" data-tool="proofread"><span class="sidebar-icon">📝</span><span class="sidebar-label">校对</span></div>' +
+    '<div class="sidebar-item" data-tool="namegen"><span class="sidebar-icon">✨</span><span class="sidebar-label">取名</span></div>' +
+    '<div class="sidebar-item" data-tool="map"><span class="sidebar-icon">🗺️</span><span class="sidebar-label">地图</span></div>' +
+    '</div>' +
+    '</div>' +
+    '</div>' +
     '</div>' +
     '</div>';
   pagesContainer.appendChild(pageDiv);
@@ -141,6 +158,7 @@ function openBookTab(bookId) {
   switchToTab(tabId);
   document.querySelector('.app-container').classList.add('editing-mode');
 }
+
 function initBookPage(tabId, bookId) {
   var pageDiv = document.querySelector('.book-page[data-page="' + tabId + '"]');
   if (!pageDiv) return;
@@ -277,6 +295,44 @@ function initBookPage(tabId, bookId) {
   }
   renderVolumes();
   renderCurrentChapter();
+
+  // 侧边栏开关按钮
+  var sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.onclick = function() {
+      var sidebar = document.getElementById('detailSidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('hidden');
+        var toggleBtn = document.getElementById('toggleSidebarBtn');
+        if (toggleBtn) {
+          toggleBtn.textContent = sidebar.classList.contains('hidden') ? '☰' : '✕';
+        }
+      }
+    };
+  }
+
+  // 初始化右侧功能栏
+  setTimeout(function() {
+    var toggleBtn = document.getElementById('toggleSidebarBtn');
+    var sidebar = document.getElementById('detailSidebar');
+    
+    if (toggleBtn && sidebar) {
+      toggleBtn.onclick = function() {
+        sidebar.classList.toggle('hidden');
+        toggleBtn.textContent = sidebar.classList.contains('hidden') ? '☰' : '✕';
+      };
+    }
+    
+    var sidebarItems = document.querySelectorAll('.sidebar-item');
+    for (var i = 0; i < sidebarItems.length; i++) {
+      sidebarItems[i].onclick = function(e) {
+        var tool = this.getAttribute('data-tool');
+        var label = this.querySelector('.sidebar-label')?.innerText || tool;
+        alert('「' + label + '」功能正在开发中，敬请期待！');
+      };
+    }
+  }, 100);
+
 }
 function newBook() { openNewBookDrawer(); }
 function switchPage(pageId) {
@@ -898,3 +954,2399 @@ if (document.readyState === 'loading') {
 } else {
   setTimeout(bindGroupButtons, 100);
 }
+
+// ========== 编辑器增强功能 ==========
+// 在 initBookPage 函数中添加以下功能，需要在创建编辑器后调用
+
+function enhanceEditor(editor) {
+  if (!editor) return;
+  
+  // 功能1：首行自动缩进2字符
+  editor.addEventListener('keydown', function(e) {
+    // 检查是否是第一个字符（当前内容为空或只有空白）
+    var currentText = editor.innerText;
+    var isEmpty = !currentText || currentText.trim() === '';
+    
+    // 如果按的是普通字符键（不是回车、删除等）
+    if (isEmpty && e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && e.key !== ' ' && e.key !== 'Enter') {
+      // 阻止默认输入
+      e.preventDefault();
+      // 插入两个空格 + 当前字符
+      var selection = window.getSelection();
+      var range = selection.getRangeAt(0);
+      var textNode = document.createTextNode('  ' + e.key);
+      range.insertNode(textNode);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      // 触发保存
+      if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+      return;
+    }
+  });
+  
+  // 功能2：回车自动空一行（增加段落间距）
+  editor.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // 获取当前光标位置
+      var selection = window.getSelection();
+      var range = selection.getRangeAt(0);
+      
+      // 创建新的段落
+      var br = document.createElement('br');
+      var p = document.createElement('p');
+      p.appendChild(br);
+      
+      // 插入新段落
+      range.insertNode(p);
+      
+      // 移动光标到新段落
+      range.setStart(p, 0);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      
+      // 触发保存
+      if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    }
+  });
+  
+  // 功能3：自动修复首行缩进（每段开头自动加两个空格）
+  function autoIndentParagraphs() {
+    var paragraphs = editor.querySelectorAll('p');
+    for (var i = 0; i < paragraphs.length; i++) {
+      var p = paragraphs[i];
+      var text = p.textContent || '';
+      // 如果段落内容不为空且不以空格开头，添加两个空格
+      if (text.trim() !== '' && !text.startsWith('  ')) {
+        p.innerHTML = '  ' + p.innerHTML;
+      }
+    }
+  }
+  
+  // 在保存时自动格式化段落
+  var originalSave = window.saveCurrentChapter;
+  if (originalSave) {
+    window.saveCurrentChapter = function() {
+      autoIndentParagraphs();
+      originalSave();
+    };
+  }
+  
+  console.log('编辑器增强功能已启用：首行缩进2字符 + 回车自动空行');
+}
+
+// 在 initBookPage 中调用这个函数
+// 需要在创建 editor 元素后调用 enhanceEditor(editor)
+
+// ========== 大纲数据结构 ==========
+// 每个书籍的大纲数据存储在 localStorage 中
+function getOutlineKey(bookId) {
+  return 'outline_' + bookId;
+}
+
+// 默认大纲结构
+function getDefaultOutline() {
+  return {
+    id: 'root',
+    title: '大纲根节点',
+    content: '',
+    children: [
+      {
+        id: 'chapter1',
+        title: '第一章',
+        content: '',
+        children: []
+      }
+    ]
+  };
+}
+
+// 加载大纲
+function loadOutline(bookId) {
+  var key = getOutlineKey(bookId);
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch(e) {}
+  }
+  return getDefaultOutline();
+}
+
+// 保存大纲
+function saveOutline(bookId, outline) {
+  var key = getOutlineKey(bookId);
+  localStorage.setItem(key, JSON.stringify(outline));
+}
+
+// 查找节点
+function findOutlineNode(node, nodeId) {
+  if (node.id === nodeId) return node;
+  if (node.children) {
+    for (var i = 0; i < node.children.length; i++) {
+      var found = findOutlineNode(node.children[i], nodeId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// 添加子节点
+function addOutlineChild(outline, parentId) {
+  var parent = findOutlineNode(outline, parentId);
+  if (parent) {
+    var newNode = {
+      id: Date.now() + '_' + Math.random(),
+      title: '新节点',
+      content: '',
+      children: []
+    };
+    if (!parent.children) parent.children = [];
+    parent.children.push(newNode);
+    return newNode;
+  }
+  return null;
+}
+
+// 删除节点
+function deleteOutlineNode(outline, nodeId) {
+  if (outline.id === nodeId) return false; // 不能删除根节点
+  function removeNode(parent) {
+    if (parent.children) {
+      for (var i = 0; i < parent.children.length; i++) {
+        if (parent.children[i].id === nodeId) {
+          parent.children.splice(i, 1);
+          return true;
+        }
+        if (removeNode(parent.children[i])) return true;
+      }
+    }
+    return false;
+  }
+  return removeNode(outline);
+}
+
+// 渲染大纲树
+function renderOutlineTree(container, node, currentNodeId, onSelect) {
+  container.innerHTML = '';
+  function renderNode(parentEl, nodeData, level) {
+    var div = document.createElement('div');
+    div.className = 'tree-node';
+    
+    var itemDiv = document.createElement('div');
+    itemDiv.className = 'tree-node-item';
+    if (nodeData.id === currentNodeId) itemDiv.classList.add('active');
+    
+    var expandIcon = document.createElement('span');
+    expandIcon.className = 'tree-expand-icon';
+    var hasChildren = nodeData.children && nodeData.children.length > 0;
+    expandIcon.textContent = hasChildren ? '▼' : '　';
+    expandIcon.onclick = function(e) {
+      e.stopPropagation();
+      var childrenDiv = div.querySelector('.tree-children');
+      if (childrenDiv) {
+        if (childrenDiv.style.display === 'none') {
+          childrenDiv.style.display = 'block';
+          expandIcon.textContent = '▼';
+        } else {
+          childrenDiv.style.display = 'none';
+          expandIcon.textContent = '▶';
+        }
+      }
+    };
+    
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'tree-node-label';
+    labelSpan.textContent = nodeData.title;
+    labelSpan.onclick = function(e) {
+      e.stopPropagation();
+      onSelect(nodeData.id);
+    };
+    
+    itemDiv.appendChild(expandIcon);
+    itemDiv.appendChild(labelSpan);
+    div.appendChild(itemDiv);
+    
+    if (hasChildren) {
+      var childrenDiv = document.createElement('div');
+      childrenDiv.className = 'tree-children';
+      for (var i = 0; i < nodeData.children.length; i++) {
+        renderNode(childrenDiv, nodeData.children[i], level + 1);
+      }
+      div.appendChild(childrenDiv);
+    }
+    
+    parentEl.appendChild(div);
+  }
+  
+  renderNode(container, node, 0);
+}
+
+// 打开大纲面板
+function openOutlinePanel(bookId) {
+  var panel = document.getElementById('outlinePanel');
+  if (!panel) return;
+  
+  panel.classList.add('open');
+  panel.setAttribute('data-book-id', bookId);
+  
+  var outline = loadOutline(bookId);
+  var currentNodeId = outline.id;
+  
+  // 渲染树
+  var treeContainer = document.getElementById('outlineTree');
+  var titleInput = document.getElementById('outlineNodeTitle');
+  var contentTextarea = document.getElementById('outlineNodeContent');
+  var saveStatus = document.getElementById('outlineSaveStatus');
+  
+  function renderCurrentNode(nodeId) {
+    var node = findOutlineNode(outline, nodeId);
+    if (node) {
+      titleInput.value = node.title || '';
+      contentTextarea.value = node.content || '';
+      currentNodeId = nodeId;
+      renderOutlineTree(treeContainer, outline, currentNodeId, function(selectedId) {
+        renderCurrentNode(selectedId);
+      });
+    }
+  }
+  
+  renderCurrentNode(currentNodeId);
+  
+  // 保存当前节点
+  var saveNode = function() {
+    var node = findOutlineNode(outline, currentNodeId);
+    if (node) {
+      node.title = titleInput.value;
+      node.content = contentTextarea.value;
+      saveOutline(bookId, outline);
+      saveStatus.textContent = '已保存';
+      setTimeout(function() {
+        if (saveStatus.textContent === '已保存') saveStatus.textContent = '已同步';
+      }, 2000);
+      renderCurrentNode(currentNodeId);
+    }
+  };
+  
+  titleInput.oninput = saveNode;
+  contentTextarea.oninput = saveNode;
+  
+  // 添加子节点
+  document.getElementById('addChildNodeBtn').onclick = function() {
+    var newNode = addOutlineChild(outline, currentNodeId);
+    if (newNode) {
+      saveOutline(bookId, outline);
+      renderCurrentNode(newNode.id);
+    }
+  };
+  
+  // 删除节点
+  document.getElementById('deleteNodeBtn').onclick = function() {
+    if (currentNodeId === outline.id) {
+      alert('根节点不能删除');
+      return;
+    }
+    if (confirm('确定要删除这个节点吗？')) {
+      deleteOutlineNode(outline, currentNodeId);
+      saveOutline(bookId, outline);
+      renderCurrentNode(outline.id);
+    }
+  };
+}
+
+// 关闭大纲面板
+function closeOutlinePanel() {
+  var panel = document.getElementById('outlinePanel');
+  if (panel) panel.classList.remove('open');
+}
+
+// 绑定大纲按钮事件
+function bindOutlineButton() {
+  var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+  if (outlineBtn) {
+    outlineBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        openOutlinePanel(bookId);
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+  }
+  
+  var closeBtn = document.getElementById('closeOutlinePanel');
+  if (closeBtn) {
+    closeBtn.onclick = closeOutlinePanel;
+  }
+}
+
+// 在页面加载后绑定
+setTimeout(bindOutlineButton, 500);
+
+// 重新绑定侧边栏按钮事件（确保每次打开书籍后都能工作）
+window.bindSidebarButtons = function() {
+  console.log('绑定侧边栏按钮');
+  
+  var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+  if (outlineBtn) {
+    outlineBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        if (typeof openOutlinePanel === 'function') {
+          openOutlinePanel(bookId);
+        } else {
+          alert('大纲功能加载中，请稍后');
+        }
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+  }
+  
+  var timelineBtn = document.querySelector('.sidebar-item[data-tool="timeline"]');
+  if (timelineBtn) {
+    timelineBtn.onclick = function() { alert('时间线功能开发中...'); };
+  }
+  
+  var charactersBtn = document.querySelector('.sidebar-item[data-tool="characters"]');
+  if (charactersBtn) {
+    charactersBtn.onclick = function() { alert('角色功能开发中...'); };
+  }
+  
+  var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+  if (settingBtn) {
+    settingBtn.onclick = function() { alert('设定功能开发中...'); };
+  }
+  
+  var proofreadBtn = document.querySelector('.sidebar-item[data-tool="proofread"]');
+  if (proofreadBtn) {
+    proofreadBtn.onclick = function() { alert('校对功能开发中...'); };
+  }
+  
+  var namegenBtn = document.querySelector('.sidebar-item[data-tool="namegen"]');
+  if (namegenBtn) {
+    namegenBtn.onclick = function() { alert('取名功能开发中...'); };
+  }
+  
+  var mapBtn = document.querySelector('.sidebar-item[data-tool="map"]');
+  if (mapBtn) {
+    mapBtn.onclick = function() { alert('地图功能开发中...'); };
+  }
+};
+
+// 在书籍页面加载时调用
+if (typeof initSidebar === 'function') {
+  var originalInitSidebar = initSidebar;
+  window.initSidebar = function() {
+    originalInitSidebar();
+    setTimeout(window.bindSidebarButtons, 200);
+  };
+} else {
+  setTimeout(window.bindSidebarButtons, 1000);
+}
+
+// 在 initBookPage 函数末尾添加按钮绑定（直接追加到文件末尾，需要手动放入函数内）
+// 由于 sed 修改复杂，我们直接在 app.js 末尾添加一个监听器
+setTimeout(function() {
+  // 监听书籍页面切换，每次切换时重新绑定侧边栏按钮
+  var observer = new MutationObserver(function() {
+    var activePage = document.querySelector('.book-page.active');
+    if (activePage && activePage.querySelector('.detail-sidebar')) {
+      bindSidebarButtonsDirect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}, 1000);
+
+function bindSidebarButtonsDirect() {
+  console.log('直接绑定侧边栏按钮');
+  
+  var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+  if (outlineBtn && !outlineBtn.hasAttribute('data-bound')) {
+    outlineBtn.setAttribute('data-bound', 'true');
+    outlineBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        if (typeof openOutlinePanel === 'function') {
+          openOutlinePanel(bookId);
+        } else {
+          alert('大纲功能加载中，请稍后');
+        }
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('大纲按钮已绑定');
+  }
+  
+  var btns = ['timeline', 'characters', 'setting', 'proofread', 'namegen', 'map'];
+  for (var i = 0; i < btns.length; i++) {
+    var btn = document.querySelector('.sidebar-item[data-tool="' + btns[i] + '"]');
+    if (btn && !btn.hasAttribute('data-bound')) {
+      btn.setAttribute('data-bound', 'true');
+      btn.onclick = function(tool) {
+        return function() { alert(tool + '功能开发中...'); };
+      }(btns[i]);
+    }
+  }
+}
+
+// 立即执行一次
+setTimeout(bindSidebarButtonsDirect, 500);
+
+// ========== 设定功能 ==========
+function getSettingKey(bookId) {
+  return 'setting_' + bookId;
+}
+
+function getDefaultSetting() {
+  return {
+    id: 'root',
+    title: '世界观设定',
+    content: '',
+    children: [
+      {
+        id: 'world_' + Date.now(),
+        title: '世界背景',
+        content: '',
+        children: []
+      },
+      {
+        id: 'magic_' + Date.now(),
+        title: '力量体系',
+        content: '',
+        children: []
+      },
+      {
+        id: 'history_' + Date.now(),
+        title: '历史事件',
+        content: '',
+        children: []
+      }
+    ]
+  };
+}
+
+function loadSetting(bookId) {
+  var key = getSettingKey(bookId);
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch(e) {}
+  }
+  return getDefaultSetting();
+}
+
+function saveSetting(bookId, setting) {
+  var key = getSettingKey(bookId);
+  localStorage.setItem(key, JSON.stringify(setting));
+}
+
+function findSettingNode(node, nodeId) {
+  if (node.id === nodeId) return node;
+  if (node.children) {
+    for (var i = 0; i < node.children.length; i++) {
+      var found = findSettingNode(node.children[i], nodeId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function addSettingChild(setting, parentId) {
+  var parent = findSettingNode(setting, parentId);
+  if (parent) {
+    var newNode = {
+      id: Date.now() + '_' + Math.random(),
+      title: '新设定',
+      content: '',
+      children: []
+    };
+    if (!parent.children) parent.children = [];
+    parent.children.push(newNode);
+    return newNode;
+  }
+  return null;
+}
+
+function deleteSettingNode(setting, nodeId) {
+  if (setting.id === nodeId) return false;
+  function removeNode(parent) {
+    if (parent.children) {
+      for (var i = 0; i < parent.children.length; i++) {
+        if (parent.children[i].id === nodeId) {
+          parent.children.splice(i, 1);
+          return true;
+        }
+        if (removeNode(parent.children[i])) return true;
+      }
+    }
+    return false;
+  }
+  return removeNode(setting);
+}
+
+function renderSettingTree(container, node, currentNodeId, onSelect) {
+  container.innerHTML = '';
+  function renderNode(parentEl, nodeData, level) {
+    var div = document.createElement('div');
+    div.className = 'tree-node';
+    
+    var itemDiv = document.createElement('div');
+    itemDiv.className = 'tree-node-item';
+    if (nodeData.id === currentNodeId) itemDiv.classList.add('active');
+    
+    var expandIcon = document.createElement('span');
+    expandIcon.className = 'tree-expand-icon';
+    var hasChildren = nodeData.children && nodeData.children.length > 0;
+    expandIcon.textContent = hasChildren ? '▼' : '　';
+    expandIcon.onclick = function(e) {
+      e.stopPropagation();
+      var childrenDiv = div.querySelector('.tree-children');
+      if (childrenDiv) {
+        if (childrenDiv.style.display === 'none') {
+          childrenDiv.style.display = 'block';
+          expandIcon.textContent = '▼';
+        } else {
+          childrenDiv.style.display = 'none';
+          expandIcon.textContent = '▶';
+        }
+      }
+    };
+    
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'tree-node-label';
+    labelSpan.textContent = nodeData.title;
+    labelSpan.onclick = function(e) {
+      e.stopPropagation();
+      onSelect(nodeData.id);
+    };
+    
+    itemDiv.appendChild(expandIcon);
+    itemDiv.appendChild(labelSpan);
+    div.appendChild(itemDiv);
+    
+    if (hasChildren) {
+      var childrenDiv = document.createElement('div');
+      childrenDiv.className = 'tree-children';
+      for (var i = 0; i < nodeData.children.length; i++) {
+        renderNode(childrenDiv, nodeData.children[i], level + 1);
+      }
+      div.appendChild(childrenDiv);
+    }
+    
+    parentEl.appendChild(div);
+  }
+  
+  renderNode(container, node, 0);
+}
+
+function openSettingPanel(bookId) {
+  var panel = document.getElementById('settingPanel');
+  if (!panel) return;
+  
+  panel.classList.add('open');
+  panel.setAttribute('data-book-id', bookId);
+  
+  var setting = loadSetting(bookId);
+  var currentNodeId = setting.id;
+  
+  var treeContainer = document.getElementById('settingTree');
+  var titleInput = document.getElementById('settingNodeTitle');
+  var contentTextarea = document.getElementById('settingNodeContent');
+  var saveStatus = document.getElementById('settingSaveStatus');
+  
+  function renderCurrentNode(nodeId) {
+    var node = findSettingNode(setting, nodeId);
+    if (node) {
+      titleInput.value = node.title || '';
+      contentTextarea.value = node.content || '';
+      currentNodeId = nodeId;
+      renderSettingTree(treeContainer, setting, currentNodeId, function(selectedId) {
+        renderCurrentNode(selectedId);
+      });
+    }
+  }
+  
+  renderCurrentNode(currentNodeId);
+  
+  function saveCurrentNode() {
+    var node = findSettingNode(setting, currentNodeId);
+    if (node) {
+      node.title = titleInput.value;
+      node.content = contentTextarea.value;
+      saveSetting(bookId, setting);
+      saveStatus.textContent = '已保存';
+      setTimeout(function() {
+        if (saveStatus.textContent === '已保存') saveStatus.textContent = '已同步';
+      }, 2000);
+      renderCurrentNode(currentNodeId);
+    }
+  }
+  
+  titleInput.oninput = saveCurrentNode;
+  contentTextarea.oninput = saveCurrentNode;
+  
+  document.getElementById('addSettingChildBtn').onclick = function() {
+    var newNode = addSettingChild(setting, currentNodeId);
+    if (newNode) {
+      saveSetting(bookId, setting);
+      renderCurrentNode(newNode.id);
+    }
+  };
+  
+  document.getElementById('deleteSettingNodeBtn').onclick = function() {
+    if (currentNodeId === setting.id) {
+      alert('根节点不能删除');
+      return;
+    }
+    if (confirm('确定要删除这个设定吗？')) {
+      deleteSettingNode(setting, currentNodeId);
+      saveSetting(bookId, setting);
+      renderCurrentNode(setting.id);
+    }
+  };
+  
+  var saveBtn = document.getElementById('saveSettingNodeBtn');
+  if (saveBtn) saveBtn.onclick = saveCurrentNode;
+}
+
+function closeSettingPanel() {
+  var panel = document.getElementById('settingPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+// 绑定设定按钮
+function bindSettingButton() {
+  var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+  if (settingBtn && !settingBtn.hasAttribute('data-bound')) {
+    settingBtn.setAttribute('data-bound', 'true');
+    settingBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        openSettingPanel(bookId);
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('设定按钮已绑定');
+  }
+  
+  var closeSettingBtn = document.getElementById('closeSettingPanel');
+  if (closeSettingBtn) {
+    closeSettingBtn.onclick = closeSettingPanel;
+  }
+}
+
+// 在绑定函数中添加设定按钮
+var originalBindSidebar = window.bindSidebarButtonsDirect;
+if (originalBindSidebar) {
+  window.bindSidebarButtonsDirect = function() {
+    if (originalBindSidebar) originalBindSidebar();
+    bindSettingButton();
+  };
+} else {
+  setTimeout(function() {
+    bindSettingButton();
+  }, 500);
+}
+
+// 更新绑定函数，包含设定按钮
+setTimeout(function() {
+  var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+  if (settingBtn && !settingBtn.hasAttribute('data-bound')) {
+    settingBtn.setAttribute('data-bound', 'true');
+    settingBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        openSettingPanel(bookId);
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('设定按钮已绑定（延迟）');
+  }
+}, 1000);
+
+// ========== 角色功能 ==========
+function getCharacterKey(bookId) {
+  return 'character_' + bookId;
+}
+
+function getDefaultCharacter() {
+  return {
+    id: 'root',
+    title: '角色列表',
+    content: '',
+    fields: { age: '', gender: '', race: '', occupation: '' },
+    children: [
+      {
+        id: 'protagonist_' + Date.now(),
+        title: '主角',
+        content: '',
+        fields: { age: '', gender: '', race: '', occupation: '' },
+        children: []
+      },
+      {
+        id: 'supporting_' + Date.now(),
+        title: '配角',
+        content: '',
+        fields: { age: '', gender: '', race: '', occupation: '' },
+        children: []
+      },
+      {
+        id: 'antagonist_' + Date.now(),
+        title: '反派',
+        content: '',
+        fields: { age: '', gender: '', race: '', occupation: '' },
+        children: []
+      }
+    ]
+  };
+}
+
+function loadCharacter(bookId) {
+  var key = getCharacterKey(bookId);
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch(e) {}
+  }
+  return getDefaultCharacter();
+}
+
+function saveCharacter(bookId, character) {
+  var key = getCharacterKey(bookId);
+  localStorage.setItem(key, JSON.stringify(character));
+}
+
+function findCharacterNode(node, nodeId) {
+  if (node.id === nodeId) return node;
+  if (node.children) {
+    for (var i = 0; i < node.children.length; i++) {
+      var found = findCharacterNode(node.children[i], nodeId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function addCharacterChild(character, parentId) {
+  var parent = findCharacterNode(character, parentId);
+  if (parent) {
+    var newNode = {
+      id: Date.now() + '_' + Math.random(),
+      title: '新角色',
+      content: '',
+      fields: { age: '', gender: '', race: '', occupation: '' },
+      children: []
+    };
+    if (!parent.children) parent.children = [];
+    parent.children.push(newNode);
+    return newNode;
+  }
+  return null;
+}
+
+function deleteCharacterNode(character, nodeId) {
+  if (character.id === nodeId) return false;
+  function removeNode(parent) {
+    if (parent.children) {
+      for (var i = 0; i < parent.children.length; i++) {
+        if (parent.children[i].id === nodeId) {
+          parent.children.splice(i, 1);
+          return true;
+        }
+        if (removeNode(parent.children[i])) return true;
+      }
+    }
+    return false;
+  }
+  return removeNode(character);
+}
+
+function renderCharacterTree(container, node, currentNodeId, onSelect) {
+  container.innerHTML = '';
+  function renderNode(parentEl, nodeData, level) {
+    var div = document.createElement('div');
+    div.className = 'tree-node';
+    
+    var itemDiv = document.createElement('div');
+    itemDiv.className = 'tree-node-item';
+    if (nodeData.id === currentNodeId) itemDiv.classList.add('active');
+    
+    var expandIcon = document.createElement('span');
+    expandIcon.className = 'tree-expand-icon';
+    var hasChildren = nodeData.children && nodeData.children.length > 0;
+    expandIcon.textContent = hasChildren ? '▼' : '　';
+    expandIcon.onclick = function(e) {
+      e.stopPropagation();
+      var childrenDiv = div.querySelector('.tree-children');
+      if (childrenDiv) {
+        if (childrenDiv.style.display === 'none') {
+          childrenDiv.style.display = 'block';
+          expandIcon.textContent = '▼';
+        } else {
+          childrenDiv.style.display = 'none';
+          expandIcon.textContent = '▶';
+        }
+      }
+    };
+    
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'tree-node-label';
+    labelSpan.textContent = nodeData.title;
+    labelSpan.onclick = function(e) {
+      e.stopPropagation();
+      onSelect(nodeData.id);
+    };
+    
+    itemDiv.appendChild(expandIcon);
+    itemDiv.appendChild(labelSpan);
+    div.appendChild(itemDiv);
+    
+    if (hasChildren) {
+      var childrenDiv = document.createElement('div');
+      childrenDiv.className = 'tree-children';
+      for (var i = 0; i < nodeData.children.length; i++) {
+        renderNode(childrenDiv, nodeData.children[i], level + 1);
+      }
+      div.appendChild(childrenDiv);
+    }
+    
+    parentEl.appendChild(div);
+  }
+  
+  renderNode(container, node, 0);
+}
+
+function openCharacterPanel(bookId) {
+  var panel = document.getElementById('characterPanel');
+  if (!panel) return;
+  
+  panel.classList.add('open');
+  panel.setAttribute('data-book-id', bookId);
+  
+  var character = loadCharacter(bookId);
+  var currentNodeId = character.id;
+  
+  var treeContainer = document.getElementById('characterTree');
+  var titleInput = document.getElementById('characterNodeTitle');
+  var contentTextarea = document.getElementById('characterNodeContent');
+  var ageInput = document.getElementById('characterAge');
+  var genderInput = document.getElementById('characterGender');
+  var raceInput = document.getElementById('characterRace');
+  var occupationInput = document.getElementById('characterOccupation');
+  var saveStatus = document.getElementById('characterSaveStatus');
+  
+  function renderCurrentNode(nodeId) {
+    var node = findCharacterNode(character, nodeId);
+    if (node) {
+      titleInput.value = node.title || '';
+      contentTextarea.value = node.content || '';
+      if (node.fields) {
+        ageInput.value = node.fields.age || '';
+        genderInput.value = node.fields.gender || '';
+        raceInput.value = node.fields.race || '';
+        occupationInput.value = node.fields.occupation || '';
+      } else {
+        ageInput.value = '';
+        genderInput.value = '';
+        raceInput.value = '';
+        occupationInput.value = '';
+      }
+      currentNodeId = nodeId;
+      renderCharacterTree(treeContainer, character, currentNodeId, function(selectedId) {
+        renderCurrentNode(selectedId);
+      });
+    }
+  }
+  
+  renderCurrentNode(currentNodeId);
+  
+  function saveCurrentNode() {
+    var node = findCharacterNode(character, currentNodeId);
+    if (node) {
+      node.title = titleInput.value;
+      node.content = contentTextarea.value;
+      node.fields = {
+        age: ageInput.value,
+        gender: genderInput.value,
+        race: raceInput.value,
+        occupation: occupationInput.value
+      };
+      saveCharacter(bookId, character);
+      saveStatus.textContent = '已保存';
+      setTimeout(function() {
+        if (saveStatus.textContent === '已保存') saveStatus.textContent = '已同步';
+      }, 2000);
+      renderCurrentNode(currentNodeId);
+    }
+  }
+  
+  titleInput.oninput = saveCurrentNode;
+  contentTextarea.oninput = saveCurrentNode;
+  ageInput.oninput = saveCurrentNode;
+  genderInput.oninput = saveCurrentNode;
+  raceInput.oninput = saveCurrentNode;
+  occupationInput.oninput = saveCurrentNode;
+  
+  document.getElementById('addCharacterChildBtn').onclick = function() {
+    var newNode = addCharacterChild(character, currentNodeId);
+    if (newNode) {
+      saveCharacter(bookId, character);
+      renderCurrentNode(newNode.id);
+    }
+  };
+  
+  document.getElementById('deleteCharacterNodeBtn').onclick = function() {
+    if (currentNodeId === character.id) {
+      alert('根节点不能删除');
+      return;
+    }
+    if (confirm('确定要删除这个角色吗？')) {
+      deleteCharacterNode(character, currentNodeId);
+      saveCharacter(bookId, character);
+      renderCurrentNode(character.id);
+    }
+  };
+  
+  var saveBtn = document.getElementById('saveCharacterNodeBtn');
+  if (saveBtn) saveBtn.onclick = saveCurrentNode;
+}
+
+function closeCharacterPanel() {
+  var panel = document.getElementById('characterPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+// 绑定角色按钮
+function bindCharacterButton() {
+  var characterBtn = document.querySelector('.sidebar-item[data-tool="characters"]');
+  if (characterBtn && !characterBtn.hasAttribute('data-bound')) {
+    characterBtn.setAttribute('data-bound', 'true');
+    characterBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId) {
+        openCharacterPanel(bookId);
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('角色按钮已绑定');
+  }
+  
+  var closeCharacterBtn = document.getElementById('closeCharacterPanel');
+  if (closeCharacterBtn) {
+    closeCharacterBtn.onclick = closeCharacterPanel;
+  }
+}
+
+// 延迟绑定角色按钮
+setTimeout(function() {
+  bindCharacterButton();
+}, 500);
+
+// 重新定义 bindSidebarButtonsDirect 函数，移除旧的提示覆盖
+window.bindSidebarButtonsDirect = function() {
+  console.log('直接绑定侧边栏按钮');
+  
+  // 大纲按钮
+  var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+  if (outlineBtn && !outlineBtn.hasAttribute('data-bound')) {
+    outlineBtn.setAttribute('data-bound', 'true');
+    outlineBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId && typeof openOutlinePanel === 'function') {
+        openOutlinePanel(bookId);
+      } else if (bookId) {
+        alert('大纲功能加载中，请稍后');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('大纲按钮已绑定');
+  }
+  
+  // 设定按钮
+  var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+  if (settingBtn && !settingBtn.hasAttribute('data-bound')) {
+    settingBtn.setAttribute('data-bound', 'true');
+    settingBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId && typeof openSettingPanel === 'function') {
+        openSettingPanel(bookId);
+      } else if (bookId) {
+        alert('设定功能加载中，请稍后');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('设定按钮已绑定');
+  }
+  
+  // 角色按钮
+  var characterBtn = document.querySelector('.sidebar-item[data-tool="characters"]');
+  if (characterBtn && !characterBtn.hasAttribute('data-bound')) {
+    characterBtn.setAttribute('data-bound', 'true');
+    characterBtn.onclick = function() {
+      var bookId = currentBookId;
+      if (bookId && typeof openCharacterPanel === 'function') {
+        openCharacterPanel(bookId);
+      } else if (bookId) {
+        alert('角色功能加载中，请稍后');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('角色按钮已绑定');
+  }
+  
+  // 时间线、校对、取名、地图按钮
+  var otherTools = ['timeline', 'proofread', 'namegen', 'map'];
+  for (var i = 0; i < otherTools.length; i++) {
+    var btn = document.querySelector('.sidebar-item[data-tool="' + otherTools[i] + '"]');
+    if (btn && !btn.hasAttribute('data-bound')) {
+      btn.setAttribute('data-bound', 'true');
+      btn.onclick = (function(tool) {
+        return function() { alert(tool + '功能开发中...'); };
+      })(otherTools[i]);
+    }
+  }
+};
+
+// 执行绑定
+setTimeout(function() {
+  if (typeof window.bindSidebarButtonsDirect === 'function') {
+    window.bindSidebarButtonsDirect();
+  }
+}, 500);
+
+// ========== 永久修复侧边栏按钮 ==========
+(function() {
+  function fixAllSidebarButtons() {
+    // 大纲按钮
+    var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+    if (outlineBtn && !outlineBtn.hasAttribute('data-fixed')) {
+      outlineBtn.setAttribute('data-fixed', 'true');
+      outlineBtn.onclick = function(e) {
+        e.stopPropagation();
+        var bookId = currentBookId;
+        if (bookId && typeof openOutlinePanel === 'function') {
+          openOutlinePanel(bookId);
+        } else if (bookId) {
+          alert('大纲功能加载中，请稍后再试');
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+    }
+    
+    // 设定按钮
+    var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+    if (settingBtn && !settingBtn.hasAttribute('data-fixed')) {
+      settingBtn.setAttribute('data-fixed', 'true');
+      settingBtn.onclick = function(e) {
+        e.stopPropagation();
+        var bookId = currentBookId;
+        if (bookId && typeof openSettingPanel === 'function') {
+          openSettingPanel(bookId);
+        } else if (bookId) {
+          alert('设定功能加载中，请稍后再试');
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+    }
+    
+    // 角色按钮
+    var characterBtn = document.querySelector('.sidebar-item[data-tool="characters"]');
+    if (characterBtn && !characterBtn.hasAttribute('data-fixed')) {
+      characterBtn.setAttribute('data-fixed', 'true');
+      characterBtn.onclick = function(e) {
+        e.stopPropagation();
+        var bookId = currentBookId;
+        if (bookId && typeof openCharacterPanel === 'function') {
+          openCharacterPanel(bookId);
+        } else if (bookId) {
+          alert('角色功能加载中，请稍后再试');
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+    }
+  }
+  
+  // 页面加载后执行
+  setTimeout(fixAllSidebarButtons, 1000);
+  setTimeout(fixAllSidebarButtons, 3000);
+  
+  // 监听书籍页面切换
+  var observer = new MutationObserver(function() {
+    var activePage = document.querySelector('.book-page.active');
+    if (activePage) {
+      setTimeout(fixAllSidebarButtons, 200);
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+// ========== 修复面板关闭按钮 ==========
+function fixPanelCloseButtons() {
+  // 设定面板关闭按钮
+  var closeSettingBtn = document.getElementById('closeSettingPanel');
+  if (closeSettingBtn && !closeSettingBtn.hasAttribute('data-fixed')) {
+    closeSettingBtn.setAttribute('data-fixed', 'true');
+    closeSettingBtn.onclick = function() {
+      var panel = document.getElementById('settingPanel');
+      if (panel) panel.classList.remove('open');
+    };
+    console.log('设定面板关闭按钮已绑定');
+  }
+  
+  // 大纲面板关闭按钮
+  var closeOutlineBtn = document.getElementById('closeOutlinePanel');
+  if (closeOutlineBtn && !closeOutlineBtn.hasAttribute('data-fixed')) {
+    closeOutlineBtn.setAttribute('data-fixed', 'true');
+    closeOutlineBtn.onclick = function() {
+      var panel = document.getElementById('outlinePanel');
+      if (panel) panel.classList.remove('open');
+    };
+    console.log('大纲面板关闭按钮已绑定');
+  }
+  
+  // 角色面板关闭按钮
+  var closeCharacterBtn = document.getElementById('closeCharacterPanel');
+  if (closeCharacterBtn && !closeCharacterBtn.hasAttribute('data-fixed')) {
+    closeCharacterBtn.setAttribute('data-fixed', 'true');
+    closeCharacterBtn.onclick = function() {
+      var panel = document.getElementById('characterPanel');
+      if (panel) panel.classList.remove('open');
+    };
+    console.log('角色面板关闭按钮已绑定');
+  }
+}
+
+// 延迟执行
+setTimeout(fixPanelCloseButtons, 500);
+setTimeout(fixPanelCloseButtons, 1000);
+
+// ========== 取名面板功能 ==========
+var nameHistory = [];
+
+function loadNameHistory() {
+  var saved = localStorage.getItem('name_history');
+  if (saved) {
+    try {
+      nameHistory = JSON.parse(saved);
+    } catch(e) {}
+  }
+  if (!nameHistory) nameHistory = [];
+}
+
+function saveNameHistory() {
+  localStorage.setItem('name_history', JSON.stringify(nameHistory));
+}
+
+function addToHistory(category, name) {
+  nameHistory.unshift({ category: category, name: name, time: new Date().toLocaleString() });
+  if (nameHistory.length > 50) nameHistory.pop();
+  saveNameHistory();
+  renderHistoryList();
+}
+
+function renderHistoryList() {
+  var container = document.getElementById('historyList');
+  if (!container) return;
+  if (nameHistory.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">暂无历史记录</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < nameHistory.length; i++) {
+    var item = nameHistory[i];
+    var categoryName = getCategoryName(item.category);
+    html += '<div style="padding: 8px; border-bottom: 1px solid #eee; cursor: pointer;" onclick="copyToClipboard(\'' + escapeHtml(item.name) + '\')">' +
+      '<span style="font-size: 12px; color: #888;">[' + categoryName + ']</span> ' +
+      '<span style="font-weight: 500;">' + escapeHtml(item.name) + '</span>' +
+      '<span style="font-size: 11px; color: #aaa; float: right;">' + item.time + '</span>' +
+      '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function getCategoryName(category) {
+  var names = {
+    person: '人物', place: '地名', power: '实力', skill: '招式',
+    equipment: '装备', monster: '怪物', item: '道具'
+  };
+  return names[category] || category;
+}
+
+function openNamegenPanel() {
+  var panel = document.getElementById('namegenPanel');
+  if (!panel) return;
+  panel.classList.add('open');
+  loadNameHistory();
+  renderHistoryList();
+  
+  // 绑定生成按钮事件
+  var generateBtn = document.getElementById('generateNameBtn');
+  var categorySelect = document.getElementById('nameCategory');
+  var resultDiv = document.getElementById('nameResult');
+  
+  if (generateBtn && !generateBtn.hasAttribute('data-bound')) {
+    generateBtn.setAttribute('data-bound', 'true');
+    generateBtn.onclick = function() {
+      var category = categorySelect.value;
+      var newName = generateName(category);
+      resultDiv.innerHTML = newName;
+      addToHistory(category, newName);
+    };
+  }
+  
+  // 复制按钮
+  var copyBtn = document.getElementById('copyNameBtn');
+  if (copyBtn && !copyBtn.hasAttribute('data-bound')) {
+    copyBtn.setAttribute('data-bound', 'true');
+    copyBtn.onclick = function() {
+      var name = resultDiv.innerText;
+      if (name && name !== '点击生成') {
+        copyToClipboard(name);
+        alert('已复制: ' + name);
+      } else {
+        alert('请先生成一个名字');
+      }
+    };
+  }
+  
+  // 清空历史按钮
+  var clearHistoryBtn = document.getElementById('clearHistoryBtn');
+  if (clearHistoryBtn && !clearHistoryBtn.hasAttribute('data-bound')) {
+    clearHistoryBtn.setAttribute('data-bound', 'true');
+    clearHistoryBtn.onclick = function() {
+      if (confirm('确定要清空所有历史记录吗？')) {
+        nameHistory = [];
+        saveNameHistory();
+        renderHistoryList();
+      }
+    };
+  }
+  
+  // 首次自动生成一个
+  if (resultDiv.innerText === '点击生成') {
+    var firstCategory = categorySelect.value;
+    resultDiv.innerHTML = generateName(firstCategory);
+  }
+}
+
+function closeNamegenPanel() {
+  var panel = document.getElementById('namegenPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+function copyToClipboard(text) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+}
+
+// 绑定取名按钮
+function bindNamegenButton() {
+  var namegenBtn = document.querySelector('.sidebar-item[data-tool="namegen"]');
+  if (namegenBtn && !namegenBtn.hasAttribute('data-bound')) {
+    namegenBtn.setAttribute('data-bound', 'true');
+    namegenBtn.onclick = function() {
+      openNamegenPanel();
+    };
+    console.log('取名按钮已绑定');
+  }
+  
+  var closeNamegenBtn = document.getElementById('closeNamegenPanel');
+  if (closeNamegenBtn && !closeNamegenBtn.hasAttribute('data-bound')) {
+    closeNamegenBtn.setAttribute('data-bound', 'true');
+    closeNamegenBtn.onclick = closeNamegenPanel;
+  }
+}
+
+// 延迟绑定
+setTimeout(bindNamegenButton, 500);
+
+// ========== 强制绑定取名按钮 ==========
+setTimeout(function() {
+  var namegenBtn = document.querySelector('.sidebar-item[data-tool="namegen"]');
+  if (namegenBtn) {
+    // 移除旧的事件
+    namegenBtn.onclick = null;
+    // 绑定新事件
+    namegenBtn.onclick = function(e) {
+      e.stopPropagation();
+      console.log('点击取名按钮');
+      if (typeof openNamegenPanel === 'function') {
+        openNamegenPanel();
+      } else {
+        console.error('openNamegenPanel 未定义');
+        alert('取名功能加载中，请稍后再试');
+      }
+    };
+    namegenBtn.setAttribute('data-bound', 'force');
+    console.log('取名按钮强制绑定完成');
+  } else {
+    console.log('找不到取名按钮');
+  }
+}, 1000);
+
+// ========== 永久强力绑定侧边栏按钮 ==========
+(function() {
+  function bindAllSidebarButtons() {
+    console.log('执行强力绑定...');
+    
+    // 取名按钮
+    var namegenBtn = document.querySelector('.sidebar-item[data-tool="namegen"]');
+    if (namegenBtn) {
+      // 移除所有已有事件
+      namegenBtn.onclick = null;
+      namegenBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (typeof openNamegenPanel === 'function') {
+          openNamegenPanel();
+        } else {
+          console.error('openNamegenPanel 未定义');
+          alert('取名功能加载中，请稍后再试');
+        }
+      };
+      console.log('取名按钮已绑定');
+    }
+    
+    // 大纲按钮
+    var outlineBtn = document.querySelector('.sidebar-item[data-tool="outline"]');
+    if (outlineBtn) {
+      outlineBtn.onclick = null;
+      outlineBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (currentBookId && typeof openOutlinePanel === 'function') {
+          openOutlinePanel(currentBookId);
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+      console.log('大纲按钮已绑定');
+    }
+    
+    // 设定按钮
+    var settingBtn = document.querySelector('.sidebar-item[data-tool="setting"]');
+    if (settingBtn) {
+      settingBtn.onclick = null;
+      settingBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (currentBookId && typeof openSettingPanel === 'function') {
+          openSettingPanel(currentBookId);
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+      console.log('设定按钮已绑定');
+    }
+    
+    // 角色按钮
+    var characterBtn = document.querySelector('.sidebar-item[data-tool="characters"]');
+    if (characterBtn) {
+      characterBtn.onclick = null;
+      characterBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (currentBookId && typeof openCharacterPanel === 'function') {
+          openCharacterPanel(currentBookId);
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+      console.log('角色按钮已绑定');
+    }
+  }
+  
+  // 页面加载完成后执行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(bindAllSidebarButtons, 500);
+    });
+  } else {
+    setTimeout(bindAllSidebarButtons, 500);
+  }
+  
+  // 监听动态内容变化（打开书籍时重新绑定）
+  var observer = new MutationObserver(function() {
+    var activePage = document.querySelector('.book-page.active');
+    if (activePage) {
+      setTimeout(bindAllSidebarButtons, 200);
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+// ========== 时间线功能 ==========
+function getTimelineKey(bookId) {
+  return 'timeline_' + bookId;
+}
+
+function getDefaultTimeline() {
+  return [
+    {
+      id: Date.now() + '_1',
+      title: '故事开端',
+      chapter: '第一章',
+      order: 1,
+      content: '主角登场，故事开始...'
+    },
+    {
+      id: Date.now() + '_2',
+      title: '初次冒险',
+      chapter: '第二章',
+      order: 2,
+      content: '主角踏上征程...'
+    }
+  ];
+}
+
+function loadTimeline(bookId) {
+  var key = getTimelineKey(bookId);
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch(e) {}
+  }
+  return getDefaultTimeline();
+}
+
+function saveTimeline(bookId, timeline) {
+  var key = getTimelineKey(bookId);
+  localStorage.setItem(key, JSON.stringify(timeline));
+}
+
+function renderTimelineEventList(container, timeline, currentEventId, onSelect) {
+  if (!container) return;
+  if (!timeline || timeline.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">暂无事件，点击"添加事件"创建</div>';
+    return;
+  }
+  
+  // 按 order 排序
+  timeline.sort(function(a, b) { return a.order - b.order; });
+  
+  var html = '';
+  for (var i = 0; i < timeline.length; i++) {
+    var event = timeline[i];
+    var activeClass = (event.id === currentEventId) ? 'active' : '';
+    html += '<div class="timeline-event-item ' + activeClass + '" data-id="' + event.id + '">' +
+      '<div class="timeline-event-title">' + escapeHtml(event.title) + '</div>' +
+      '<div class="timeline-event-meta">' +
+      '<span class="timeline-event-chapter">📖 ' + escapeHtml(event.chapter || '未设置') + '</span>' +
+      '<span>#' + event.order + '</span>' +
+      '</div>' +
+      '</div>';
+  }
+  container.innerHTML = html;
+  
+  // 绑定点击事件
+  var items = container.querySelectorAll('.timeline-event-item');
+  for (var i = 0; i < items.length; i++) {
+    items[i].onclick = function(e) {
+      var id = this.getAttribute('data-id');
+      onSelect(id);
+    };
+  }
+}
+
+function openTimelinePanel(bookId) {
+  var panel = document.getElementById('timelinePanel');
+  if (!panel) return;
+  
+  panel.classList.add('open');
+  panel.setAttribute('data-book-id', bookId);
+  
+  var timeline = loadTimeline(bookId);
+  var currentEventId = timeline.length > 0 ? timeline[0].id : null;
+  
+  var eventList = document.getElementById('timelineEventList');
+  var titleInput = document.getElementById('timelineEventTitle');
+  var chapterInput = document.getElementById('timelineEventChapter');
+  var orderInput = document.getElementById('timelineEventOrder');
+  var contentTextarea = document.getElementById('timelineEventContent');
+  var saveStatus = document.getElementById('timelineSaveStatus');
+  
+  function renderCurrentEvent(eventId) {
+    var event = null;
+    for (var i = 0; i < timeline.length; i++) {
+      if (timeline[i].id === eventId) {
+        event = timeline[i];
+        break;
+      }
+    }
+    if (event) {
+      titleInput.value = event.title || '';
+      chapterInput.value = event.chapter || '';
+      orderInput.value = event.order || '';
+      contentTextarea.value = event.content || '';
+      currentEventId = eventId;
+      renderTimelineEventList(eventList, timeline, currentEventId, function(selectedId) {
+        renderCurrentEvent(selectedId);
+      });
+    } else if (timeline.length > 0) {
+      renderCurrentEvent(timeline[0].id);
+    } else {
+      titleInput.value = '';
+      chapterInput.value = '';
+      orderInput.value = '';
+      contentTextarea.value = '';
+      renderTimelineEventList(eventList, timeline, null, function(selectedId) {
+        renderCurrentEvent(selectedId);
+      });
+    }
+  }
+  
+  renderCurrentEvent(currentEventId);
+  
+  function saveCurrentEvent() {
+    if (!currentEventId && timeline.length === 0) {
+      // 没有事件时，创建新事件
+      return;
+    }
+    var event = null;
+    for (var i = 0; i < timeline.length; i++) {
+      if (timeline[i].id === currentEventId) {
+        event = timeline[i];
+        break;
+      }
+    }
+    if (event) {
+      event.title = titleInput.value;
+      event.chapter = chapterInput.value;
+      event.order = parseInt(orderInput.value) || 1;
+      event.content = contentTextarea.value;
+      saveTimeline(bookId, timeline);
+      saveStatus.textContent = '已保存';
+      setTimeout(function() {
+        if (saveStatus.textContent === '已保存') saveStatus.textContent = '已同步';
+      }, 2000);
+      renderCurrentEvent(currentEventId);
+    }
+  }
+  
+  titleInput.oninput = saveCurrentEvent;
+  chapterInput.oninput = saveCurrentEvent;
+  orderInput.oninput = saveCurrentEvent;
+  contentTextarea.oninput = saveCurrentEvent;
+  
+  // 添加事件
+  document.getElementById('addTimelineEventBtn').onclick = function() {
+    var newOrder = timeline.length + 1;
+    var newEvent = {
+      id: Date.now() + '_' + Math.random(),
+      title: '新事件',
+      chapter: '第' + newOrder + '章',
+      order: newOrder,
+      content: ''
+    };
+    timeline.push(newEvent);
+    saveTimeline(bookId, timeline);
+    renderCurrentEvent(newEvent.id);
+  };
+  
+  // 删除事件
+  document.getElementById('deleteTimelineEventBtn').onclick = function() {
+    if (!currentEventId) return;
+    if (timeline.length === 1) {
+      alert('至少保留一个事件');
+      return;
+    }
+    if (confirm('确定要删除这个事件吗？')) {
+      var newTimeline = [];
+      for (var i = 0; i < timeline.length; i++) {
+        if (timeline[i].id !== currentEventId) {
+          newTimeline.push(timeline[i]);
+        }
+      }
+      // 重新排序
+      for (var i = 0; i < newTimeline.length; i++) {
+        newTimeline[i].order = i + 1;
+      }
+      timeline = newTimeline;
+      saveTimeline(bookId, timeline);
+      renderCurrentEvent(timeline.length > 0 ? timeline[0].id : null);
+    }
+  };
+  
+  var saveBtn = document.getElementById('saveTimelineEventBtn');
+  if (saveBtn) saveBtn.onclick = saveCurrentEvent;
+}
+
+function closeTimelinePanel() {
+  var panel = document.getElementById('timelinePanel');
+  if (panel) panel.classList.remove('open');
+}
+
+// 绑定时间线按钮
+function bindTimelineButton() {
+  var timelineBtn = document.querySelector('.sidebar-item[data-tool="timeline"]');
+  if (timelineBtn && !timelineBtn.hasAttribute('data-bound')) {
+    timelineBtn.setAttribute('data-bound', 'true');
+    timelineBtn.onclick = function(e) {
+      e.stopPropagation();
+      var bookId = currentBookId;
+      if (bookId && typeof openTimelinePanel === 'function') {
+        openTimelinePanel(bookId);
+      } else if (bookId) {
+        alert('时间线功能加载中，请稍后再试');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('时间线按钮已绑定');
+  }
+  
+  var closeTimelineBtn = document.getElementById('closeTimelinePanel');
+  if (closeTimelineBtn && !closeTimelineBtn.hasAttribute('data-bound')) {
+    closeTimelineBtn.setAttribute('data-bound', 'true');
+    closeTimelineBtn.onclick = closeTimelinePanel;
+  }
+}
+
+// 延迟绑定
+setTimeout(bindTimelineButton, 500);
+
+// 在强力绑定函数中添加时间线按钮
+// 更新 bindAllSidebarButtons 函数
+(function() {
+  var originalBind = window.bindAllSidebarButtons;
+  window.bindAllSidebarButtons = function() {
+    if (originalBind) originalBind();
+    
+    // 时间线按钮
+    var timelineBtn = document.querySelector('.sidebar-item[data-tool="timeline"]');
+    if (timelineBtn) {
+      timelineBtn.onclick = null;
+      timelineBtn.onclick = function(e) {
+        e.stopPropagation();
+        if (currentBookId && typeof openTimelinePanel === 'function') {
+          openTimelinePanel(currentBookId);
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+      console.log('时间线按钮已强力绑定');
+    }
+  };
+})();
+
+// ========== 强力修复时间线按钮 ==========
+setTimeout(function() {
+  var timelineBtn = document.querySelector('.sidebar-item[data-tool="timeline"]');
+  if (timelineBtn) {
+    timelineBtn.onclick = function(e) {
+      e.stopPropagation();
+      e.preventDefault();
+      console.log('强力点击: 时间线');
+      if (currentBookId && typeof openTimelinePanel === 'function') {
+        openTimelinePanel(currentBookId);
+      } else if (currentBookId) {
+        alert('时间线功能加载中，请稍后再试');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    timelineBtn.setAttribute('data-bound', 'strong');
+    console.log('时间线按钮已强力绑定');
+  }
+}, 1000);
+
+// ========== 校对功能 ==========
+// 预设错别字库
+var typoDatabase = {
+  '的': ['地', '得', '底'],
+  '地': ['的', '得', '底'],
+  '得': ['的', '地', '底'],
+  '在': ['再', '灾'],
+  '再': ['在', '载'],
+  '做': ['作', '坐'],
+  '作': ['做', '坐'],
+  '坐': ['做', '作'],
+  '像': ['象', '向'],
+  '象': ['像', '向'],
+  '向': ['像', '象'],
+  '那': ['哪', '拿'],
+  '哪': ['那', '拿'],
+  '已': ['以', '己'],
+  '以': ['已', '己'],
+  '己': ['已', '以'],
+  '须': ['需', '需'],
+  '需': ['须'],
+  '副': ['幅', '福'],
+  '幅': ['副', '福'],
+  '度': ['渡', '镀'],
+  '渡': ['度', '镀'],
+  '形': ['型'],
+  '型': ['形'],
+  '应': ['因'],
+  '因': ['应'],
+  '只': ['之', '知'],
+  '之': ['只', '知'],
+  '知': ['只', '之'],
+  '他': ['她', '它'],
+  '她': ['他', '它'],
+  '它': ['他', '她'],
+  '你': ['您'],
+  '您': ['你']
+};
+
+// 自定义违禁词库（按书籍存储）
+function getCustomWordsKey(bookId) {
+  return 'custom_words_' + bookId;
+}
+
+function loadCustomWords(bookId) {
+  var key = getCustomWordsKey(bookId);
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch(e) {}
+  }
+  return [];
+}
+
+function saveCustomWords(bookId, words) {
+  var key = getCustomWordsKey(bookId);
+  localStorage.setItem(key, JSON.stringify(words));
+}
+
+function addCustomWord(bookId, word) {
+  var words = loadCustomWords(bookId);
+  if (!words.includes(word)) {
+    words.push(word);
+    saveCustomWords(bookId, words);
+  }
+}
+
+function removeCustomWord(bookId, word) {
+  var words = loadCustomWords(bookId);
+  var newWords = [];
+  for (var i = 0; i < words.length; i++) {
+    if (words[i] !== word) newWords.push(words[i]);
+  }
+  saveCustomWords(bookId, newWords);
+}
+
+// 校对函数
+function proofreadText(text, bookId) {
+  var issues = [];
+  
+  // 1. 检查错别字
+  for (var wrong in typoDatabase) {
+    var regex = new RegExp(wrong, 'g');
+    var match;
+    while ((match = regex.exec(text)) !== null) {
+      issues.push({
+        type: 'typo',
+        word: wrong,
+        position: match.index,
+        suggestion: typoDatabase[wrong][0],
+        message: '疑似错别字："' + wrong + '"，建议改为："' + typoDatabase[wrong][0] + '"'
+      });
+    }
+  }
+  
+  // 2. 检查自定义词
+  var customWords = loadCustomWords(bookId);
+  for (var i = 0; i < customWords.length; i++) {
+    var word = customWords[i];
+    var regex = new RegExp(word, 'g');
+    var match;
+    while ((match = regex.exec(text)) !== null) {
+      issues.push({
+        type: 'custom',
+        word: word,
+        position: match.index,
+        suggestion: '请检查此词是否符合语境',
+        message: '自定义提醒词："' + word + '"'
+      });
+    }
+  }
+  
+  // 3. 检查常见病句模式
+  var patterns = [
+    { regex: /因为[\s\S]*?所以[\s\S]*?因为/, message: '可能存在因果关系混乱' },
+    { regex: /虽然[\s\S]*?但是[\s\S]*?虽然/, message: '转折关系可能有问题' },
+    { regex: /，[\s]*，/, message: '存在连续逗号，建议检查' },
+    { regex: /。。/, message: '存在连续句号' },
+    { regex: /的的/, message: '重复的"的"字' },
+    { regex: /了了/, message: '重复的"了"字' }
+  ];
+  
+  for (var i = 0; i < patterns.length; i++) {
+    if (patterns[i].regex.test(text)) {
+      issues.push({
+        type: 'grammar',
+        word: '',
+        position: -1,
+        suggestion: '',
+        message: patterns[i].message
+      });
+    }
+  }
+  
+  // 去重（按位置和词去重）
+  var uniqueIssues = [];
+  for (var i = 0; i < issues.length; i++) {
+    var isDuplicate = false;
+    for (var j = 0; j < uniqueIssues.length; j++) {
+      if (uniqueIssues[j].word === issues[i].word && 
+          Math.abs(uniqueIssues[j].position - issues[i].position) < 5) {
+        isDuplicate = true;
+        break;
+      }
+    }
+    if (!isDuplicate) {
+      uniqueIssues.push(issues[i]);
+    }
+  }
+  
+  return uniqueIssues;
+}
+
+function openProofreadPanel() {
+  var panel = document.getElementById('proofreadPanel');
+  if (!panel) return;
+  panel.classList.add('open');
+  
+  var resultContainer = document.getElementById('proofreadResult');
+  var checkBtn = document.getElementById('checkTextBtn');
+  
+  if (checkBtn && !checkBtn.hasAttribute('data-bound')) {
+    checkBtn.setAttribute('data-bound', 'true');
+    checkBtn.onclick = function() {
+      var editor = document.getElementById('editor');
+      if (!editor) {
+        resultContainer.innerHTML = '<div style="text-align:center; color:#ff6b6b; padding:20px;">未找到编辑器内容</div>';
+        return;
+      }
+      
+      var text = editor.innerText;
+      if (!text || text.trim() === '') {
+        resultContainer.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">当前章节内容为空，请先写一些内容</div>';
+        return;
+      }
+      
+      resultContainer.innerHTML = '<div style="text-align:center; padding:20px;">正在校对中...</div>';
+      
+      setTimeout(function() {
+        var issues = proofreadText(text, currentBookId);
+        renderProofreadResult(issues, resultContainer);
+      }, 100);
+    };
+  }
+  
+  // 添加自定义词按钮
+  var addCustomBtn = document.getElementById('addCustomWordBtn');
+  if (addCustomBtn && !addCustomBtn.hasAttribute('data-bound')) {
+    addCustomBtn.setAttribute('data-bound', 'true');
+    addCustomBtn.onclick = function() {
+      var word = prompt('请输入要添加的自定义提醒词：');
+      if (word && word.trim()) {
+        addCustomWord(currentBookId, word.trim());
+        alert('已添加词：' + word);
+      }
+    };
+  }
+  
+  // 管理词库按钮
+  var manageBtn = document.getElementById('manageWordsBtn');
+  if (manageBtn && !manageBtn.hasAttribute('data-bound')) {
+    manageBtn.setAttribute('data-bound', 'true');
+    manageBtn.onclick = function() {
+      openWordManagerModal();
+    };
+  }
+}
+
+function renderProofreadResult(issues, container) {
+  if (!container) return;
+  if (issues.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#4caf50; padding:20px;">✅ 校对完成！没有发现问题</div>';
+    return;
+  }
+  
+  var html = '<div style="margin-bottom: 12px; color:#ff6b6b;">发现 ' + issues.length + ' 个问题：</div>';
+  for (var i = 0; i < issues.length; i++) {
+    var issue = issues[i];
+    var typeLabel = issue.type === 'typo' ? '🔴 错别字' : (issue.type === 'custom' ? '🟡 自定义词' : '🟠 病句');
+    html += '<div style="background: rgba(0,0,0,0.03); border-radius: 8px; padding: 12px; margin-bottom: 12px;">' +
+      '<div style="font-weight: 600; margin-bottom: 6px;">' + typeLabel + '</div>' +
+      '<div>' + issue.message + '</div>';
+    if (issue.suggestion) {
+      html += '<div style="color: #007aff; font-size: 12px; margin-top: 6px;">💡 建议：' + issue.suggestion + '</div>';
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function openWordManagerModal() {
+  var modal = document.getElementById('wordManagerModal');
+  if (!modal) return;
+  
+  modal.style.display = 'flex';
+  
+  var words = loadCustomWords(currentBookId);
+  renderCustomWordList(words);
+  
+  // 添加词按钮
+  var addWordBtn = document.getElementById('addWordBtn');
+  if (addWordBtn) {
+    addWordBtn.onclick = function() {
+      var input = document.getElementById('newCustomWord');
+      var word = input.value.trim();
+      if (word) {
+        addCustomWord(currentBookId, word);
+        input.value = '';
+        var newWords = loadCustomWords(currentBookId);
+        renderCustomWordList(newWords);
+      } else {
+        alert('请输入词语');
+      }
+    };
+  }
+  
+  // 关闭按钮
+  var closeBtn = document.getElementById('closeWordModal');
+  if (closeBtn) {
+    closeBtn.onclick = function() {
+      modal.style.display = 'none';
+    };
+  }
+  
+  // 点击遮罩关闭
+  modal.onclick = function(e) {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  };
+}
+
+function renderCustomWordList(words) {
+  var container = document.getElementById('customWordList');
+  if (!container) return;
+  
+  if (!words || words.length === 0) {
+    container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">暂无自定义词</div>';
+    return;
+  }
+  
+  var html = '';
+  for (var i = 0; i < words.length; i++) {
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #eee;">' +
+      '<span>' + escapeHtml(words[i]) + '</span>' +
+      '<button class="delete-word-btn" data-word="' + escapeHtml(words[i]) + '" style="background: none; border: none; color: #ff6b6b; cursor: pointer;">删除</button>' +
+      '</div>';
+  }
+  container.innerHTML = html;
+  
+  // 绑定删除按钮
+  var deleteBtns = container.querySelectorAll('.delete-word-btn');
+  for (var i = 0; i < deleteBtns.length; i++) {
+    deleteBtns[i].onclick = function() {
+      var word = this.getAttribute('data-word');
+      if (confirm('确定要删除 "' + word + '" 吗？')) {
+        removeCustomWord(currentBookId, word);
+        var newWords = loadCustomWords(currentBookId);
+        renderCustomWordList(newWords);
+      }
+    };
+  }
+}
+
+function closeProofreadPanel() {
+  var panel = document.getElementById('proofreadPanel');
+  if (panel) panel.classList.remove('open');
+  
+  var modal = document.getElementById('wordManagerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// 绑定校对按钮
+function bindProofreadButton() {
+  var proofreadBtn = document.querySelector('.sidebar-item[data-tool="proofread"]');
+  if (proofreadBtn && !proofreadBtn.hasAttribute('data-bound')) {
+    proofreadBtn.setAttribute('data-bound', 'true');
+    proofreadBtn.onclick = function(e) {
+      e.stopPropagation();
+      if (currentBookId && typeof openProofreadPanel === 'function') {
+        openProofreadPanel();
+      } else if (currentBookId) {
+        alert('校对功能加载中，请稍后再试');
+      } else {
+        alert('请先打开一本书籍');
+      }
+    };
+    console.log('校对按钮已绑定');
+  }
+  
+  var closeProofreadBtn = document.getElementById('closeProofreadPanel');
+  if (closeProofreadBtn && !closeProofreadBtn.hasAttribute('data-bound')) {
+    closeProofreadBtn.setAttribute('data-bound', 'true');
+    closeProofreadBtn.onclick = closeProofreadPanel;
+  }
+}
+
+// 延迟绑定
+setTimeout(bindProofreadButton, 500);
+
+// ========== 永久修复校对按钮 ==========
+(function() {
+  function fixProofreadButton() {
+    var proofreadBtn = document.querySelector('.sidebar-item[data-tool="proofread"]');
+    if (proofreadBtn) {
+      proofreadBtn.onclick = function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('点击校对按钮');
+        if (currentBookId && typeof openProofreadPanel === 'function') {
+          openProofreadPanel();
+        } else if (currentBookId) {
+          alert('校对功能加载中，请稍后再试');
+        } else {
+          alert('请先打开一本书籍');
+        }
+      };
+      proofreadBtn.setAttribute('data-proofread-fixed', 'true');
+      console.log('✅ 校对按钮已永久修复');
+    }
+  }
+  
+  // 页面加载后执行
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(fixProofreadButton, 500);
+    });
+  } else {
+    setTimeout(fixProofreadButton, 500);
+  }
+  
+  // 监听书籍页面切换
+  var observer = new MutationObserver(function() {
+    var activePage = document.querySelector('.book-page.active');
+    if (activePage) {
+      setTimeout(fixProofreadButton, 200);
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+
+// ========== 永久修复地图按钮 ==========
+(function() {
+  function fixMapButton() {
+    var mapBtn = document.querySelector('.sidebar-item[data-tool="map"]');
+    if (mapBtn) {
+      mapBtn.onclick = function(e) {
+        e.stopPropagation();
+        alert('地图功能开发中，敬请期待！');
+      };
+      mapBtn.setAttribute('data-map-fixed', 'true');
+      console.log('✅ 地图按钮已修复');
+    }
+  }
+  
+  setTimeout(fixMapButton, 500);
+  setTimeout(fixMapButton, 1000);
+})();
+// 在控制台执行，或添加到 app.js 末尾
+
+// ========== 简单地图生成器 ==========
+// 使用 Canvas 生成随机地图，支持自定义区域名称
+
+var currentMapData = null;
+var mapRegions = []; // 存储区域 { x, y, name, color }
+
+function generateRandomMap() {
+  var canvas = document.getElementById('mapCanvas');
+  if (!canvas) return;
+  
+  var ctx = canvas.getContext('2d');
+  var width = canvas.width;
+  var height = canvas.height;
+  
+  // 清除画布
+  ctx.clearRect(0, 0, width, height);
+  
+  // 生成随机地形
+  var gridSize = 40;
+  var cols = Math.floor(width / gridSize);
+  var rows = Math.floor(height / gridSize);
+  
+  mapRegions = [];
+  
+  for (var i = 0; i < cols; i++) {
+    for (var j = 0; j < rows; j++) {
+      // 随机决定地形类型
+      var rand = Math.random();
+      var color;
+      var type;
+      
+      if (rand < 0.3) {
+        color = '#4a7c59'; // 森林 - 绿色
+        type = '森林';
+      } else if (rand < 0.5) {
+        color = '#c8ad7b'; // 沙漠 - 土黄
+        type = '沙漠';
+      } else if (rand < 0.7) {
+        color = '#6b8cae'; // 水域 - 蓝色
+        type = '水域';
+      } else if (rand < 0.85) {
+        color = '#8b8c7a'; // 山地 - 灰色
+        type = '山地';
+      } else {
+        color = '#d4c5a9'; // 平原 - 米色
+        type = '平原';
+      }
+      
+      ctx.fillStyle = color;
+      ctx.fillRect(i * gridSize, j * gridSize, gridSize - 1, gridSize - 1);
+      
+      // 随机添加纹理
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      if (Math.random() > 0.7) {
+        ctx.fillRect(i * gridSize + 5, j * gridSize + 5, 5, 5);
+      }
+      
+      // 存储区域信息
+      mapRegions.push({
+        x: i * gridSize,
+        y: j * gridSize,
+        width: gridSize,
+        height: gridSize,
+        type: type,
+        name: getRandomRegionName(type),
+        color: color
+      });
+    }
+  }
+  
+  // 添加山脉标记（随机山峰）
+  ctx.fillStyle = '#a0a0a0';
+  for (var i = 0; i < 30; i++) {
+    var x = Math.random() * width;
+    var y = Math.random() * height;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 8);
+    ctx.lineTo(x - 6, y + 4);
+    ctx.lineTo(x + 6, y + 4);
+    ctx.fill();
+  }
+  
+  // 添加河流（随机曲线）
+  ctx.beginPath();
+  ctx.strokeStyle = '#4a90d9';
+  ctx.lineWidth = 3;
+  var startX = Math.random() * width;
+  var startY = 0;
+  ctx.moveTo(startX, startY);
+  for (var i = 0; i < 20; i++) {
+    var x = startX + (Math.random() - 0.5) * 100;
+    var y = (i + 1) * (height / 20);
+    ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  
+  // 添加城市标记
+  for (var i = 0; i < 15; i++) {
+    var x = Math.random() * width;
+    var y = Math.random() * height;
+    ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath();
+    ctx.arc(x, y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.font = '10px Arial';
+    ctx.fillText(getRandomCityName(), x - 8, y - 8);
+  }
+  
+  // 更新区域列表显示
+  updateRegionList();
+  
+  currentMapData = { width: width, height: height, regions: mapRegions };
+  document.getElementById('mapLoading').style.display = 'none';
+}
+
+function getRandomRegionName(type) {
+  var names = {
+    '森林': ['翠绿林', '迷雾森林', '精灵林地', '暗影丛林', '晨曦之森'],
+    '沙漠': ['黄金沙海', '死亡沙漠', '风之谷', '烈日荒漠', '遗迹沙原'],
+    '水域': ['蓝宝石湖', '迷雾海湾', '龙息海', '星辰海峡', '翡翠河'],
+    '山地': ['巨龙峰', '云霄山脉', '铁石山', '雷云之巅', '霜冻高地'],
+    '平原': ['金色原野', '风语草原', '晨曦平原', '骏马之地', '自由旷野']
+  };
+  var list = names[type] || ['未知之地'];
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function getRandomCityName() {
+  var cities = ['王城', '铁匠铺', '魔法塔', '港口', '哨站', '神庙', '学院', '集市'];
+  return cities[Math.floor(Math.random() * cities.length)];
+}
+
+function updateRegionList() {
+  var container = document.getElementById('mapRegionList');
+  if (!container) return;
+  
+  var html = '<div style="font-weight: 600; margin-bottom: 8px;">📌 区域列表（点击可自定义名称）</div>';
+  var displayRegions = mapRegions.slice(0, 20);
+  for (var i = 0; i < displayRegions.length; i++) {
+    var r = displayRegions[i];
+    html += '<span class="region-tag" data-x="' + r.x + '" data-y="' + r.y + '">' + escapeHtml(r.name) + ' (' + r.type + ')</span>';
+  }
+  container.innerHTML = html;
+  
+  // 绑定点击事件
+  var tags = container.querySelectorAll('.region-tag');
+  for (var i = 0; i < tags.length; i++) {
+    tags[i].onclick = function() {
+      var x = parseInt(this.getAttribute('data-x'));
+      var y = parseInt(this.getAttribute('data-y'));
+      var newName = prompt('请输入新名称：', this.innerText.split(' (')[0]);
+      if (newName && newName.trim()) {
+        for (var j = 0; j < mapRegions.length; j++) {
+          if (mapRegions[j].x === x && mapRegions[j].y === y) {
+            mapRegions[j].name = newName.trim();
+            break;
+          }
+        }
+        updateRegionList();
+        alert('名称已更新');
+      }
+    };
+  }
+}
+
+function exportMapAsImage() {
+  var canvas = document.getElementById('mapCanvas');
+  if (!canvas) return;
+  var link = document.createElement('a');
+  link.download = 'fantasy-map.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+function saveMapToCurrentBook() {
+  if (!currentBookId) {
+    alert('请先打开一本书籍');
+    return;
+  }
+  var mapData = {
+    bookId: currentBookId,
+    generatedAt: new Date().toISOString(),
+    regions: mapRegions
+  };
+  var key = 'book_map_' + currentBookId;
+  localStorage.setItem(key, JSON.stringify(mapData));
+  alert('地图已保存到当前书籍，下次打开可恢复');
+}
+
+function loadMapFromCurrentBook() {
+  if (!currentBookId) return;
+  var key = 'book_map_' + currentBookId;
+  var saved = localStorage.getItem(key);
+  if (saved) {
+    try {
+      var data = JSON.parse(saved);
+      if (data.regions && data.regions.length > 0) {
+        mapRegions = data.regions;
+        renderMapFromRegions();
+        updateRegionList();
+        document.getElementById('mapLoading').style.display = 'none';
+        alert('已加载上次保存的地图');
+      }
+    } catch(e) {}
+  }
+}
+
+function renderMapFromRegions() {
+  var canvas = document.getElementById('mapCanvas');
+  if (!canvas || !mapRegions.length) return;
+  var ctx = canvas.getContext('2d');
+  var width = canvas.width;
+  var height = canvas.height;
+  
+  ctx.clearRect(0, 0, width, height);
+  
+  for (var i = 0; i < mapRegions.length; i++) {
+    var r = mapRegions[i];
+    ctx.fillStyle = r.color;
+    ctx.fillRect(r.x, r.y, r.width, r.height);
+    
+    // 添加文字
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px Arial';
+    ctx.shadowBlur = 0;
+    ctx.fillText(r.name, r.x + 5, r.y + 15);
+  }
+}
+
+function openMapPanel() {
+  var panel = document.getElementById('mapPanel');
+  if (!panel) return;
+  panel.classList.add('open');
+  
+  // 绑定按钮事件
+  var genBtn = document.getElementById('mapGenerateBtn');
+  var exportBtn = document.getElementById('mapExportBtn');
+  var saveBtn = document.getElementById('mapSaveToBookBtn');
+  
+  if (genBtn && !genBtn.hasAttribute('data-bound')) {
+    genBtn.setAttribute('data-bound', 'true');
+    genBtn.onclick = generateRandomMap;
+  }
+  if (exportBtn && !exportBtn.hasAttribute('data-bound')) {
+    exportBtn.setAttribute('data-bound', 'true');
+    exportBtn.onclick = exportMapAsImage;
+  }
+  if (saveBtn && !saveBtn.hasAttribute('data-bound')) {
+    saveBtn.setAttribute('data-bound', 'true');
+    saveBtn.onclick = saveMapToCurrentBook;
+  }
+  
+  // 尝试加载已保存的地图
+  loadMapFromCurrentBook();
+}
+
+function closeMapPanel() {
+  var panel = document.getElementById('mapPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+// 绑定地图按钮
+function bindMapButton() {
+  var mapBtn = document.querySelector('.sidebar-item[data-tool="map"]');
+  if (mapBtn && !mapBtn.hasAttribute('data-bound')) {
+    mapBtn.setAttribute('data-bound', 'true');
+    mapBtn.onclick = function(e) {
+      e.stopPropagation();
+      openMapPanel();
+    };
+    console.log('地图按钮已绑定');
+  }
+  
+  var closeMapBtn = document.getElementById('closeMapPanel');
+  if (closeMapBtn && !closeMapBtn.hasAttribute('data-bound')) {
+    closeMapBtn.setAttribute('data-bound', 'true');
+    closeMapBtn.onclick = closeMapPanel;
+  }
+}
+
+setTimeout(bindMapButton, 500);
