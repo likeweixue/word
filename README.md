@@ -17,20 +17,25 @@
 - 内容策划者
 - 任何热爱写作的人
 
-## 截图
+## 预揽
 
-![主界面](https://img.seedvault.cn/i/2026/05/07/截屏2026-05-06 00.14.1269fb8faa85d88264.png)
-![写作区](https://img.seedvault.cn/i/2026/05/07/截屏2026-05-06 00.14.2769fb8fd4a0a66264.png)
+![主界面](https://img.seedvault.cn/i/2026/05/07/169fb91ca81ac3264.png)
+![写作区](https://img.seedvault.cn/i/2026/05/07/1169fb91e44e915264.png)
 
+## 食用方法
+下载一整个源码 https://github.com/likeweixue/word/archive/refs/heads/main.zip
+解压之后用浏览器打开index.html（或者把index.html拖到浏览器窗口）就可以体验了
+
+## 特别说明
+截止到目前，软件还是测试版，很不稳定，我只建议尝鲜，很不建议用于写作！
 
 ## 贡献
 
 欢迎提交 Issue 和 Pull Request！
+d当然，你也可以加入网文扑街群660783010，这里面发信息，我会看见的，或者发邮箱给我 likeweixue@qq.com
 
 ##  许可证
 
 [GPL-3.0]
-
----
 
 **祝大家墨香！** 🖋️
