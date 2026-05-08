@@ -371,7 +371,7 @@ function createPages() {
   var aboutPageSource = document.createElement('div');
   aboutPageSource.id = 'aboutPageSource';
   aboutPageSource.style.display = 'none';
-  aboutPageSource.innerHTML = '<div class="about-content"><h2>写作帮手</h2><p><strong>免费，开源，自由的写作软件</strong></p><p>版本 0.2.3 Beta 测试版</p><p>GitHub: <a href="https://github.com/likeweixue/word" target="_blank">github.com/likeweixue/word</a></p></div>';
+  aboutPageSource.innerHTML = '<div class="about-content"><h2>写作帮手</h2><p><strong>免费，开源，自由的写作软件</strong></p><p>版本 0.2.4 Beta 测试版</p><p>GitHub: <a href="https://github.com/likeweixue/word" target="_blank">github.com/likeweixue/word</a></p></div>';
   pagesContainer.appendChild(statsPageSource);
   pagesContainer.appendChild(settingsPageSource);
   pagesContainer.appendChild(aboutPageSource);
@@ -3442,3 +3442,750 @@ function updateBbsWithTheme() {
 // 替换原来的创建函数
 window.createBbsContent = updateBbsWithTheme;
 updateBbsWithTheme();
+
+// ========== 江湖内容管理系统 ==========
+
+// 江湖数据结构
+var jianghuGroups = [
+    { id: 'default', name: '默认分组', icon: '📁', items: [] }
+];
+var jianghuItems = [
+    { id: 1, groupId: 'default', title: 'QQ交流群', url: 'https://qm.qq.com/q/你的QQ群链接', desc: '与作者们实时交流', icon: '💬' },
+    { id: 2, groupId: 'default', title: 'GitHub', url: 'https://github.com/likeweixue/word', desc: '查看源码与反馈', icon: '🐙' },
+    { id: 3, groupId: 'default', title: '官方论坛', url: 'https://你的论坛地址.com', desc: '分享作品与技巧', icon: '📚' }
+];
+
+// 加载江湖数据
+function loadJianghuData() {
+    var savedGroups = localStorage.getItem('jianghu_groups');
+    var savedItems = localStorage.getItem('jianghu_items');
+    if (savedGroups) {
+        try { jianghuGroups = JSON.parse(savedGroups); } catch(e) {}
+    }
+    if (savedItems) {
+        try { jianghuItems = JSON.parse(savedItems); } catch(e) {}
+    }
+    if (!jianghuGroups || jianghuGroups.length === 0) {
+        jianghuGroups = [{ id: 'default', name: '默认分组', icon: '📁', items: [] }];
+    }
+}
+
+// 保存江湖数据
+function saveJianghuData() {
+    localStorage.setItem('jianghu_groups', JSON.stringify(jianghuGroups));
+    localStorage.setItem('jianghu_items', JSON.stringify(jianghuItems));
+}
+
+// 渲染江湖页面
+function renderJianghuPage() {
+    var container = document.getElementById('jianghuContainer');
+    if (!container) return;
+    
+    var html = `
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <h2 style="margin: 0;">江湖</h2>
+                <div style="display: flex; gap: 12px;">
+                    <button id="jhNewGroupBtn" class="primary-btn" style="background: #6c757d;">+ 新建分组</button>
+                    <button id="jhNewItemBtn" class="primary-btn">+ 新建链接</button>
+                </div>
+            </div>
+            <div id="jianghuGroupsContainer"></div>
+        </div>
+    `;
+    container.innerHTML = html;
+    
+    renderJianghuGroups();
+    
+    // 绑定按钮事件
+    document.getElementById('jhNewGroupBtn').onclick = function() { openJianghuGroupDrawer(); };
+    document.getElementById('jhNewItemBtn').onclick = function() { openJianghuItemDrawer(); };
+}
+
+// 渲染江湖分组和内容
+function renderJianghuGroups() {
+    var container = document.getElementById('jianghuGroupsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    for (var g = 0; g < jianghuGroups.length; g++) {
+        var group = jianghuGroups[g];
+        var groupItems = jianghuItems.filter(function(item) { return item.groupId === group.id; });
+        
+        var groupDiv = document.createElement('div');
+        groupDiv.className = 'jianghu-group';
+        groupDiv.style.cssText = 'margin-bottom: 30px;';
+        
+        groupDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">${group.icon || '📁'}</span>
+                    <h3 style="margin: 0;">${escapeHtml(group.name)}</h3>
+                    <span style="font-size: 12px; opacity: 0.6;">(${groupItems.length}项)</span>
+                </div>
+                <div>
+                    <button class="jh-group-menu-btn" data-id="${group.id}" style="background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px;">⋯</button>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                ${groupItems.map(function(item) {
+                    return `
+                        <div class="jianghu-card" data-id="${item.id}" style="background: #fff; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 32px;">${item.icon || ''}</span>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 16px;">${escapeHtml(item.title)}</div>
+                                    <div style="font-size: 12px; color: #888; margin-top: 4px;">${escapeHtml(item.desc || '点击打开链接')}</div>
+                                </div>
+                                <button class="jh-item-menu-btn" data-id="${item.id}" style="background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px;">⋯</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        container.appendChild(groupDiv);
+    }
+    
+    // 绑定卡片点击事件
+    var cards = document.querySelectorAll('.jianghu-card');
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].onclick = function(e) {
+            if (e.target.classList && e.target.classList.contains('jh-item-menu-btn')) return;
+            var id = parseInt(this.getAttribute('data-id'));
+            var item = jianghuItems.find(function(i) { return i.id === id; });
+            if (item && item.url) {
+                window.open(item.url, '_blank');
+            }
+        };
+    }
+    
+    // 绑定分组菜单
+    var groupMenus = document.querySelectorAll('.jh-group-menu-btn');
+    for (var i = 0; i < groupMenus.length; i++) {
+        groupMenus[i].onclick = function(e) {
+            e.stopPropagation();
+            showJianghuGroupMenu(this.getAttribute('data-id'), this);
+        };
+    }
+    
+    // 绑定项目菜单
+    var itemMenus = document.querySelectorAll('.jh-item-menu-btn');
+    for (var i = 0; i < itemMenus.length; i++) {
+        itemMenus[i].onclick = function(e) {
+            e.stopPropagation();
+            showJianghuItemMenu(parseInt(this.getAttribute('data-id')), this);
+        };
+    }
+}
+
+// 显示分组菜单
+function showJianghuGroupMenu(groupId, btnElement) {
+    var existingMenu = document.querySelector('.jh-context-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    var menu = document.createElement('div');
+    menu.className = 'jh-context-menu';
+    menu.style.cssText = 'position: fixed; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;';
+    menu.innerHTML = `
+        <button class="jh-rename-group" data-id="${groupId}" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">✏️ 重命名分组</button>
+        <button class="jh-delete-group" data-id="${groupId}" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">🗑️ 删除分组</button>
+    `;
+    
+    var rect = btnElement.getBoundingClientRect();
+    menu.style.top = rect.bottom + 'px';
+    menu.style.left = rect.left + 'px';
+    document.body.appendChild(menu);
+    
+    menu.querySelector('.jh-rename-group').onclick = function() {
+        renameJianghuGroup(groupId);
+        menu.remove();
+    };
+    menu.querySelector('.jh-delete-group').onclick = function() {
+        deleteJianghuGroup(groupId);
+        menu.remove();
+    };
+    
+    setTimeout(function() {
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                if(menu.parentNode) menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }, 100);
+}
+
+// 显示项目菜单
+function showJianghuItemMenu(itemId, btnElement) {
+    var existingMenu = document.querySelector('.jh-context-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    var menu = document.createElement('div');
+    menu.className = 'jh-context-menu';
+    menu.style.cssText = 'position: fixed; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;';
+    menu.innerHTML = `
+        <button class="jh-edit-item" data-id="${itemId}" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">✏️ 编辑</button>
+        <button class="jh-move-item" data-id="${itemId}" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">📁 移动到分组</button>
+        <button class="jh-delete-item" data-id="${itemId}" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">🗑️ 删除</button>
+    `;
+    
+    var rect = btnElement.getBoundingClientRect();
+    menu.style.top = rect.bottom + 'px';
+    menu.style.left = rect.left + 'px';
+    document.body.appendChild(menu);
+    
+    menu.querySelector('.jh-edit-item').onclick = function() {
+        editJianghuItem(itemId);
+        menu.remove();
+    };
+    menu.querySelector('.jh-move-item').onclick = function() {
+        moveJianghuItem(itemId, menu);
+        menu.remove();
+    };
+    menu.querySelector('.jh-delete-item').onclick = function() {
+        deleteJianghuItem(itemId);
+        menu.remove();
+    };
+}
+
+// 新建分组抽屉
+function openJianghuGroupDrawer() {
+    var name = prompt('请输入分组名称：');
+    if (name && name.trim()) {
+        var newGroup = {
+            id: Date.now().toString(),
+            name: name.trim(),
+            icon: '📁',
+            items: []
+        };
+        jianghuGroups.push(newGroup);
+        saveJianghuData();
+        renderJianghuGroups();
+        alert('分组创建成功');
+    }
+}
+
+// 重命名分组
+function renameJianghuGroup(groupId) {
+    var group = jianghuGroups.find(function(g) { return g.id == groupId; });
+    if (group) {
+        var newName = prompt('请输入新分组名称：', group.name);
+        if (newName && newName.trim()) {
+            group.name = newName.trim();
+            saveJianghuData();
+            renderJianghuGroups();
+        }
+    }
+}
+
+// 删除分组
+function deleteJianghuGroup(groupId) {
+    var group = jianghuGroups.find(function(g) { return g.id == groupId; });
+    if (group && group.name !== '默认分组') {
+        if (confirm('确定要删除分组 "' + group.name + '" 吗？分组内的链接将移动到"默认分组"')) {
+            var defaultGroup = jianghuGroups.find(function(g) { return g.name === '默认分组'; });
+            if (!defaultGroup) {
+                defaultGroup = { id: 'default', name: '默认分组', icon: '📁', items: [] };
+                jianghuGroups.push(defaultGroup);
+            }
+            // 移动项目到默认分组
+            for (var i = 0; i < jianghuItems.length; i++) {
+                if (jianghuItems[i].groupId == groupId) {
+                    jianghuItems[i].groupId = defaultGroup.id;
+                }
+            }
+            // 删除分组
+            jianghuGroups = jianghuGroups.filter(function(g) { return g.id != groupId; });
+            saveJianghuData();
+            renderJianghuGroups();
+            alert('分组已删除，链接已移至默认分组');
+        }
+    } else {
+        alert('默认分组不能删除');
+    }
+}
+
+// 新建链接抽屉
+function openJianghuItemDrawer() {
+    var title = prompt('请输入链接名称：');
+    if (!title || !title.trim()) return;
+    var url = prompt('请输入链接地址（URL）：');
+    if (!url || !url.trim()) return;
+    var desc = prompt('请输入链接描述（可选）：');
+    var groups = jianghuGroups.map(function(g) { return g.name; }).join(', ');
+    var groupName = prompt('请选择分组（默认："默认分组"），可选分组：' + groups, '默认分组');
+    
+    var targetGroup = jianghuGroups.find(function(g) { return g.name === (groupName || '默认分组'); });
+    if (!targetGroup) targetGroup = jianghuGroups[0];
+    
+    var newItem = {
+        id: Date.now(),
+        groupId: targetGroup.id,
+        title: title.trim(),
+        url: url.trim(),
+        desc: desc || '点击打开链接',
+        icon: ''
+    };
+    jianghuItems.push(newItem);
+    saveJianghuData();
+    renderJianghuGroups();
+    alert('链接添加成功');
+}
+
+// 编辑链接
+function editJianghuItem(itemId) {
+    var item = jianghuItems.find(function(i) { return i.id === itemId; });
+    if (item) {
+        var newTitle = prompt('请输入链接名称：', item.title);
+        if (newTitle && newTitle.trim()) item.title = newTitle.trim();
+        var newUrl = prompt('请输入链接地址：', item.url);
+        if (newUrl && newUrl.trim()) item.url = newUrl.trim();
+        var newDesc = prompt('请输入链接描述：', item.desc);
+        if (newDesc !== null) item.desc = newDesc || '';
+        saveJianghuData();
+        renderJianghuGroups();
+    }
+}
+
+// 移动链接到其他分组
+function moveJianghuItem(itemId, parentMenu) {
+    var item = jianghuItems.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    
+    parentMenu.innerHTML = '<div style="padding: 8px 12px; font-weight: 500; border-bottom: 1px solid #eee;">移动到分组</div>';
+    for (var i = 0; i < jianghuGroups.length; i++) {
+        var group = jianghuGroups[i];
+        var btn = document.createElement('button');
+        btn.textContent = group.name;
+        btn.style.cssText = 'display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;';
+        btn.onclick = (function(gid) {
+            return function() {
+                item.groupId = gid;
+                saveJianghuData();
+                renderJianghuGroups();
+                if(parentMenu.parentNode) parentMenu.remove();
+                alert('已移动');
+            };
+        })(group.id);
+        parentMenu.appendChild(btn);
+    }
+}
+
+// 删除链接
+function deleteJianghuItem(itemId) {
+    if (confirm('确定要删除这个链接吗？')) {
+        jianghuItems = jianghuItems.filter(function(i) { return i.id !== itemId; });
+        saveJianghuData();
+        renderJianghuGroups();
+    }
+}
+
+// 初始化江湖页面
+function initJianghuPage() {
+    loadJianghuData();
+    var jianghuPage = document.getElementById('jianghuPage');
+    if (jianghuPage) {
+        // 确保江湖页面有容器
+        if (!document.getElementById('jianghuContainer')) {
+            var container = document.createElement('div');
+            container.id = 'jianghuContainer';
+            jianghuPage.innerHTML = '';
+            jianghuPage.appendChild(container);
+        }
+        renderJianghuPage();
+    }
+}
+
+// 暴露函数
+window.initJianghuPage = initJianghuPage;
+window.renderJianghuPage = renderJianghuPage;
+
+// 修改江湖按钮的点击事件
+setTimeout(function() {
+    var jianghuBtn = document.querySelector('.menu-item[data-page="bbs"]');
+    if (jianghuBtn) {
+        jianghuBtn.onclick = function(e) {
+            e.stopPropagation();
+            switchPage('bbs');
+            setTimeout(initJianghuPage, 200);
+        };
+    }
+}, 500);
+
+// ========== 完整江湖管理系统 ==========
+(function() {
+    function initFullJianghu() {
+        var jianghuPage = document.getElementById('jianghuPage');
+        if (!jianghuPage) {
+            var pagesContainer = document.getElementById('pagesContainer');
+            jianghuPage = document.createElement('div');
+            jianghuPage.id = 'jianghuPage';
+            jianghuPage.style.cssText = 'display: none; overflow-y: auto; height: 100%; background: inherit;';
+            pagesContainer.appendChild(jianghuPage);
+        }
+        
+        // 初始化默认数据
+        if (!localStorage.getItem('jianghu_groups')) {
+            localStorage.setItem('jianghu_groups', JSON.stringify([
+                { id: 'default', name: '默认分组', icon: '📁' }
+            ]));
+        }
+        if (!localStorage.getItem('jianghu_items')) {
+            localStorage.setItem('jianghu_items', JSON.stringify([
+                { id: 1, groupId: 'default', title: 'QQ交流群', url: 'https://qm.qq.com/q/你的QQ群链接', desc: '与作者们实时交流', icon: '💬' },
+                { id: 2, groupId: 'default', title: 'GitHub', url: 'https://github.com/likeweixue/word', desc: '查看源码与反馈', icon: '🐙' },
+                { id: 3, groupId: 'default', title: '官方论坛', url: 'https://你的论坛地址.com', desc: '分享作品与技巧', icon: '📚' }
+            ]));
+        }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function loadGroups() { return JSON.parse(localStorage.getItem('jianghu_groups')); }
+        function loadItems() { return JSON.parse(localStorage.getItem('jianghu_items')); }
+        function saveGroups(g) { localStorage.setItem('jianghu_groups', JSON.stringify(g)); }
+        function saveItems(i) { localStorage.setItem('jianghu_items', JSON.stringify(i)); }
+        
+        function render() {
+            var groups = loadGroups();
+            var items = loadItems();
+            var container = document.getElementById('jianghuContainer');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                        <h2 style="margin: 0;">江湖</h2>
+                        <div style="display: flex; gap: 12px;">
+                            <button id="jhNewGroupBtn" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">+ 新建分组</button>
+                            <button id="jhNewItemBtn" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;">+ 新建链接</button>
+                        </div>
+                    </div>
+                    <div id="jhGroupsContainer"></div>
+                </div>
+            `;
+            
+            var groupsContainer = document.getElementById('jhGroupsContainer');
+            groupsContainer.innerHTML = '';
+            
+            for (var g = 0; g < groups.length; g++) {
+                var group = groups[g];
+                var groupItems = items.filter(function(item) { return item.groupId === group.id; });
+                
+                var groupDiv = document.createElement('div');
+                groupDiv.style.cssText = 'margin-bottom: 30px;';
+                groupDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">${group.icon || '📁'}</span>
+                            <h3 style="margin: 0;">${escapeHtml(group.name)}</h3>
+                            <span style="font-size: 12px; opacity: 0.6;">(${groupItems.length}项)</span>
+                        </div>
+                        <button class="jh-group-menu" data-id="${group.id}" style="background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px;">⋯</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                        ${groupItems.map(function(item) {
+                            return `
+                                <div class="jh-item-card" data-id="${item.id}" style="background: #fff; border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span style="font-size: 32px;">${item.icon || ''}</span>
+                                        <div style="flex: 1;">
+                                            <div style="font-weight: 600; font-size: 16px;">${escapeHtml(item.title)}</div>
+                                            <div style="font-size: 12px; color: #888; margin-top: 4px;">${escapeHtml(item.desc || '点击打开链接')}</div>
+                                        </div>
+                                        <button class="jh-item-menu" data-id="${item.id}" style="background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px;">⋯</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                groupsContainer.appendChild(groupDiv);
+            }
+            
+            // 绑定卡片点击
+            var cards = document.querySelectorAll('.jh-item-card');
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].onclick = function(e) {
+                    if (e.target.classList && e.target.classList.contains('jh-item-menu')) return;
+                    var id = parseInt(this.getAttribute('data-id'));
+                    var itemsData = loadItems();
+                    var item = itemsData.find(function(i) { return i.id === id; });
+                    if (item && item.url) window.open(item.url, '_blank');
+                };
+            }
+            
+            // 绑定分组菜单
+            var groupMenus = document.querySelectorAll('.jh-group-menu');
+            for (var i = 0; i < groupMenus.length; i++) {
+                groupMenus[i].onclick = function(e) {
+                    e.stopPropagation();
+                    var groupId = this.getAttribute('data-id');
+                    showGroupMenu(groupId);
+                };
+            }
+            
+            // 绑定项目菜单
+            var itemMenus = document.querySelectorAll('.jh-item-menu');
+            for (var i = 0; i < itemMenus.length; i++) {
+                itemMenus[i].onclick = function(e) {
+                    e.stopPropagation();
+                    var itemId = parseInt(this.getAttribute('data-id'));
+                    showItemMenu(itemId);
+                };
+            }
+            
+            // 新建分组
+            document.getElementById('jhNewGroupBtn').onclick = function() {
+                var name = prompt('请输入分组名称：');
+                if (name && name.trim()) {
+                    var groupsData = loadGroups();
+                    groupsData.push({ id: Date.now().toString(), name: name.trim(), icon: '📁' });
+                    saveGroups(groupsData);
+                    render();
+                }
+            };
+            
+            // 新建链接
+            document.getElementById('jhNewItemBtn').onclick = function() {
+                var title = prompt('请输入链接名称：');
+                if (!title || !title.trim()) return;
+                var url = prompt('请输入链接地址（URL）：');
+                if (!url || !url.trim()) return;
+                var desc = prompt('请输入链接描述（可选）：');
+                var groupsData = loadGroups();
+                var groupNames = groupsData.map(function(g) { return g.name; }).join(', ');
+                var groupName = prompt('请选择分组（默认："默认分组"），可选：' + groupNames, '默认分组');
+                var targetGroup = groupsData.find(function(g) { return g.name === (groupName || '默认分组'); });
+                if (!targetGroup) targetGroup = groupsData[0];
+                
+                var itemsData = loadItems();
+                itemsData.push({
+                    id: Date.now(),
+                    groupId: targetGroup.id,
+                    title: title.trim(),
+                    url: url.trim(),
+                    desc: desc || '点击打开链接',
+                    icon: ''
+                });
+                saveItems(itemsData);
+                render();
+                alert('链接添加成功');
+            };
+        }
+        
+        function showGroupMenu(groupId) {
+            var menu = document.createElement('div');
+            menu.style.cssText = 'position: fixed; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;';
+            menu.innerHTML = '<button class="rename-group" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">重命名</button><button class="delete-group" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">删除分组</button>';
+            document.body.appendChild(menu);
+            
+            var rect = event.target.getBoundingClientRect();
+            menu.style.top = rect.bottom + 'px';
+            menu.style.left = rect.left + 'px';
+            
+            menu.querySelector('.rename-group').onclick = function() {
+                var groups = loadGroups();
+                var group = groups.find(function(g) { return g.id == groupId; });
+                if (group) {
+                    var newName = prompt('请输入新名称：', group.name);
+                    if (newName && newName.trim()) {
+                        group.name = newName.trim();
+                        saveGroups(groups);
+                        render();
+                    }
+                }
+                menu.remove();
+            };
+            
+            menu.querySelector('.delete-group').onclick = function() {
+                var groups = loadGroups();
+                var group = groups.find(function(g) { return g.id == groupId; });
+                if (group && group.name !== '默认分组') {
+                    if (confirm('确定删除分组 "' + group.name + '" 吗？')) {
+                        var items = loadItems();
+                        var defaultGroup = groups.find(function(g) { return g.name === '默认分组'; });
+                        for (var i = 0; i < items.length; i++) {
+                            if (items[i].groupId == groupId) items[i].groupId = defaultGroup.id;
+                        }
+                        saveItems(items);
+                        var newGroups = groups.filter(function(g) { return g.id != groupId; });
+                        saveGroups(newGroups);
+                        render();
+                    }
+                } else { alert('默认分组不能删除'); }
+                menu.remove();
+            };
+            
+            setTimeout(function() {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+                });
+            }, 100);
+        }
+        
+        function showItemMenu(itemId) {
+            var menu = document.createElement('div');
+            menu.style.cssText = 'position: fixed; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;';
+            menu.innerHTML = '<button class="edit-item" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">编辑</button><button class="delete-item" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">删除</button>';
+            document.body.appendChild(menu);
+            
+            var rect = event.target.getBoundingClientRect();
+            menu.style.top = rect.bottom + 'px';
+            menu.style.left = rect.left + 'px';
+            
+            menu.querySelector('.edit-item').onclick = function() {
+                var items = loadItems();
+                var item = items.find(function(i) { return i.id === itemId; });
+                if (item) {
+                    var newTitle = prompt('请输入链接名称：', item.title);
+                    if (newTitle && newTitle.trim()) item.title = newTitle.trim();
+                    var newUrl = prompt('请输入链接地址：', item.url);
+                    if (newUrl && newUrl.trim()) item.url = newUrl.trim();
+                    var newDesc = prompt('请输入链接描述：', item.desc);
+                    if (newDesc !== null) item.desc = newDesc || '';
+                    saveItems(items);
+                    render();
+                }
+                menu.remove();
+            };
+            
+            menu.querySelector('.delete-item').onclick = function() {
+                if (confirm('确定删除这个链接吗？')) {
+                    var items = loadItems();
+                    var newItems = items.filter(function(i) { return i.id !== itemId; });
+                    saveItems(newItems);
+                    render();
+                }
+                menu.remove();
+            };
+            
+            setTimeout(function() {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+                });
+            }, 100);
+        }
+        
+        // 创建容器并渲染
+        if (!document.getElementById('jianghuContainer')) {
+            jianghuPage.innerHTML = '<div id="jianghuContainer"></div>';
+        }
+        render();
+        
+        // 显示江湖页面
+        var allPages = document.querySelectorAll('.book-page');
+        for (var i = 0; i < allPages.length; i++) {
+            allPages[i].style.display = 'none';
+        }
+        jianghuPage.style.display = 'block';
+    }
+    
+    // 绑定江湖按钮
+    setTimeout(function() {
+        var jianghuBtn = document.querySelector('.menu-item[data-page="bbs"]');
+        if (jianghuBtn) {
+            jianghuBtn.onclick = function(e) {
+                e.stopPropagation();
+                initFullJianghu();
+            };
+        }
+        // 如果当前在江湖页面，直接初始化
+        if (window.location.hash === '#bbs') {
+            initFullJianghu();
+        }
+    }, 1000);
+})();
+
+// ========== 修复江湖和书籍页面切换 ==========
+(function fixPageSwitch() {
+    // 移除旧的江湖页面内容，防止冲突
+    var oldJianghuContent = document.getElementById('jianghuPage');
+    if (oldJianghuContent) {
+        oldJianghuContent.innerHTML = '<div id="jianghuContainer"></div>';
+    }
+    
+    // 重新定义书籍按钮的点击事件
+    var booksBtn = document.querySelector('.menu-item[data-page="books"]');
+    var homePage = document.querySelector('.book-page[data-page="home"]');
+    var jianghuPage = document.getElementById('jianghuPage');
+    
+    if (booksBtn) {
+        booksBtn.onclick = function(e) {
+            e.stopPropagation();
+            console.log('点击书籍按钮');
+            
+            // 隐藏江湖页面
+            if (jianghuPage) jianghuPage.style.display = 'none';
+            
+            // 显示首页
+            if (homePage) homePage.style.display = 'block';
+            
+            // 隐藏其他页面
+            var allPages = document.querySelectorAll('.book-page');
+            for (var i = 0; i < allPages.length; i++) {
+                if (allPages[i] !== homePage) {
+                    allPages[i].style.display = 'none';
+                }
+            }
+            
+            // 更新菜单激活状态
+            var menuItems = document.querySelectorAll('.menu-item');
+            for (var i = 0; i < menuItems.length; i++) {
+                menuItems[i].classList.remove('active');
+            }
+            booksBtn.classList.add('active');
+        };
+    }
+    
+    // 重新定义江湖按钮的点击事件
+    var jianghuBtn = document.querySelector('.menu-item[data-page="bbs"]');
+    if (jianghuBtn) {
+        jianghuBtn.onclick = function(e) {
+            e.stopPropagation();
+            console.log('点击江湖按钮');
+            
+            // 隐藏首页
+            if (homePage) homePage.style.display = 'none';
+            
+            // 初始化并显示江湖页面
+            if (typeof initFullJianghu === 'function') {
+                initFullJianghu();
+            } else {
+                // 如果函数不存在，直接显示
+                if (jianghuPage) {
+                    jianghuPage.style.display = 'block';
+                }
+            }
+            
+            // 更新菜单激活状态
+            var menuItems = document.querySelectorAll('.menu-item');
+            for (var i = 0; i < menuItems.length; i++) {
+                menuItems[i].classList.remove('active');
+            }
+            jianghuBtn.classList.add('active');
+        };
+    }
+    
+    // 确保 initFullJianghu 函数存在且只显示正确的页面
+    if (typeof initFullJianghu === 'function') {
+        var originalInit = initFullJianghu;
+        window.initFullJianghu = function() {
+            originalInit();
+            // 确保首页被隐藏
+            if (homePage) homePage.style.display = 'none';
+        };
+    }
+    
+    console.log('页面切换已修复');
+})();

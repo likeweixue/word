@@ -1496,3 +1496,105 @@ body.theme-dark #bbsPageSource .jianghu-footer {
   font-size: 12px;
   opacity: 0.7;
 }
+
+/* 设置面板主题适配 */
+#settingsPageSource .settings-card {
+  transition: background 0.2s, color 0.2s;
+}
+
+/* 默认白色主题 */
+body.theme-default #settingsPageSource .settings-card,
+body.theme-default #settingsRightContent > div > div {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+/* 护眼绿主题 */
+body.theme-eye #settingsPageSource .settings-card,
+body.theme-eye #settingsRightContent > div > div {
+  background: #d4e6d1 !important;
+  color: #2c3e2f !important;
+}
+
+/* 经典黄主题 */
+body.theme-warm #settingsPageSource .settings-card,
+body.theme-warm #settingsRightContent > div > div {
+  background: #efe5cd !important;
+  color: #4a3b2c !important;
+}
+
+/* 暗夜黑主题 */
+body.theme-dark #settingsPageSource .settings-card,
+body.theme-dark #settingsRightContent > div > div {
+  background: #2a2a3a !important;
+  color: #e0e0e0 !important;
+}
+
+/* 设置面板内输入框主题适配 */
+body.theme-dark #settingsRightContent input,
+body.theme-dark #settingsRightContent select,
+body.theme-dark #settingsRightContent button {
+  background: #3a3a4a !important;
+  color: #e0e0e0 !important;
+  border-color: #4a4a5a !important;
+}
+
+body.theme-eye #settingsRightContent input,
+body.theme-eye #settingsRightContent select {
+  background: #c8dbc5 !important;
+  border-color: #a8b8a5 !important;
+}
+
+body.theme-warm #settingsRightContent input,
+body.theme-warm #settingsRightContent select {
+  background: #dfd5bd !important;
+  border-color: #c8bda0 !important;
+}
+
+/* 设置面板主题适配 - 修正版 */
+/* 默认白色主题 */
+body.theme-default #settingsRightContent .settings-card {
+  background: #ffffff !important;
+  color: #333333 !important;
+}
+
+/* 护眼绿主题 */
+body.theme-eye #settingsRightContent .settings-card {
+  background: #b8caa8 !important;
+  color: #2c3e2f !important;
+}
+
+/* 经典黄主题 */
+body.theme-warm #settingsRightContent .settings-card {
+  background: #c8bda0 !important;
+  color: #4a3b2c !important;
+}
+
+/* 暗夜黑主题 */
+body.theme-dark #settingsRightContent .settings-card {
+  background: #2a2a3e !important;
+  color: #e0e0e0 !important;
+}
+
+/* 输入框和按钮主题适配 */
+body.theme-dark #settingsRightContent input,
+body.theme-dark #settingsRightContent select,
+body.theme-dark #settingsRightContent button:not(.color-option-btn) {
+  background: #3a3a4e !important;
+  color: #e0e0e0 !important;
+  border-color: #4a4a5e !important;
+}
+
+body.theme-eye #settingsRightContent input,
+body.theme-eye #settingsRightContent select {
+  background: #a8ba98 !important;
+  border-color: #8aa878 !important;
+  color: #2c3e2f !important;
+}
+
+body.theme-warm #settingsRightContent input,
+body.theme-warm #settingsRightContent select {
+  background: #b8a88a !important;
+  border-color: #a89878 !important;
+  color: #4a3b2c !important;
+}

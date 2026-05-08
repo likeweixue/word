@@ -378,3 +378,72 @@
     </div>
   </div>
 </div>
+<!-- 颜色功能最终修复 - 放在页面最底部 -->
+<script>
+(function() {
+    // 等待所有内容加载完成
+    function initColor() {
+        // 应用颜色函数
+        function applyColor(color) {
+            var oldStyle = document.getElementById('final-color-style');
+            if (oldStyle) oldStyle.remove();
+            var style = document.createElement('style');
+            style.id = 'final-color-style';
+            style.textContent = '* { color: ' + color + ' !important; } input, textarea, select { color: ' + color + ' !important; }';
+            document.head.appendChild(style);
+            localStorage.setItem('final_text_color', color);
+        }
+        
+        // 查找颜色选择器
+        function findAndBindPicker() {
+            var picker = document.querySelector('#themeColorPicker, input[type="color"]');
+            if (!picker) {
+                setTimeout(findAndBindPicker, 500);
+                return;
+            }
+            
+            if (picker.hasAttribute('data-final-bound')) return;
+            picker.setAttribute('data-final-bound', 'true');
+            
+            // 实时预览
+            picker.addEventListener('input', function(e) {
+                var color = e.target.value;
+                var preview = document.getElementById('preview-final-style');
+                if (preview) preview.remove();
+                var ps = document.createElement('style');
+                ps.id = 'preview-final-style';
+                ps.textContent = '* { color: ' + color + ' !important; }';
+                document.head.appendChild(ps);
+            });
+            
+            // 保存颜色
+            picker.addEventListener('change', function(e) {
+                applyColor(e.target.value);
+            });
+            
+            // 恢复保存的颜色
+            var saved = localStorage.getItem('final_text_color');
+            if (saved && saved !== '#333333') {
+                applyColor(saved);
+                picker.value = saved;
+            } else {
+                applyColor('#333333');
+            }
+        }
+        
+        findAndBindPicker();
+    }
+    
+    // 页面完全加载后执行
+    if (document.readyState === 'complete') {
+        initColor();
+    } else {
+        window.addEventListener('load', initColor);
+    }
+})();
+</script>
+
+<!-- 江湖页面容器 -->
+<div id="jianghuPage" style="display: none; overflow-y: auto; height: 100%; background: inherit;">
+    <!-- 内容由JS动态生成 -->
+</div>
