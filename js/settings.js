@@ -1538,3 +1538,829 @@ if (typeof originalRenderSettingsRightContent === 'function') {
 
 // 初始化时执行一次
 setTimeout(updateSettingsPanelTheme, 500);
+
+// ========== 增强主题设置功能 ==========
+
+// 存储自定义背景设置
+var customBgSettings = {
+    enabled: false,
+    image: null,
+    opacity: 0.1
+};
+
+var customCssText = '';
+
+// 加载保存的设置
+function loadCustomBgSettings() {
+    var saved = localStorage.getItem('custom_bg_settings');
+    if (saved) {
+        try {
+            var parsed = JSON.parse(saved);
+            customBgSettings.enabled = parsed.enabled || false;
+            customBgSettings.image = parsed.image || null;
+            customBgSettings.opacity = parsed.opacity !== undefined ? parsed.opacity : 0.1;
+        } catch(e) {}
+    }
+    var savedCss = localStorage.getItem('custom_css_text');
+    if (savedCss) {
+        customCssText = savedCss;
+    }
+}
+
+// 保存自定义背景设置
+function saveCustomBgSettings() {
+    localStorage.setItem('custom_bg_settings', JSON.stringify(customBgSettings));
+}
+
+// 保存自定义CSS
+function saveCustomCss() {
+    localStorage.setItem('custom_css_text', customCssText);
+}
+
+// 应用自定义背景和CSS
+function applyCustomBackground() {
+    // 移除旧的背景样式
+    var oldBgStyle = document.getElementById('custom-bg-style');
+    if (oldBgStyle) oldBgStyle.remove();
+    
+    if (customBgSettings.enabled && customBgSettings.image) {
+        var style = document.createElement('style');
+        style.id = 'custom-bg-style';
+        style.textContent = `
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-image: url('${customBgSettings.image}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+                opacity: ${customBgSettings.opacity};
+                z-index: -1;
+                pointer-events: none;
+            }
+            .app-container, .main-wrapper, .main-content, .book-page {
+                background: transparent !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // 应用自定义CSS
+    var oldCssStyle = document.getElementById('custom-css-style');
+    if (oldCssStyle) oldCssStyle.remove();
+    
+    if (customCssText && customCssText.trim()) {
+        var cssStyle = document.createElement('style');
+        cssStyle.id = 'custom-css-style';
+        cssStyle.textContent = customCssText;
+        document.head.appendChild(cssStyle);
+    }
+}
+
+// 渲染增强的主题设置界面
+function renderEnhancedThemeSettings() {
+    var container = document.getElementById('settingsRightContent');
+    if (!container) return;
+    
+    loadCustomBgSettings();
+    
+    container.innerHTML = `
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 20px;">主题设置</h3>
+                
+                <!-- 预设主题 -->
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                    <h4 style="margin-bottom: 12px;">预设主题</h4>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="preset-theme-btn" data-theme="default" style="padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">默认白</button>
+                        <button class="preset-theme-btn" data-theme="eye" style="padding: 8px 16px; background: #C8DBC5; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">护眼绿</button>
+                        <button class="preset-theme-btn" data-theme="warm" style="padding: 8px 16px; background: #DFD5BD; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;">经典黄</button>
+                        <button class="preset-theme-btn" data-theme="dark" style="padding: 8px 16px; background: #1e1e2e; color: white; border: 1px solid #444; border-radius: 8px; cursor: pointer;">暗夜黑</button>
+                    </div>
+                </div>
+                
+                <!-- 自定义背景 -->
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                    <h4 style="margin-bottom: 12px;">自定义背景</h4>
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                        <input type="checkbox" id="enableCustomBgCheckbox" ${customBgSettings.enabled ? 'checked' : ''}>
+                        <span>启用自定义背景图片</span>
+                    </label>
+                    <div id="customBgPanel" style="${customBgSettings.enabled ? 'display: block;' : 'display: none;'}">
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 8px;">选择背景图片：</label>
+                            <input type="file" id="uploadBgFileInput" accept="image/*" style="display: block; margin-bottom: 12px;">
+                            <div id="bgPreview" style="width: 100%; height: 100px; background: #ddd; border-radius: 8px; background-size: cover; background-position: center; ${customBgSettings.image ? 'background-image: url(' + customBgSettings.image + ');' : ''}"></div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label>背景透明度：<span id="bgOpacityValue">${Math.round(customBgSettings.opacity * 100)}</span>%</label>
+                            <input type="range" id="bgOpacitySlider" min="0" max="100" step="1" value="${customBgSettings.opacity * 100}" style="width: 100%; margin-top: 8px;">
+                        </div>
+                        <button id="clearBgBtn" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">清除背景</button>
+                    </div>
+                </div>
+                
+                <!-- 自定义CSS -->
+                <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                    <h4 style="margin-bottom: 12px;">自定义CSS</h4>
+                    <textarea id="customCssTextarea" rows="8" placeholder="/* 在此输入自定义CSS样式 */&#10;.editor-content { font-size: 16px; }&#10;.sidebar-menu { background: #f5f5f5; }" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: monospace; resize: vertical;">${customCssText.replace(/</g, '&lt;')}</textarea>
+                    <p style="font-size: 12px; color: #888; margin-top: 8px;">高级功能：输入自定义CSS代码来个性化界面样式</p>
+                </div>
+                
+                <div style="display: flex; gap: 12px;">
+                    <button id="saveThemeSettingsBtn" style="flex: 1; padding: 12px; background: #007aff; color: white; border: none; border-radius: 8px; cursor: pointer;">保存所有设置</button>
+                    <button id="resetThemeSettingsBtn" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer;">重置</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 绑定预设主题按钮
+    var presetBtns = document.querySelectorAll('.preset-theme-btn');
+    for (var i = 0; i < presetBtns.length; i++) {
+        presetBtns[i].onclick = function() {
+            var theme = this.getAttribute('data-theme');
+            if (typeof applyTheme === 'function') {
+                applyTheme(theme);
+            }
+        };
+    }
+    
+    // 绑定自定义背景开关
+    var enableCheckbox = document.getElementById('enableCustomBgCheckbox');
+    var bgPanel = document.getElementById('customBgPanel');
+    if (enableCheckbox) {
+        enableCheckbox.onchange = function() {
+            customBgSettings.enabled = this.checked;
+            bgPanel.style.display = this.checked ? 'block' : 'none';
+            if (!this.checked) {
+                customBgSettings.image = null;
+                var preview = document.getElementById('bgPreview');
+                if (preview) preview.style.backgroundImage = '';
+            }
+            applyCustomBackground();
+        };
+    }
+    
+    // 上传背景图片
+    var uploadInput = document.getElementById('uploadBgFileInput');
+    var preview = document.getElementById('bgPreview');
+    if (uploadInput) {
+        uploadInput.onchange = function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    customBgSettings.image = ev.target.result;
+                    if (preview) preview.style.backgroundImage = 'url(' + ev.target.result + ')';
+                    applyCustomBackground();
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+    
+    // 透明度滑块
+    var opacitySlider = document.getElementById('bgOpacitySlider');
+    var opacityValue = document.getElementById('bgOpacityValue');
+    if (opacitySlider) {
+        opacitySlider.oninput = function() {
+            var val = parseInt(this.value);
+            if (opacityValue) opacityValue.textContent = val;
+            customBgSettings.opacity = val / 100;
+            applyCustomBackground();
+        };
+    }
+    
+    // 清除背景
+    var clearBtn = document.getElementById('clearBgBtn');
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            customBgSettings.image = null;
+            customBgSettings.enabled = false;
+            if (enableCheckbox) enableCheckbox.checked = false;
+            if (bgPanel) bgPanel.style.display = 'none';
+            if (preview) preview.style.backgroundImage = '';
+            applyCustomBackground();
+            saveCustomBgSettings();
+        };
+    }
+    
+    // 自定义CSS
+    var cssTextarea = document.getElementById('customCssTextarea');
+    if (cssTextarea) {
+        var saveTimer;
+        cssTextarea.oninput = function() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(function() {
+                customCssText = cssTextarea.value;
+                saveCustomCss();
+                applyCustomBackground();
+            }, 500);
+        };
+    }
+    
+    // 保存按钮
+    var saveBtn = document.getElementById('saveThemeSettingsBtn');
+    if (saveBtn) {
+        saveBtn.onclick = function() {
+            saveCustomBgSettings();
+            saveCustomCss();
+            applyCustomBackground();
+            alert('主题设置已保存');
+        };
+    }
+    
+    // 重置按钮
+    var resetBtn = document.getElementById('resetThemeSettingsBtn');
+    if (resetBtn) {
+        resetBtn.onclick = function() {
+            customBgSettings = { enabled: false, image: null, opacity: 0.1 };
+            customCssText = '';
+            if (enableCheckbox) enableCheckbox.checked = false;
+            if (bgPanel) bgPanel.style.display = 'none';
+            if (preview) preview.style.backgroundImage = '';
+            if (opacitySlider) opacitySlider.value = '10';
+            if (opacityValue) opacityValue.textContent = '10';
+            if (cssTextarea) cssTextarea.value = '';
+            saveCustomBgSettings();
+            saveCustomCss();
+            applyCustomBackground();
+            alert('已重置所有自定义设置');
+        };
+    }
+    
+    // 应用已保存的设置
+    applyCustomBackground();
+}
+
+// 替换原来的主题设置渲染函数
+window.renderThemeSettings = renderEnhancedThemeSettings;
+
+// 在设置页面中启用增强主题
+var originalRenderThemeUI = window.renderThemeSettingsUI;
+if (originalRenderThemeUI) {
+    window.renderThemeSettingsUI = renderEnhancedThemeSettings;
+}
+
+// 确保在正确的时机渲染
+setTimeout(function() {
+    var activeCat = localStorage.getItem('settings_active_category');
+    if (activeCat === 'theme') {
+        renderEnhancedThemeSettings();
+    }
+}, 500);
+
+// ========== 主题设置功能完整修复 ==========
+(function fixThemeSettings() {
+    // 修复预设主题按钮
+    function fixPresetThemeButtons() {
+        var btns = document.querySelectorAll('.preset-theme-btn');
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].onclick = function(e) {
+                e.stopPropagation();
+                var theme = this.getAttribute('data-theme');
+                var themeLink = document.getElementById('themeStyle');
+                if (themeLink) {
+                    themeLink.href = 'themes/' + theme + '.css';
+                }
+                document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark');
+                document.body.classList.add('theme-' + theme);
+                if (typeof settings !== 'undefined') {
+                    settings.theme = theme;
+                    if (typeof saveAllData === 'function') saveAllData();
+                }
+                var allPresets = document.querySelectorAll('.preset-theme-btn');
+                for (var j = 0; j < allPresets.length; j++) {
+                    allPresets[j].style.border = '1px solid #ddd';
+                    allPresets[j].style.boxShadow = 'none';
+                }
+                this.style.border = '2px solid #007aff';
+                this.style.boxShadow = '0 0 0 2px rgba(0,122,255,0.2)';
+            };
+        }
+    }
+    
+    // 修复图片上传功能
+    function fixImageUpload() {
+        var uploadInput = document.getElementById('uploadBgFileInput');
+        if (!uploadInput) {
+            var bgPanel = document.getElementById('customBgPanel');
+            if (bgPanel) {
+                var fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = 'uploadBgFileInput';
+                fileInput.accept = 'image/*';
+                fileInput.style.cssText = 'display: block; margin-bottom: 12px;';
+                var oldInput = document.getElementById('uploadBgFileInput');
+                if (oldInput) {
+                    oldInput.parentNode.replaceChild(fileInput, oldInput);
+                } else {
+                    var labelDiv = bgPanel.querySelector('div:first-child');
+                    if (labelDiv) {
+                        labelDiv.appendChild(fileInput);
+                    }
+                }
+                uploadInput = fileInput;
+            }
+        }
+        
+        if (uploadInput) {
+            uploadInput.onchange = function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(ev) {
+                        var preview = document.getElementById('bgPreview');
+                        if (preview) {
+                            preview.style.backgroundImage = 'url(' + ev.target.result + ')';
+                            preview.style.backgroundSize = 'cover';
+                        }
+                        window.customBgSettings = window.customBgSettings || { enabled: false, image: null, opacity: 0.1 };
+                        window.customBgSettings.image = ev.target.result;
+                        window.customBgSettings.enabled = true;
+                        var enableCheckbox = document.getElementById('enableCustomBgCheckbox');
+                        if (enableCheckbox) enableCheckbox.checked = true;
+                        var bgPanel = document.getElementById('customBgPanel');
+                        if (bgPanel) bgPanel.style.display = 'block';
+                        var oldStyle = document.getElementById('dynamic-bg-style');
+                        if (oldStyle) oldStyle.remove();
+                        var style = document.createElement('style');
+                        style.id = 'dynamic-bg-style';
+                        style.textContent = `
+                            body::before {
+                                content: '';
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                right: 0;
+                                bottom: 0;
+                                background-image: url('${ev.target.result}');
+                                background-size: cover;
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                background-attachment: fixed;
+                                opacity: ${window.customBgSettings.opacity || 0.1};
+                                z-index: -1;
+                                pointer-events: none;
+                            }
+                            .app-container, .main-wrapper, .main-content, .book-page {
+                                background: transparent !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                        localStorage.setItem('custom_bg_settings', JSON.stringify(window.customBgSettings));
+                        alert('背景图片已应用');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+    }
+    
+    // 修复透明度滑块
+    function fixOpacitySlider() {
+        var slider = document.getElementById('bgOpacitySlider');
+        var valueSpan = document.getElementById('bgOpacityValue');
+        if (slider) {
+            slider.oninput = function() {
+                var val = parseInt(this.value);
+                if (valueSpan) valueSpan.textContent = val;
+                window.customBgSettings = window.customBgSettings || { enabled: false, image: null, opacity: 0.1 };
+                window.customBgSettings.opacity = val / 100;
+                var oldStyle = document.getElementById('dynamic-bg-style');
+                if (oldStyle && window.customBgSettings.image) {
+                    oldStyle.remove();
+                    var style = document.createElement('style');
+                    style.id = 'dynamic-bg-style';
+                    style.textContent = `
+                        body::before {
+                            content: '';
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background-image: url('${window.customBgSettings.image}');
+                            background-size: cover;
+                            background-position: center;
+                            background-repeat: no-repeat;
+                            background-attachment: fixed;
+                            opacity: ${window.customBgSettings.opacity};
+                            z-index: -1;
+                            pointer-events: none;
+                        }
+                        .app-container, .main-wrapper, .main-content, .book-page {
+                            background: transparent !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            };
+            slider.onchange = function() {
+                localStorage.setItem('custom_bg_settings', JSON.stringify(window.customBgSettings));
+            };
+        }
+    }
+    
+    // 修复清除背景按钮
+    function fixClearBgBtn() {
+        var clearBtn = document.getElementById('clearBgBtn');
+        if (clearBtn) {
+            clearBtn.onclick = function() {
+                window.customBgSettings = { enabled: false, image: null, opacity: 0.1 };
+                var enableCheckbox = document.getElementById('enableCustomBgCheckbox');
+                var bgPanel = document.getElementById('customBgPanel');
+                var preview = document.getElementById('bgPreview');
+                if (enableCheckbox) enableCheckbox.checked = false;
+                if (bgPanel) bgPanel.style.display = 'none';
+                if (preview) preview.style.backgroundImage = '';
+                var oldStyle = document.getElementById('dynamic-bg-style');
+                if (oldStyle) oldStyle.remove();
+                localStorage.setItem('custom_bg_settings', JSON.stringify(window.customBgSettings));
+                alert('背景已清除');
+            };
+        }
+    }
+    
+    // 修复启用背景开关
+    function fixEnableCheckbox() {
+        var enableCheckbox = document.getElementById('enableCustomBgCheckbox');
+        var bgPanel = document.getElementById('customBgPanel');
+        if (enableCheckbox) {
+            enableCheckbox.onchange = function() {
+                if (bgPanel) bgPanel.style.display = this.checked ? 'block' : 'none';
+                if (!this.checked) {
+                    var oldStyle = document.getElementById('dynamic-bg-style');
+                    if (oldStyle) oldStyle.remove();
+                } else if (window.customBgSettings && window.customBgSettings.image) {
+                    var style = document.createElement('style');
+                    style.id = 'dynamic-bg-style';
+                    style.textContent = `
+                        body::before {
+                            content: '';
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background-image: url('${window.customBgSettings.image}');
+                            background-size: cover;
+                            background-position: center;
+                            background-repeat: no-repeat;
+                            background-attachment: fixed;
+                            opacity: ${window.customBgSettings.opacity || 0.1};
+                            z-index: -1;
+                            pointer-events: none;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            };
+        }
+    }
+    
+    // 恢复保存的设置
+    function restoreSavedSettings() {
+        var saved = localStorage.getItem('custom_bg_settings');
+        if (saved) {
+            try {
+                window.customBgSettings = JSON.parse(saved);
+                var enableCheckbox = document.getElementById('enableCustomBgCheckbox');
+                var bgPanel = document.getElementById('customBgPanel');
+                var preview = document.getElementById('bgPreview');
+                var slider = document.getElementById('bgOpacitySlider');
+                var valueSpan = document.getElementById('bgOpacityValue');
+                if (enableCheckbox) enableCheckbox.checked = window.customBgSettings.enabled || false;
+                if (bgPanel) bgPanel.style.display = window.customBgSettings.enabled ? 'block' : 'none';
+                if (preview && window.customBgSettings.image) {
+                    preview.style.backgroundImage = 'url(' + window.customBgSettings.image + ')';
+                    preview.style.backgroundSize = 'cover';
+                }
+                if (slider) slider.value = (window.customBgSettings.opacity || 0.1) * 100;
+                if (valueSpan) valueSpan.textContent = (window.customBgSettings.opacity || 0.1) * 100;
+                if (window.customBgSettings.enabled && window.customBgSettings.image) {
+                    var style = document.createElement('style');
+                    style.id = 'dynamic-bg-style';
+                    style.textContent = `
+                        body::before {
+                            content: '';
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background-image: url('${window.customBgSettings.image}');
+                            background-size: cover;
+                            background-position: center;
+                            background-repeat: no-repeat;
+                            background-attachment: fixed;
+                            opacity: ${window.customBgSettings.opacity || 0.1};
+                            z-index: -1;
+                            pointer-events: none;
+                        }
+                        .app-container, .main-wrapper, .main-content, .book-page {
+                            background: transparent !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } catch(e) {}
+        }
+    }
+    
+    // 初始化所有功能
+    function init() {
+        setTimeout(function() {
+            fixPresetThemeButtons();
+            fixImageUpload();
+            fixOpacitySlider();
+            fixClearBgBtn();
+            fixEnableCheckbox();
+            restoreSavedSettings();
+        }, 200);
+    }
+    
+    // 监听设置页面切换
+    var observer = new MutationObserver(function() {
+        var activeCat = localStorage.getItem('settings_active_category');
+        if (activeCat === 'theme') {
+            setTimeout(init, 100);
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    init();
+})();
+
+// ========== 简化版主题背景设置 ==========
+(function simpleBackgroundSettings() {
+    // 重新渲染简化的主题设置区域
+    function renderSimpleBgSettings() {
+        var container = document.getElementById('settingsRightContent');
+        if (!container) return;
+        
+        // 获取保存的背景设置
+        var savedBg = localStorage.getItem('simple_bg_settings');
+        var bgImage = null;
+        var bgOpacity = 10;
+        if (savedBg) {
+            try {
+                var parsed = JSON.parse(savedBg);
+                bgImage = parsed.image;
+                bgOpacity = parsed.opacity || 10;
+            } catch(e) {}
+        }
+        
+        // 保留原有的预设主题部分，替换背景部分
+        var oldHtml = container.innerHTML;
+        var presetThemeHtml = '';
+        var match = oldHtml.match(/<div style="margin-bottom: 24px; padding: 16px; background: rgba\(0,0,0,0.03\); border-radius: 12px;">\s*<h4 style="margin-bottom: 12px;">预设主题<\/h4>[\s\S]*?<\/div>/);
+        if (match) {
+            presetThemeHtml = match[0];
+        }
+        
+        container.innerHTML = `
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h3 style="margin-bottom: 20px;">主题设置</h3>
+                    
+                    <!-- 预设主题 -->
+                    ${presetThemeHtml}
+                    
+                    <!-- 自定义背景图片 -->
+                    <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                        <h4 style="margin-bottom: 12px;">自定义背景图片</h4>
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 8px;">选择背景图片：</label>
+                            <input type="file" id="simpleBgUpload" accept="image/*" style="display: block; margin-bottom: 12px;">
+                            <div id="simpleBgPreview" style="width: 100%; height: 100px; background: #ddd; border-radius: 8px; background-size: cover; background-position: center; ${bgImage ? 'background-image: url(' + bgImage + ');' : ''}"></div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label>背景透明度：<span id="simpleBgOpacityValue">${bgOpacity}</span>%</label>
+                            <input type="range" id="simpleBgOpacitySlider" min="0" max="100" step="1" value="${bgOpacity}" style="width: 100%; margin-top: 8px;">
+                        </div>
+                        <button id="simpleClearBgBtn" style="padding: 6px 12px; background: #dc3545; color: white; border: none; border-radius: 6px; cursor: pointer;">清除背景</button>
+                    </div>
+                    
+                    <!-- 自定义CSS -->
+                    <div style="margin-bottom: 24px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                        <h4 style="margin-bottom: 12px;">自定义CSS</h4>
+                        <textarea id="simpleCustomCss" rows="6" placeholder="/* 在此输入自定义CSS样式 */" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ddd; font-family: monospace; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button id="simpleSaveBtn" style="flex: 1; padding: 12px; background: #007aff; color: white; border: none; border-radius: 8px; cursor: pointer;">保存设置</button>
+                        <button id="simpleResetBtn" style="flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer;">重置</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 重新绑定预设主题按钮
+        var presetBtns = document.querySelectorAll('.preset-theme-btn');
+        for (var i = 0; i < presetBtns.length; i++) {
+            presetBtns[i].onclick = function(e) {
+                e.stopPropagation();
+                var theme = this.getAttribute('data-theme');
+                var themeLink = document.getElementById('themeStyle');
+                if (themeLink) {
+                    themeLink.href = 'themes/' + theme + '.css';
+                }
+                document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark');
+                document.body.classList.add('theme-' + theme);
+                if (typeof settings !== 'undefined') {
+                    settings.theme = theme;
+                    if (typeof saveAllData === 'function') saveAllData();
+                }
+                var allPresets = document.querySelectorAll('.preset-theme-btn');
+                for (var j = 0; j < allPresets.length; j++) {
+                    allPresets[j].style.border = '1px solid #ddd';
+                    allPresets[j].style.boxShadow = 'none';
+                }
+                this.style.border = '2px solid #007aff';
+                this.style.boxShadow = '0 0 0 2px rgba(0,122,255,0.2)';
+            };
+        }
+        
+        bindSimpleBgEvents();
+    }
+    
+    function applySimpleBg(imageUrl, opacity) {
+        var oldStyle = document.getElementById('simple-bg-style');
+        if (oldStyle) oldStyle.remove();
+        
+        if (imageUrl) {
+            var style = document.createElement('style');
+            style.id = 'simple-bg-style';
+            style.textContent = `
+                body::before {
+                    content: '';
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-image: url('${imageUrl}');
+                    background-size: cover;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    background-attachment: fixed;
+                    opacity: ${opacity / 100};
+                    z-index: -1;
+                    pointer-events: none;
+                }
+                .app-container, .main-wrapper, .main-content, .book-page {
+                    background: transparent !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    function bindSimpleBgEvents() {
+        var uploadInput = document.getElementById('simpleBgUpload');
+        var preview = document.getElementById('simpleBgPreview');
+        var opacitySlider = document.getElementById('simpleBgOpacitySlider');
+        var opacityValue = document.getElementById('simpleBgOpacityValue');
+        var clearBtn = document.getElementById('simpleClearBgBtn');
+        var saveBtn = document.getElementById('simpleSaveBtn');
+        var resetBtn = document.getElementById('simpleResetBtn');
+        var customCss = document.getElementById('simpleCustomCss');
+        
+        var currentImage = null;
+        var currentOpacity = 10;
+        
+        // 恢复保存的CSS
+        var savedCss = localStorage.getItem('simple_custom_css');
+        if (savedCss && customCss) customCss.value = savedCss;
+        
+        // 上传图片
+        if (uploadInput) {
+            uploadInput.onchange = function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    var reader = new FileReader();
+                    reader.onload = function(ev) {
+                        currentImage = ev.target.result;
+                        if (preview) preview.style.backgroundImage = 'url(' + currentImage + ')';
+                        applySimpleBg(currentImage, currentOpacity);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+        
+        // 透明度
+        if (opacitySlider) {
+            opacitySlider.oninput = function() {
+                currentOpacity = parseInt(this.value);
+                if (opacityValue) opacityValue.textContent = currentOpacity;
+                if (currentImage) {
+                    applySimpleBg(currentImage, currentOpacity);
+                }
+            };
+        }
+        
+        // 清除背景
+        if (clearBtn) {
+            clearBtn.onclick = function() {
+                currentImage = null;
+                currentOpacity = 10;
+                if (preview) preview.style.backgroundImage = '';
+                if (opacitySlider) opacitySlider.value = '10';
+                if (opacityValue) opacityValue.textContent = '10';
+                var oldStyle = document.getElementById('simple-bg-style');
+                if (oldStyle) oldStyle.remove();
+            };
+        }
+        
+        // 保存设置
+        if (saveBtn) {
+            saveBtn.onclick = function() {
+                var settings = {
+                    image: currentImage,
+                    opacity: currentOpacity
+                };
+                localStorage.setItem('simple_bg_settings', JSON.stringify(settings));
+                if (customCss) {
+                    localStorage.setItem('simple_custom_css', customCss.value);
+                    // 应用自定义CSS
+                    var oldCss = document.getElementById('simple-css-style');
+                    if (oldCss) oldCss.remove();
+                    if (customCss.value.trim()) {
+                        var cssStyle = document.createElement('style');
+                        cssStyle.id = 'simple-css-style';
+                        cssStyle.textContent = customCss.value;
+                        document.head.appendChild(cssStyle);
+                    }
+                }
+                alert('设置已保存');
+            };
+        }
+        
+        // 重置
+        if (resetBtn) {
+            resetBtn.onclick = function() {
+                currentImage = null;
+                currentOpacity = 10;
+                if (preview) preview.style.backgroundImage = '';
+                if (opacitySlider) opacitySlider.value = '10';
+                if (opacityValue) opacityValue.textContent = '10';
+                if (customCss) customCss.value = '';
+                var oldStyle = document.getElementById('simple-bg-style');
+                if (oldStyle) oldStyle.remove();
+                var oldCss = document.getElementById('simple-css-style');
+                if (oldCss) oldCss.remove();
+                localStorage.removeItem('simple_bg_settings');
+                localStorage.removeItem('simple_custom_css');
+                alert('已重置');
+            };
+        }
+        
+        // 恢复保存的背景
+        var savedBg = localStorage.getItem('simple_bg_settings');
+        if (savedBg) {
+            try {
+                var parsed = JSON.parse(savedBg);
+                if (parsed.image) {
+                    currentImage = parsed.image;
+                    currentOpacity = parsed.opacity || 10;
+                    if (preview) preview.style.backgroundImage = 'url(' + currentImage + ')';
+                    if (opacitySlider) opacitySlider.value = currentOpacity;
+                    if (opacityValue) opacityValue.textContent = currentOpacity;
+                    applySimpleBg(currentImage, currentOpacity);
+                }
+            } catch(e) {}
+        }
+        
+        // 恢复自定义CSS
+        var savedCss2 = localStorage.getItem('simple_custom_css');
+        if (savedCss2 && customCss) {
+            customCss.value = savedCss2;
+            var oldCss = document.getElementById('simple-css-style');
+            if (oldCss) oldCss.remove();
+            var cssStyle = document.createElement('style');
+            cssStyle.id = 'simple-css-style';
+            cssStyle.textContent = savedCss2;
+            document.head.appendChild(cssStyle);
+        }
+    }
+    
+    // 替换原来的主题设置渲染
+    window.renderThemeSettings = renderSimpleBgSettings;
+    
+    // 初始化
+    setTimeout(function() {
+        var activeCat = localStorage.getItem('settings_active_category');
+        if (activeCat === 'theme') {
+            renderSimpleBgSettings();
+        }
+    }, 500);
+})();

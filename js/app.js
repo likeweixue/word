@@ -371,7 +371,7 @@ function createPages() {
   var aboutPageSource = document.createElement('div');
   aboutPageSource.id = 'aboutPageSource';
   aboutPageSource.style.display = 'none';
-  aboutPageSource.innerHTML = '<div class="about-content"><h2>写作帮手</h2><p><strong>免费，开源，自由的写作软件</strong></p><p>版本 0.2.4 Beta 测试版</p><p>GitHub: <a href="https://github.com/likeweixue/word" target="_blank">github.com/likeweixue/word</a></p></div>';
+  aboutPageSource.innerHTML = '<div class="about-content"><h2>写作帮手</h2><p><strong>免费，开源，自由的写作软件</strong></p><p>版本 0.2.5 Beta 测试版</p><p>GitHub: <a href="https://github.com/likeweixue/word" target="_blank">github.com/likeweixue/word</a></p></div>';
   pagesContainer.appendChild(statsPageSource);
   pagesContainer.appendChild(settingsPageSource);
   pagesContainer.appendChild(aboutPageSource);
@@ -3220,7 +3220,7 @@ function createBbsPage() {
       
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
         
-        <div onclick="window.open('https://qm.qq.com/q/你的QQ群链接', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <div onclick="window.open('https://qm.qq.com/q/HNJFzwEw8K', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
           <div style="font-size: 48px; margin-bottom: 12px;">💬</div>
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px;">QQ交流群</div>
           <div style="font-size: 12px; color: #888;">与作者们实时交流</div>
@@ -3233,27 +3233,27 @@ function createBbsPage() {
         </div>
         
         <div onclick="window.open('https://github.com/likeweixue/word', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size: 48px; margin-bottom: 12px;">🐙</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"></div>
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px;">GitHub</div>
           <div style="font-size: 12px; color: #888;">查看源码与反馈</div>
         </div>
         
-        <div onclick="window.open('https://你的教程链接.com', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📖</div>
+        <div onclick="window.open('https://github.com/likeweixue/word', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-size: 48px; margin-bottom: 12px;"></div>
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px;">使用教程</div>
           <div style="font-size: 12px; color: #888;">快速上手写作帮手</div>
         </div>
         
-        <div onclick="window.open('https://你的反馈链接.com', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size: 48px; margin-bottom: 12px;">💡</div>
+        <div onclick="window.open('https://github.com/likeweixue/word', '_blank')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-size: 48px; margin-bottom: 12px;"></div>
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px;">意见反馈</div>
           <div style="font-size: 12px; color: #888;">告诉我们你的想法</div>
         </div>
         
         <div onclick="alert('即将发布，敬请期待！')" style="background: #fff; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-          <div style="font-size: 48px; margin-bottom: 12px;">📢</div>
+          <div style="font-size: 48px; margin-bottom: 12px;"></div>
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 6px;">更新日志</div>
-          <div style="font-size: 12px; color: #888;">v0.2.1 Beta版本</div>
+          <div style="font-size: 12px; color: #888;">v0.2.5 Beta版本</div>
         </div>
       </div>
       
@@ -4188,4 +4188,435 @@ setTimeout(function() {
     }
     
     console.log('页面切换已修复');
+})();
+
+// ========== 江湖卡片拖拽功能 ==========
+(function addDragAndDrop() {
+    var dragSourceItemId = null;
+    var dragSourceGroupId = null;
+    
+    function enableDragAndDrop() {
+        // 让所有卡片可拖拽
+        var cards = document.querySelectorAll('.jh-item-card');
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            card.setAttribute('draggable', 'true');
+            
+            card.ondragstart = function(e) {
+                var itemId = parseInt(this.getAttribute('data-id'));
+                dragSourceItemId = itemId;
+                // 查找所属分组
+                var groupDiv = this.closest('[data-group-id]');
+                if (groupDiv) {
+                    dragSourceGroupId = groupDiv.getAttribute('data-group-id');
+                }
+                e.dataTransfer.setData('text/plain', itemId);
+                e.dataTransfer.effectAllowed = 'move';
+                this.style.opacity = '0.5';
+            };
+            
+            card.ondragend = function(e) {
+                this.style.opacity = '1';
+                dragSourceItemId = null;
+                dragSourceGroupId = null;
+            };
+        }
+        
+        // 让分组区域可接收拖拽
+        var groupContainers = document.querySelectorAll('#jhGroupsContainer > div');
+        for (var i = 0; i < groupContainers.length; i++) {
+            var container = groupContainers[i];
+            var groupHeader = container.querySelector('div:first-child');
+            if (groupHeader) {
+                groupHeader.ondragover = function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    this.style.backgroundColor = 'rgba(0,122,255,0.1)';
+                };
+                groupHeader.ondragleave = function(e) {
+                    this.style.backgroundColor = '';
+                };
+                groupHeader.ondrop = function(e) {
+                    e.preventDefault();
+                    this.style.backgroundColor = '';
+                    if (!dragSourceItemId) return;
+                    
+                    // 获取目标分组ID
+                    var targetGroupDiv = this.closest('#jhGroupsContainer > div');
+                    var groupMenuBtn = targetGroupDiv.querySelector('.jh-group-menu');
+                    if (!groupMenuBtn) return;
+                    var targetGroupId = groupMenuBtn.getAttribute('data-id');
+                    
+                    // 获取源分组ID
+                    var sourceGroupId = dragSourceGroupId;
+                    
+                    if (targetGroupId === sourceGroupId) return;
+                    
+                    // 移动项目
+                    var items = JSON.parse(localStorage.getItem('jianghu_items') || '[]');
+                    var item = items.find(function(i) { return i.id === dragSourceItemId; });
+                    if (item) {
+                        item.groupId = targetGroupId;
+                        localStorage.setItem('jianghu_items', JSON.stringify(items));
+                        // 重新渲染
+                        if (typeof render === 'function') {
+                            render();
+                        } else if (typeof initFullJianghu === 'function') {
+                            initFullJianghu();
+                        }
+                        alert('已移动到目标分组');
+                    }
+                    dragSourceItemId = null;
+                };
+            }
+        }
+    }
+    
+    // 监听江湖页面渲染完成
+    var observer = new MutationObserver(function() {
+        var cards = document.querySelectorAll('.jh-item-card');
+        if (cards.length > 0) {
+            enableDragAndDrop();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // 延迟执行
+    setTimeout(enableDragAndDrop, 1000);
+})();
+
+// ========== 学府 - 写作素材管理系统 ==========
+(function XuefuSystem() {
+    // 素材分类
+    var materialCategories = [
+        { id: 'chm', name: 'CHM文档', icon: '📘', folder: 'library/chm/', ext: '.chm' },
+        { id: 'pdf', name: 'PDF文档', icon: '📕', folder: 'library/pdf/', ext: '.pdf' },
+        { id: 'txt', name: '文本文件', icon: '📄', folder: 'library/txt/', ext: '.txt' },
+        { id: 'other', name: '其他素材', icon: '📚', folder: 'library/', ext: '' }
+    ];
+    
+    // 加载素材列表（从 localStorage 存储的元数据）
+    function loadMaterials() {
+        var saved = localStorage.getItem('xuefu_materials');
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e) {}
+        }
+        // 默认示例数据
+        return [
+            { id: 1, category: 'chm', name: '古言写作素材大全', path: 'library/chm/古言写作素材大全.chm', desc: '古代言情写作必备素材' },
+            { id: 2, category: 'chm', name: '龙与地下城DND扩展规则大全V1.01', path: 'library/chm/龙与地下城DND扩展规则大全V1.01.chm', desc: 'DND跑团规则扩展' },
+            { id: 3, category: 'chm', name: '男频文写作指南', path: 'library/chm/男频文写作指南.chm', desc: '男频小说创作指导' },
+            { id: 4, category: 'chm', name: '女频文创作指南', path: 'library/chm/女频文创作指南.chm', desc: '女频小说创作指导' },
+            { id: 5, category: 'chm', name: '小说素材大典（女频版）', path: 'library/chm/小说素材大典（女频版）.chm', desc: '丰富的小说素材库' },
+            { id: 6, category: 'chm', name: '医学-植物草药资料库', path: 'library/chm/医学-植物草药资料库.chm', desc: '中医药植物资料' },
+            { id: 7, category: 'chm', name: '游戏法术大全', path: 'library/chm/游戏法术大全.chm', desc: '游戏法术设计参考' },
+            { id: 8, category: 'chm', name: '游戏功法介绍', path: 'library/chm/游戏功法介绍.chm', desc: '游戏修炼功法设定' },
+            { id: 9, category: 'chm', name: 'dnd3R法术大全', path: 'library/chm/dnd3R法术大全.chm', desc: 'DND 3R版本法术大全' }
+        ];
+    }
+    
+    function saveMaterials(materials) {
+        localStorage.setItem('xuefu_materials', JSON.stringify(materials));
+    }
+    
+    function getPlatform() {
+        var userAgent = navigator.userAgent;
+        if (userAgent.indexOf('Win') !== -1) return 'windows';
+        if (userAgent.indexOf('Mac') !== -1) return 'mac';
+        if (userAgent.indexOf('Linux') !== -1) return 'linux';
+        return 'other';
+    }
+    
+    function openFile(filePath, category) {
+        var platform = getPlatform();
+        var ext = filePath.split('.').pop().toLowerCase();
+        
+        if (ext === 'chm') {
+            if (platform === 'windows') {
+                alert('请在 Windows 系统中用鼠标双击文件打开，或使用以下软件：\n\n文件位置：' + filePath + '\n\n推荐软件：CHM Viewer (Windows自带)');
+            } else {
+                alert('CHM文件在 macOS 上无法直接打开。\n\n推荐方案：\n1. 安装 KchmViewer：brew install kchmviewer\n2. 安装 Chmox\n3. 将文件复制到 Windows 电脑打开\n4. 转换为 PDF 或 HTML 格式\n\n文件位置：' + filePath);
+            }
+        } else if (ext === 'pdf') {
+            if (confirm('PDF文件可以使用系统阅读器打开。\n\n是否生成下载链接？')) {
+                // 提示用户文件位置
+                alert('请打开以下路径：\n' + filePath + '\n\n或用系统 PDF 阅读器打开此文件');
+            }
+        } else {
+            alert('文件位置：' + filePath + '\n\n请用相应的程序打开此文件');
+        }
+    }
+    
+    function renderXuefu() {
+        var materials = loadMaterials();
+        var container = document.getElementById('xuefuContainer');
+        if (!container) return;
+        
+        var html = `
+            <div style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid rgba(0,0,0,0.1);">
+                    <div>
+                        <h2 style="margin: 0;">学府</h2>
+                        <p style="color: #888; margin-top: 5px;">写作素材与参考资料管理</p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button id="xfNewMaterialBtn" style="padding: 8px 16px; background: #007aff; color: white; border: none; border-radius: 6px; cursor: pointer;">+ 添加素材</button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    ${materialCategories.map(cat => {
+                        var catMaterials = materials.filter(m => m.category === cat.id);
+                        if (catMaterials.length === 0) return '';
+                        return `
+                            <div style="flex: 1; min-width: 280px; background: rgba(0,0,0,0.02); border-radius: 12px; padding: 16px;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid rgba(0,0,0,0.1);">
+                                    <span style="font-size: 24px;">${cat.icon}</span>
+                                    <h3 style="margin: 0;">${cat.name}</h3>
+                                    <span style="font-size: 12px; opacity: 0.6;">(${catMaterials.length})</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    ${catMaterials.map(m => `
+                                        <div class="xuefu-item" data-id="${m.id}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; background: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                                                <span style="font-size: 20px;">${cat.icon}</span>
+                                                <div>
+                                                    <div style="font-weight: 500;">${escapeHtml(m.name)}</div>
+                                                    <div style="font-size: 11px; color: #888;">${escapeHtml(m.desc || '无描述')}</div>
+                                                </div>
+                                            </div>
+                                            <button class="xf-menu-btn" data-id="${m.id}" style="background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px 8px;">⋯</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <div style="margin-top: 30px; padding: 16px; background: rgba(0,0,0,0.03); border-radius: 12px;">
+                    <h4 style="margin-bottom: 8px;">💡 使用提示</h4>
+                    <p style="font-size: 12px; color: #888;">1. 素材文件存放在 library/ 文件夹下相应的子文件夹中<br>2. CHM文件在macOS上需要第三方软件打开（如KchmViewer）<br>3. 建议将重要素材转换为PDF格式以便跨平台阅读</p>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+        // 绑定点击事件
+        var items = document.querySelectorAll('.xuefu-item');
+        for (var i = 0; i < items.length; i++) {
+            items[i].onclick = function(e) {
+                if (e.target.classList && e.target.classList.contains('xf-menu-btn')) return;
+                var id = parseInt(this.getAttribute('data-id'));
+                var material = materials.find(m => m.id === id);
+                if (material) {
+                    openFile(material.path, material.category);
+                }
+            };
+        }
+        
+        // 绑定菜单按钮
+        var menuBtns = document.querySelectorAll('.xf-menu-btn');
+        for (var i = 0; i < menuBtns.length; i++) {
+            menuBtns[i].onclick = function(e) {
+                e.stopPropagation();
+                var id = parseInt(this.getAttribute('data-id'));
+                showXuefuMenu(id);
+            };
+        }
+        
+        // 添加素材按钮
+        var addBtn = document.getElementById('xfNewMaterialBtn');
+        if (addBtn) {
+            addBtn.onclick = function() {
+                addNewMaterial();
+            };
+        }
+    }
+    
+    function showXuefuMenu(materialId) {
+        var materials = loadMaterials();
+        var material = materials.find(m => m.id === materialId);
+        if (!material) return;
+        
+        var menu = document.createElement('div');
+        menu.style.cssText = 'position: fixed; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 4px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;';
+        menu.innerHTML = `
+            <button class="xf-edit" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">✏️ 编辑</button>
+            <button class="xf-delete" style="display: block; width: 100%; padding: 8px 16px; border: none; background: none; cursor: pointer; text-align: left;">🗑️ 删除</button>
+        `;
+        document.body.appendChild(menu);
+        
+        var rect = event.target.getBoundingClientRect();
+        menu.style.top = rect.bottom + 'px';
+        menu.style.left = rect.left + 'px';
+        
+        menu.querySelector('.xf-edit').onclick = function() {
+            editMaterial(materialId);
+            menu.remove();
+        };
+        
+        menu.querySelector('.xf-delete').onclick = function() {
+            if (confirm('确定要删除素材 "' + material.name + '" 吗？')) {
+                var newMaterials = materials.filter(m => m.id !== materialId);
+                saveMaterials(newMaterials);
+                renderXuefu();
+            }
+            menu.remove();
+        };
+        
+        setTimeout(function() {
+            document.addEventListener('click', function closeMenu(e) {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }, 100);
+    }
+    
+    function addNewMaterial() {
+        var name = prompt('请输入素材名称：');
+        if (!name || !name.trim()) return;
+        
+        var categoryMap = { '1': 'chm', '2': 'pdf', '3': 'txt', '4': 'other' };
+        var categoryChoice = prompt('请选择素材类型：\n1 - CHM文档\n2 - PDF文档\n3 - 文本文件\n4 - 其他', '1');
+        var category = categoryMap[categoryChoice] || 'other';
+        
+        var fileName = name.trim().replace(/[\\/:*?"<>|]/g, '');
+        var ext = '';
+        if (category === 'chm') ext = '.chm';
+        else if (category === 'pdf') ext = '.pdf';
+        else if (category === 'txt') ext = '.txt';
+        
+        var path = 'library/' + category + '/' + fileName + ext;
+        var desc = prompt('请输入素材描述（可选）：');
+        
+        var materials = loadMaterials();
+        var newId = Date.now();
+        materials.push({
+            id: newId,
+            category: category,
+            name: name.trim(),
+            path: path,
+            desc: desc || ''
+        });
+        saveMaterials(materials);
+        renderXuefu();
+        alert('素材已添加\n\n请将文件放入：' + path);
+    }
+    
+    function editMaterial(materialId) {
+        var materials = loadMaterials();
+        var material = materials.find(m => m.id === materialId);
+        if (!material) return;
+        
+        var newName = prompt('请输入素材名称：', material.name);
+        if (newName && newName.trim()) material.name = newName.trim();
+        
+        var newDesc = prompt('请输入素材描述：', material.desc);
+        if (newDesc !== null) material.desc = newDesc;
+        
+        saveMaterials(materials);
+        renderXuefu();
+    }
+    
+    function initXuefu() {
+        renderXuefu();
+        var xuefuPage = document.getElementById('xuefuPage');
+        if (xuefuPage) {
+            xuefuPage.style.display = 'block';
+        }
+    }
+    
+    // 绑定学府菜单按钮
+    setTimeout(function() {
+        var xuefuBtn = document.querySelector('.menu-item[data-page="xuefu"]');
+        var xuefuPage = document.getElementById('xuefuPage');
+        var homePage = document.querySelector('.book-page[data-page="home"]');
+        var jianghuPage = document.getElementById('jianghuPage');
+        
+        if (xuefuBtn && xuefuPage) {
+            xuefuBtn.onclick = function(e) {
+                e.stopPropagation();
+                if (homePage) homePage.style.display = 'none';
+                if (jianghuPage) jianghuPage.style.display = 'none';
+                var allPages = document.querySelectorAll('.book-page');
+                for (var i = 0; i < allPages.length; i++) {
+                    allPages[i].style.display = 'none';
+                }
+                xuefuPage.style.display = 'block';
+                renderXuefu();
+                
+                var menuItems = document.querySelectorAll('.menu-item');
+                for (var i = 0; i < menuItems.length; i++) {
+                    menuItems[i].classList.remove('active');
+                }
+                xuefuBtn.classList.add('active');
+            };
+        }
+    }, 500);
+    
+    window.initXuefu = initXuefu;
+    window.renderXuefu = renderXuefu;
+})();
+
+// ========== 修复书籍编辑页面残留菜单按钮 ==========
+(function fixBookMenuButton() {
+    // 在打开书籍编辑页面时，清理所有残留的菜单按钮
+    function cleanBookMenuButtons() {
+        var menuBtns = document.querySelectorAll('.book-menu-btn');
+        for (var i = 0; i < menuBtns.length; i++) {
+            // 检查按钮是否在错误的位置（不应该出现在编辑页面）
+            var parent = menuBtns[i].parentNode;
+            if (parent && parent.classList && parent.classList.contains('book-card')) {
+                // 如果在书籍卡片上，检查这个卡片是否在编辑页面中
+                var isInEditing = document.querySelector('.detail-editor');
+                if (isInEditing) {
+                    menuBtns[i].remove();
+                    console.log('已清理残留的书籍菜单按钮');
+                }
+            }
+        }
+    }
+    
+    // 在打开书籍时执行清理
+    var originalOpenBookTab = window.openBookTab;
+    if (originalOpenBookTab) {
+        window.openBookTab = function(bookId) {
+            originalOpenBookTab(bookId);
+            setTimeout(cleanBookMenuButtons, 100);
+        };
+    }
+    
+    // 在渲染书籍列表后，确保菜单按钮只出现在书籍卡片上
+    var originalRenderBooks = window.renderBooks;
+    if (originalRenderBooks) {
+        window.renderBooks = function() {
+            originalRenderBooks();
+            // 确保菜单按钮只在首页显示
+            setTimeout(function() {
+                var isEditing = document.querySelector('.detail-editor');
+                if (isEditing) {
+                    cleanBookMenuButtons();
+                }
+            }, 50);
+        };
+    }
+    
+    // 监听页面切换，清理残留
+    var originalSwitchToTab = window.switchToTab;
+    if (originalSwitchToTab) {
+        window.switchToTab = function(tabId) {
+            originalSwitchToTab(tabId);
+            setTimeout(function() {
+                if (tabId !== 'home') {
+                    cleanBookMenuButtons();
+                }
+            }, 100);
+        };
+    }
+    
+    console.log('书籍菜单按钮修复已启用');
 })();
