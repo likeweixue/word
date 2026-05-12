@@ -167,12 +167,8 @@ function showBookMenu(bookId, btn) {
     var book = getBookById(bookId);
     if (!book) return;
     var menu = document.createElement('div');
-    menu.className = 'context-menu';
     menu.style.cssText = 'position:fixed;background:#fff;border-radius:8px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;min-width:120px;';
-    menu.innerHTML = `
-        <button class="rename-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button>
-        <button class="delete-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除</button>
-    `;
+    menu.innerHTML = '<button class="rename-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button><button class="delete-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除</button>';
     var rect = btn.getBoundingClientRect();
     menu.style.top = rect.bottom + 'px';
     menu.style.left = rect.left + 'px';
@@ -206,10 +202,8 @@ function showGroupMenu(groupId, btn) {
     var group = groups.find(function(g) { return g.id == groupId; });
     if (!group || group.name === '默认分组') { alert('默认分组不能操作'); return; }
     var menu = document.createElement('div');
-    menu.className = 'context-menu';
     menu.style.cssText = 'position:fixed;background:#fff;border-radius:8px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;min-width:120px;';
-    menu.innerHTML = `<button class="rename-group" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button>
-        <button class="delete-group" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除分组</button>`;
+    menu.innerHTML = '<button class="rename-group" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button><button class="delete-group" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除分组</button>';
     var rect = btn.getBoundingClientRect();
     menu.style.top = rect.bottom + 'px';
     menu.style.left = rect.left + 'px';
@@ -263,9 +257,9 @@ function openBookTab(bookId) {
     
     var sidebar = document.querySelector('.sidebar-menu');
     if (sidebar) sidebar.style.display = 'none';
-    
     var toolbar = document.getElementById('mainToolbar');
     if (toolbar) toolbar.classList.add('visible');
+    setTimeout(initChaptersToggle, 200);
 }
 
 function renderBookEditor(bookId) {
@@ -308,13 +302,8 @@ function initBookEditor(tabId, bookId) {
     loadEditorSettings();
     initRightSidebar();
     
-    // 绑定回收站按钮
     var trashBtn = document.getElementById('trashBtnHeader');
-    if (trashBtn) {
-        trashBtn.onclick = function() {
-            openTrashPanel();
-        };
-    }
+    if (trashBtn) trashBtn.onclick = function() { openTrashPanel(); };
 }
 
 function loadEditorSettings() {
@@ -332,14 +321,7 @@ function loadEditorSettings() {
 function renderVolumeList() {
     var container = document.getElementById('volumeList');
     var book = getCurrentBook();
-    if (!container) {
-        console.log('volumeList not found');
-        return;
-    }
-    if (!book) {
-        console.log('book not found');
-        return;
-    }
+    if (!container || !book) return;
     container.innerHTML = '';
     if (!book.volumes || book.volumes.length === 0) {
         container.innerHTML = '<div style="padding:20px;text-align:center;opacity:0.6;">暂无分卷，点击"分卷"创建</div>';
@@ -392,10 +374,7 @@ function bindDeleteChapterEvents() {
             if (vol && vol.chapters) {
                 var ch = vol.chapters.find(function(c) { return c.id == chapterId; });
                 if (ch) {
-                    if (vol.chapters.length === 1) {
-                        alert('每个分卷至少保留一个章节');
-                        return;
-                    }
+                    if (vol.chapters.length === 1) { alert('每个分卷至少保留一个章节'); return; }
                     if (confirm('确定删除章节 "' + ch.title + '" 吗？删除后可在回收站恢复')) {
                         moveChapterToTrash(volId, chapterId, ch.title, ch.content);
                         vol.chapters = vol.chapters.filter(function(c) { return c.id !== chapterId; });
@@ -420,15 +399,13 @@ function showVolumeMenu(volId) {
     if (!vol) return;
     var menu = document.createElement('div');
     menu.style.cssText = 'position:fixed;background:#fff;border-radius:8px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;min-width:100px;';
-    menu.innerHTML = `<button class="rename-vol" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button>
-        <button class="delete-vol" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除分卷</button>`;
+    menu.innerHTML = '<button class="rename-vol" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button><button class="delete-vol" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除分卷</button>';
     document.body.appendChild(menu);
     var rect = event.target.getBoundingClientRect();
     menu.style.top = rect.bottom + 'px';
     menu.style.left = rect.left + 'px';
     menu.querySelector('.rename-vol').onclick = function() {
-        var newName = prompt('请输入新名称', vol.name);
-        if (newName) { vol.name = newName; saveAllData(); renderVolumeList(); renderBooks(); }
+        if (vol) { var newName = prompt('请输入新名称', vol.name); if (newName) { vol.name = newName; saveAllData(); renderVolumeList(); renderBooks(); } }
         menu.remove();
     };
     menu.querySelector('.delete-vol').onclick = function() {
@@ -534,38 +511,20 @@ function bindEditorEvents() {
     }
 }
 
-// 右侧边栏初始化
 function initRightSidebar() {
     if (document.getElementById('rightSidebar')) return;
-    
     var sidebarHtml = `
         <div id="rightSidebar" class="right-sidebar hidden">
             <div class="right-sidebar-content">
-                <div class="sidebar-tool-item" data-tool="outline">
-                    <div class="sidebar-tool-icon">📋</div>
-                    <div class="sidebar-tool-label">大纲</div>
-                </div>
-                <div class="sidebar-tool-item" data-tool="timeline">
-                    <div class="sidebar-tool-icon">⏱️</div>
-                    <div class="sidebar-tool-label">时间线</div>
-                </div>
-                <div class="sidebar-tool-item" data-tool="characters">
-                    <div class="sidebar-tool-icon">👥</div>
-                    <div class="sidebar-tool-label">角色</div>
-                </div>
-                <div class="sidebar-tool-item" data-tool="setting">
-                    <div class="sidebar-tool-icon">⚙️</div>
-                    <div class="sidebar-tool-label">设定</div>
-                </div>
-                <div class="sidebar-tool-item" data-tool="relation">
-                    <div class="sidebar-tool-icon">🔗</div>
-                    <div class="sidebar-tool-label">关系图</div>
-                </div>
+                <div class="sidebar-tool-item" data-tool="outline"><div class="sidebar-tool-icon">📋</div><div class="sidebar-tool-label">大纲</div></div>
+                <div class="sidebar-tool-item" data-tool="timeline"><div class="sidebar-tool-icon">⏱️</div><div class="sidebar-tool-label">时间线</div></div>
+                <div class="sidebar-tool-item" data-tool="characters"><div class="sidebar-tool-icon">👥</div><div class="sidebar-tool-label">角色</div></div>
+                <div class="sidebar-tool-item" data-tool="setting"><div class="sidebar-tool-icon">⚙️</div><div class="sidebar-tool-label">设定</div></div>
+                <div class="sidebar-tool-item" data-tool="relation"><div class="sidebar-tool-icon">🔗</div><div class="sidebar-tool-label">关系图</div></div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', sidebarHtml);
-    
     var tools = document.querySelectorAll('.sidebar-tool-item');
     for (var i = 0; i < tools.length; i++) {
         tools[i].onclick = function() {
@@ -576,156 +535,22 @@ function initRightSidebar() {
 }
 
 function openSecondaryWindow(tool) {
-    var titles = {
-        outline: '大纲管理',
-        timeline: '时间线',
-        characters: '角色管理',
-        setting: '设定管理',
-        relation: '关系图'
+    var fileMap = {
+        outline: 'outline.html',
+        timeline: 'timeline.html',
+        characters: 'characters.html',
+        setting: 'setting.html',
+        relation: 'relation.html'
     };
-    var title = titles[tool] || tool;
-    
-    var win = window.open('', tool, 'width=800,height=600,left=100,top=50');
-    win.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                body { font-family: system-ui; margin: 0; display: flex; height: 100vh; background: #f5f5f5; }
-                .sidebar { width: 260px; background: #fff; border-right: 1px solid #ddd; display: flex; flex-direction: column; }
-                .sidebar-header { padding: 16px; border-bottom: 1px solid #ddd; }
-                .sidebar-header h3 { margin: 0; }
-                .sidebar-content { flex: 1; overflow-y: auto; padding: 12px; }
-                .tree-item { padding: 8px; cursor: pointer; border-radius: 6px; margin-bottom: 4px; }
-                .tree-item:hover { background: #f0f0f0; }
-                .tree-item.active { background: #007aff; color: white; }
-                .editor { flex: 1; display: flex; flex-direction: column; background: #fff; margin: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-                .editor-header { padding: 16px; border-bottom: 1px solid #eee; }
-                .editor-title { font-size: 18px; font-weight: 600; width: 100%; padding: 8px; border: none; outline: none; }
-                .editor-content { flex: 1; padding: 16px; border: none; outline: none; resize: none; font-family: inherit; font-size: 14px; }
-                .toolbar { padding: 12px; border-top: 1px solid #eee; display: flex; gap: 8px; }
-                button { padding: 6px 12px; cursor: pointer; background: #007aff; color: white; border: none; border-radius: 6px; }
-                button.secondary { background: #6c757d; }
-            </style>
-        </head>
-        <body>
-            <div class="sidebar">
-                <div class="sidebar-header">
-                    <h3>${title}</h3>
-                    <button id="newItemBtn" style="margin-top:12px; width:100%;">+ 新建</button>
-                </div>
-                <div class="sidebar-content" id="treeList">
-                    <div style="text-align:center; color:#888; padding:20px;">暂无内容，点击新建</div>
-                </div>
-            </div>
-            <div class="editor">
-                <div class="editor-header">
-                    <input type="text" id="itemTitle" class="editor-title" placeholder="标题">
-                </div>
-                <textarea id="itemContent" class="editor-content" placeholder="内容..."></textarea>
-                <div class="toolbar">
-                    <button id="saveItemBtn">保存</button>
-                    <button id="deleteItemBtn" class="secondary">删除</button>
-                </div>
-            </div>
-            <script>
-                var storageKey = '${tool}_data';
-                var items = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                var currentId = null;
-                
-                function saveToLocal() {
-                    localStorage.setItem(storageKey, JSON.stringify(items));
-                }
-                
-                function renderTree() {
-                    var container = document.getElementById('treeList');
-                    if (items.length === 0) {
-                        container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">暂无内容，点击新建</div>';
-                        return;
-                    }
-                    container.innerHTML = items.map(function(item) {
-                        return '<div class="tree-item" data-id="' + item.id + '">' + escapeHtml(item.title) + '</div>';
-                    }).join('');
-                    container.querySelectorAll('.tree-item').forEach(function(el) {
-                        el.onclick = function() { loadItem(parseInt(this.getAttribute('data-id'))); };
-                    });
-                }
-                
-                function loadItem(id) {
-                    var item = items.find(function(i) { return i.id === id; });
-                    if (item) {
-                        currentId = item.id;
-                        document.getElementById('itemTitle').value = item.title;
-                        document.getElementById('itemContent').value = item.content;
-                        renderTree();
-                        var active = document.querySelector('.tree-item.active');
-                        if (active) active.classList.remove('active');
-                        var newActive = document.querySelector('.tree-item[data-id="' + id + '"]');
-                        if (newActive) newActive.classList.add('active');
-                    }
-                }
-                
-                function saveItem() {
-                    var title = document.getElementById('itemTitle').value;
-                    var content = document.getElementById('itemContent').value;
-                    if (!title) title = '未命名';
-                    if (currentId) {
-                        var item = items.find(function(i) { return i.id === currentId; });
-                        if (item) {
-                            item.title = title;
-                            item.content = content;
-                        }
-                    } else {
-                        var newId = Date.now();
-                        items.push({ id: newId, title: title, content: content });
-                        currentId = newId;
-                    }
-                    saveToLocal();
-                    renderTree();
-                    loadItem(currentId);
-                }
-                
-                function deleteItem() {
-                    if (!currentId) return;
-                    if (confirm('确定删除吗？')) {
-                        items = items.filter(function(i) { return i.id !== currentId; });
-                        currentId = null;
-                        document.getElementById('itemTitle').value = '';
-                        document.getElementById('itemContent').value = '';
-                        saveToLocal();
-                        renderTree();
-                    }
-                }
-                
-                function newItem() {
-                    currentId = null;
-                    document.getElementById('itemTitle').value = '';
-                    document.getElementById('itemContent').value = '';
-                    renderTree();
-                }
-                
-                function escapeHtml(str) {
-                    if (!str) return '';
-                    return str.replace(/[&<>]/g, function(m) {
-                        if (m === '&') return '&amp;';
-                        if (m === '<') return '&lt;';
-                        if (m === '>') return '&gt;';
-                        return m;
-                    });
-                }
-                
-                document.getElementById('newItemBtn').onclick = newItem;
-                document.getElementById('saveItemBtn').onclick = saveItem;
-                document.getElementById('deleteItemBtn').onclick = deleteItem;
-                renderTree();
-            <\/script>
-        </body>
-        </html>
-    `);
+    var file = fileMap[tool];
+    if (file) {
+        window.open(file, tool, 'width=1000,height=750,left=100,top=50');
+    } else {
+        alert(tool + '功能开发中');
+    }
 }
 
-// ========== 章节回收站功能 ==========
+// 章节回收站
 var chapterTrash = [];
 
 function loadChapterTrash() {
@@ -739,14 +564,7 @@ function saveChapterTrash() {
 }
 
 function moveChapterToTrash(volId, chapterId, chapterTitle, chapterContent) {
-    chapterTrash.unshift({
-        id: Date.now(),
-        volId: volId,
-        chapterId: chapterId,
-        title: chapterTitle,
-        content: chapterContent,
-        deletedTime: new Date().toLocaleString()
-    });
+    chapterTrash.unshift({ id: Date.now(), volId: volId, chapterId: chapterId, title: chapterTitle, content: chapterContent, deletedTime: new Date().toLocaleString() });
     if (chapterTrash.length > 50) chapterTrash.pop();
     saveChapterTrash();
 }
@@ -766,8 +584,8 @@ function restoreChapterFromTrash(trashId) {
         }
         chapterTrash = chapterTrash.filter(function(t) { return t.id !== trashId; });
         saveChapterTrash();
-        alert('已恢复章节: ' + item.title);
         if (typeof renderTrashPanel === 'function') renderTrashPanel();
+        alert('已恢复章节: ' + item.title);
     }
 }
 
@@ -810,18 +628,7 @@ function renderTrashPanel() {
     var html = '';
     for (var i = 0; i < chapterTrash.length; i++) {
         var item = chapterTrash[i];
-        html += `
-            <div class="chapter-trash-item" data-id="${item.id}">
-                <div>
-                    <div class="chapter-trash-title">${escapeHtml(item.title)}</div>
-                    <div class="chapter-trash-time">删除于: ${item.deletedTime}</div>
-                </div>
-                <div>
-                    <button class="restore-chapter-btn" data-id="${item.id}">恢复</button>
-                    <button class="delete-chapter-permanent-btn" data-id="${item.id}">永久删除</button>
-                </div>
-            </div>
-        `;
+        html += '<div class="chapter-trash-item" data-id="' + item.id + '"><div><div class="chapter-trash-title">' + escapeHtml(item.title) + '</div><div class="chapter-trash-time">删除于: ' + item.deletedTime + '</div></div><div><button class="restore-chapter-btn" data-id="' + item.id + '">恢复</button><button class="delete-chapter-permanent-btn" data-id="' + item.id + '">永久删除</button></div></div>';
     }
     container.innerHTML = html;
     var restoreBtns = container.querySelectorAll('.restore-chapter-btn');
@@ -842,6 +649,33 @@ function renderTrashPanel() {
             }
         };
     }
+}
+
+function initChaptersToggle() {
+    var toggleBtn = document.getElementById('toggleChaptersBtn');
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!toggleBtn || !chaptersPanel) return;
+    var isCollapsed = localStorage.getItem('chapters_collapsed') === 'true';
+    if (isCollapsed) {
+        chaptersPanel.classList.add('collapsed');
+        toggleBtn.innerHTML = '▶';
+        toggleBtn.title = '展开章节栏';
+    } else {
+        toggleBtn.innerHTML = '◀';
+        toggleBtn.title = '收起章节栏';
+    }
+    toggleBtn.onclick = function() {
+        chaptersPanel.classList.toggle('collapsed');
+        var collapsed = chaptersPanel.classList.contains('collapsed');
+        if (collapsed) {
+            toggleBtn.innerHTML = '▶';
+            toggleBtn.title = '展开章节栏';
+        } else {
+            toggleBtn.innerHTML = '◀';
+            toggleBtn.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
 }
 
 loadChapterTrash();

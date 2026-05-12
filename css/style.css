@@ -908,3 +908,96 @@ body.has-custom-bg #trashBtnHeader {
 body.has-custom-bg .toolbar-btn:hover {
     background: rgba(255, 255, 255, 0.2) !important;
 }
+
+/* 修复标签栏和菜单栏主题适配 */
+body.theme-dark .tabs-container,
+body.theme-dark .main-toolbar {
+    background: rgba(42, 42, 58, 0.95) !important;
+}
+body.theme-eye .tabs-container,
+body.theme-eye .main-toolbar {
+    background: rgba(184, 201, 181, 0.95) !important;
+}
+body.theme-warm .tabs-container,
+body.theme-warm .main-toolbar {
+    background: rgba(207, 197, 173, 0.95) !important;
+}
+
+/* 修复标签页背景 */
+body.theme-dark .tab {
+    background: #1e1e2e !important;
+    color: #e0e0e0 !important;
+}
+body.theme-dark .tab.active {
+    background: #2a2a3a !important;
+}
+body.theme-eye .tab {
+    background: #c8dbc5 !important;
+    color: #2c3e2f !important;
+}
+body.theme-eye .tab.active {
+    background: #d4e6d1 !important;
+}
+body.theme-warm .tab {
+    background: #dfd5bd !important;
+    color: #4a3b2c !important;
+}
+body.theme-warm .tab.active {
+    background: #efe5cd !important;
+}
+
+/* 主题预设按钮无边框 */
+.theme-preset-btn {
+    border: none !important;
+    outline: none !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+    cursor: pointer !important;
+}
+body.theme-default .theme-preset-btn[data-theme="default"],
+body.theme-eye .theme-preset-btn[data-theme="eye"],
+body.theme-warm .theme-preset-btn[data-theme="warm"],
+body.theme-dark .theme-preset-btn[data-theme="dark"] {
+    outline: 2px solid #007aff !important;
+    outline-offset: 1px !important;
+}
+
+/* 颜色选择器透明边框 */
+#globalTextColorSlide,
+input[type="color"] {
+    border: none !important;
+    background: transparent !important;
+    width: 100%;
+    height: 40px;
+    cursor: pointer;
+}
+
+/* 章节栏收起样式 */
+.detail-chapters {
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+.detail-chapters.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    border-right: none !important;
+}
+.detail-chapters.collapsed .chapters-header,
+.detail-chapters.collapsed .volume-list {
+    display: none;
+}
+
+/* 收起按钮样式 */
+.toggle-chapters-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 6px 12px;
+    margin-right: 8px;
+    border-radius: 6px;
+}
+.toggle-chapters-btn:hover {
+    background: rgba(0,0,0,0.08);
+}
