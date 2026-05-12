@@ -121,6 +121,7 @@ function openThemePanel() {
                     var img = ev.target.result;
                     bgPreview.style.backgroundImage = 'url(' + img + ')';
                     applyGlobalBg(img, opacitySlider ? parseInt(opacitySlider.value) : 30);
+            document.body.classList.add('has-custom-bg');
                 };
                 reader.readAsDataURL(file);
             }
@@ -438,6 +439,10 @@ function toggleRightSidebar() {
     if (sidebar) sidebar.classList.toggle('hidden');
 }
 
+function clearCustomBg() {
+    document.body.classList.remove('has-custom-bg');
+}
+
 function applyGlobalBg(imageUrl, opacity) {
     var oldStyle = document.getElementById('global-bg-style');
     if (oldStyle) oldStyle.remove();
@@ -579,3 +584,64 @@ function updateExportAction() {
 }
 
 setTimeout(updateExportAction, 500);
+
+// 透明背景模式
+function setTransparentMode(enable) {
+    var elements = document.querySelectorAll('.tabs-container, .main-toolbar, .detail-editor, .editor-content, .title-input, .status-bar, .chapters-header, .volume-list, .volume-title, .chapter-list, .chapter-item, .right-sidebar, .right-slide-panel');
+    for (var i = 0; i < elements.length; i++) {
+        if (enable) {
+            elements[i].style.setProperty('background', 'transparent', 'important');
+            elements[i].style.setProperty('backdrop-filter', 'none', 'important');
+        } else {
+            elements[i].style.removeProperty('background');
+            elements[i].style.removeProperty('backdrop-filter');
+        }
+    }
+    
+    var btns = document.querySelectorAll('#addVolumeBtn, #addChapterBtn');
+    for (var i = 0; i < btns.length; i++) {
+        if (enable) {
+            btns[i].style.setProperty('background', 'rgba(184, 202, 181, 0.5)', 'important');
+        } else {
+            btns[i].style.removeProperty('background');
+        }
+    }
+    
+    var trashBtn = document.getElementById('trashBtnHeader');
+    if (trashBtn) {
+        if (enable) {
+            trashBtn.style.setProperty('background', 'rgba(220, 53, 69, 0.7)', 'important');
+        } else {
+            trashBtn.style.removeProperty('background');
+        }
+    }
+}
+
+// 修改应用背景的函数
+var originalApplyGlobalBg = applyGlobalBg;
+window.applyGlobalBg = function(imageUrl, opacity) {
+    originalApplyGlobalBg(imageUrl, opacity);
+    setTransparentMode(true);
+    document.body.classList.add('has-custom-bg');
+};
+
+// 修改清除背景的函数
+var originalClearBg = function() {
+    var oldStyle = document.getElementById('global-bg-style');
+    if (oldStyle) oldStyle.remove();
+    setTransparentMode(false);
+    document.body.classList.remove('has-custom-bg');
+};
+
+// 替换清除按钮的功能
+setTimeout(function() {
+    var clearBtn = document.getElementById('themeClearBg');
+    if (clearBtn) {
+        clearBtn.onclick = function() {
+            originalClearBg();
+            var preview = document.getElementById('themeBgPreview');
+            if (preview) preview.style.backgroundImage = '';
+            alert('背景已清除');
+        };
+    }
+}, 500);
