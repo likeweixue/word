@@ -125,3 +125,9 @@ function switchPage(pageId) {
         if (pageId === 'stats') updateStats();
     }
 }
+
+function loadSettingsPage() {
+    if (typeof renderSettingsPage === 'function') {
+        renderSettingsPage();
+    }
+}

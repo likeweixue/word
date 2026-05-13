@@ -1,31 +1,7 @@
-// ========== 一级菜单栏功能 ==========
-
-window.importFile = importFile;
-window.toggleFullscreen = toggleFullscreen;
-window.openThemePanel = openThemePanel;
-window.openFontPanel = openFontPanel;
-window.autoFormat = autoFormat;
-window.openFindReplacePanel = openFindReplacePanel;
-window.openNamegenWindow = openNamegenWindow;
-window.toggleDualMode = toggleDualMode;
-window.openSeclusionPanel = openSeclusionPanel;
-window.openNotesWindow = openNotesWindow;
-window.exportChapter = exportChapter;
-window.toggleRightSidebar = toggleRightSidebar;
-window.openSeclusionPanel = openSeclusionPanel;
-window.openExportPanel = openExportPanel;
-window.exportBook = exportBook;
-function initToolbar() {
-    var btns = document.querySelectorAll('.toolbar-btn');
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].onclick = function() {
-            var action = this.getAttribute('data-action');
-            handleToolbarAction(action);
-        };
-    }
-}
+// ========== 工具栏功能 ==========
 
 function handleToolbarAction(action) {
+    console.log('点击:', action);
     switch(action) {
         case 'import': importFile(); break;
         case 'fullscreen': toggleFullscreen(); break;
@@ -41,250 +17,23 @@ function handleToolbarAction(action) {
         case 'save': if (typeof saveCurrentChapter === 'function') { saveCurrentChapter(); alert('已保存'); } break;
         case 'export': openExportPanel(); break;
         case 'sidebar': toggleRightSidebar(); break;
+        default: console.log('未知:', action);
     }
 }
 
-// 主题面板（右侧滑出）
-function openThemePanel() {
-    var panel = document.getElementById('themeSlidePanel');
+// 通用关闭面板函数
+function closePanel(panelId) {
+    var panel = document.getElementById(panelId);
     if (panel) {
-        panel.classList.toggle('open');
-        return;
-    }
-    var html = `
-        <div id="themeSlidePanel" class="right-slide-panel">
-            <div class="right-slide-panel-header">
-                <h3>主题设置</h3>
-                <button class="right-slide-panel-close" onclick="document.getElementById('themeSlidePanel').classList.remove('open')">✕</button>
-            </div>
-            <div class="right-slide-panel-content">
-                <h5>预设主题</h5>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;">
-                    <button data-theme="default" class="theme-preset-btn" style="padding:6px 12px;cursor:pointer;">默认白</button>
-                    <button data-theme="eye" class="theme-preset-btn" style="padding:6px 12px;cursor:pointer;">护眼绿</button>
-                    <button data-theme="warm" class="theme-preset-btn" style="padding:6px 12px;cursor:pointer;">经典黄</button>
-                    <button data-theme="dark" class="theme-preset-btn" style="padding:6px 12px;cursor:pointer;">暗夜黑</button>
-                </div>
-                <h5>网格线</h5>
-                <label style="display:block; margin-bottom:20px;"><input type="checkbox" id="gridLinesCheckboxSlide"> 显示网格线</label>
-                <h5>背景图片</h5>
-                <input type="file" id="themeBgUploadSlide" accept="image/*" style="margin-bottom:8px; width:100%;">
-                <div id="themeBgPreviewSlide" style="width:100%; height:80px; background:#ddd; border-radius:6px; margin-bottom:12px; background-size:cover;"></div>
-                <div style="margin-bottom:20px;">
-                    <span>透明度: <span id="themeOpacityValSlide">30</span>%</span>
-                    <input type="range" id="themeOpacitySliderSlide" min="0" max="100" value="30" style="width:100%;">
-                </div>
-                <h5>全局文字颜色</h5>
-                <input type="color" id="globalTextColorSlide" value="#333333" style="width:100%;">
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    // 预设主题按钮
-    var presetBtns = document.querySelectorAll('.theme-preset-btn');
-    for (var i = 0; i < presetBtns.length; i++) {
-        presetBtns[i].onclick = function() {
-            var theme = this.getAttribute('data-theme');
-            var link = document.getElementById('themeStyle');
-            if (link) link.href = 'themes/' + theme + '.css';
-            document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark');
-            document.body.classList.add('theme-' + theme);
-            localStorage.setItem('app_theme', theme);
-        };
-    }
-    
-    // 网格线
-    var gridCheck = document.getElementById('gridLinesCheckboxSlide'); if (gridCheck) { gridCheck.onchange = function() { var editor = document.getElementById('editor'); if (editor) { if (this.checked) editor.classList.add('show-grid'); else editor.classList.remove('show-grid'); } }; var savedGrid = localStorage.getItem('editor_grid_lines'); if (savedGrid === 'true') { gridCheck.checked = true; if (editor) editor.classList.add('show-grid'); } }
-    if (gridCheck) {
-        gridCheck.onchange = function() {
-            var editor = document.getElementById('editor');
-            if (editor) {
-                if (this.checked) editor.classList.add('show-grid');
-                else editor.classList.remove('show-grid');
-            }
-        };
-    }
-    
-    // 背景上传
-    var bgUpload = document.getElementById('themeBgUploadSlide');
-    var bgPreview = document.getElementById('themeBgPreviewSlide');
-    var opacitySlider = document.getElementById('themeOpacitySliderSlide');
-    var opacityVal = document.getElementById('themeOpacityValSlide');
-    
-    if (bgUpload) {
-        bgUpload.onchange = function(e) {
-            var file = e.target.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var img = ev.target.result;
-                    bgPreview.style.backgroundImage = 'url(' + img + ')';
-                    applyGlobalBg(img, opacitySlider ? parseInt(opacitySlider.value) : 30);
-            document.body.classList.add('has-custom-bg');
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-    }
-    if (opacitySlider) {
-        opacitySlider.oninput = function() {
-            opacityVal.textContent = this.value;
-            var img = bgPreview.style.backgroundImage.slice(5, -2);
-            if (img && img !== 'null') applyGlobalBg(img, parseInt(this.value));
-        };
-    }
-    
-    var colorPicker = document.getElementById('globalTextColorSlide');
-    if (colorPicker) {
-        colorPicker.onchange = function() {
-            var color = this.value;
-            var style = document.getElementById('global-color-style');
-            if (style) style.remove();
-            var newStyle = document.createElement('style');
-            newStyle.id = 'global-color-style';
-            newStyle.textContent = '* { color: ' + color + ' !important; }';
-            document.head.appendChild(newStyle);
-            localStorage.setItem('global_text_color', color);
-        };
-        var savedColor = localStorage.getItem('global_text_color');
-        if (savedColor) colorPicker.value = savedColor;
+        panel.classList.remove('open');
     }
 }
-
-// 字体面板（右侧滑出）
-function openFontPanel() {
-    var panel = document.getElementById('fontSlidePanel');
+    var panel = document.getElementById(panelId);
     if (panel) {
-        panel.classList.toggle('open');
-        return;
+        panel.classList.remove('open');
+        // panel.style.display = 'none';
+        panel.style.transform = '';
     }
-    var html = `
-        <div id="fontSlidePanel" class="right-slide-panel">
-            <div class="right-slide-panel-header">
-                <h3>字体设置</h3>
-                <button class="right-slide-panel-close" onclick="document.getElementById('fontSlidePanel').classList.remove('open')">✕</button>
-            </div>
-            <div class="right-slide-panel-content">
-                <label>字体：</label>
-                <select id="fontFamilySlide" style="width:100%; margin:8px 0 16px; padding:8px;">
-                    <option value="system-ui">系统默认</option>
-                    <option value="Georgia, serif">宋体风格</option>
-                    <option value="PingFang SC, Microsoft YaHei">苹方/雅黑</option>
-                    <option value="KaiTi, serif">楷体</option>
-                    <option value="Courier New, monospace">等宽字体</option>
-                </select>
-                <label>字号：</label>
-                <select id="fontSizeSlide" style="width:100%; margin:8px 0 16px; padding:8px;">
-                    <option value="12">12px</option>
-                    <option value="14" selected>14px</option>
-                    <option value="16">16px</option>
-                    <option value="18">18px</option>
-                    <option value="20">20px</option>
-                    <option value="24">24px</option>
-                </select>
-                <label>行高：</label>
-                <select id="lineHeightSlide" style="width:100%; margin:8px 0 16px; padding:8px;">
-                    <option value="1.5">1.5</option>
-                    <option value="1.8" selected>1.8</option>
-                    <option value="2.0">2.0</option>
-                    <option value="2.5">2.5</option>
-                </select>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    var fontFamily = document.getElementById('fontFamilySlide');
-    var fontSize = document.getElementById('fontSizeSlide');
-    var lineHeight = document.getElementById('lineHeightSlide');
-    var editor = document.getElementById('editor');
-    
-    if (fontFamily) {
-        fontFamily.onchange = function() {
-            if (editor) editor.style.fontFamily = this.value;
-            localStorage.setItem('editor_font_family', this.value);
-        };
-        var savedFont = localStorage.getItem('editor_font_family');
-        if (savedFont) fontFamily.value = savedFont;
-        if (editor && savedFont) editor.style.fontFamily = savedFont;
-    }
-    if (fontSize) {
-        fontSize.onchange = function() {
-            if (editor) editor.style.fontSize = this.value + 'px';
-            localStorage.setItem('editor_font_size', this.value);
-        };
-        var savedSize = localStorage.getItem('editor_font_size');
-        if (savedSize) fontSize.value = savedSize;
-        if (editor && savedSize) editor.style.fontSize = savedSize + 'px';
-    }
-    if (lineHeight) {
-        lineHeight.onchange = function() {
-            if (editor) editor.style.lineHeight = this.value;
-            localStorage.setItem('editor_line_height', this.value);
-        };
-        var savedLine = localStorage.getItem('editor_line_height');
-        if (savedLine) lineHeight.value = savedLine;
-        if (editor && savedLine) editor.style.lineHeight = savedLine;
-    }
-}
-
-// 查找替换面板（右侧滑出）
-function openFindReplacePanel() {
-    var panel = document.getElementById('findSlidePanel');
-    if (panel) {
-        panel.classList.toggle('open');
-        return;
-    }
-    var html = `
-        <div id="findSlidePanel" class="right-slide-panel">
-            <div class="right-slide-panel-header">
-                <h3>查找替换</h3>
-                <button class="right-slide-panel-close" onclick="document.getElementById('findSlidePanel').classList.remove('open')">✕</button>
-            </div>
-            <div class="right-slide-panel-content">
-                <input type="text" id="findTextSlide" placeholder="查找内容" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
-                <input type="text" id="replaceTextSlide" placeholder="替换为" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
-                <div style="display:flex; gap:12px;">
-                    <button id="findNextBtnSlide" class="btn-primary" style="flex:1; padding:8px;">查找下一个</button>
-                    <button id="replaceBtnSlide" class="btn-primary" style="flex:1; padding:8px;">替换</button>
-                    <button id="replaceAllBtnSlide" class="btn-primary" style="flex:1; padding:8px;">全部替换</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    document.getElementById('findNextBtnSlide').onclick = function() {
-        var findText = document.getElementById('findTextSlide').value;
-        if (!findText) return;
-        var editor = document.getElementById('editor');
-        if (editor) {
-            var content = editor.innerText;
-            if (content.indexOf(findText) !== -1) alert('找到匹配内容');
-            else alert('没有找到');
-        }
-    };
-    document.getElementById('replaceBtnSlide').onclick = function() {
-        var findText = document.getElementById('findTextSlide').value;
-        var replaceText = document.getElementById('replaceTextSlide').value;
-        var editor = document.getElementById('editor');
-        if (editor && findText) {
-            editor.innerHTML = editor.innerHTML.replace(new RegExp(findText, 'g'), replaceText);
-            if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
-        }
-    };
-    document.getElementById('replaceAllBtnSlide').onclick = function() {
-        var findText = document.getElementById('findTextSlide').value;
-        var replaceText = document.getElementById('replaceTextSlide').value;
-        var editor = document.getElementById('editor');
-        if (editor && findText) {
-            var regex = new RegExp(findText, 'g');
-            editor.innerHTML = editor.innerHTML.replace(regex, replaceText);
-            if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
-            alert('替换完成');
-        }
-    };
 }
 
 function importFile() {
@@ -329,17 +78,162 @@ function autoFormat() {
     alert('排版完成');
 }
 
+function openThemePanel() {
+    var panel = document.getElementById('themeSlidePanel');
+    if (panel) {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) {
+            // panel.style.display = 'flex';
+            panel.style.transform = '';
+        } else {
+            // panel.style.display = 'none';
+        }
+        return;
+    }
+    var html = '<div id="themeSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>主题设置</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><h5>预设主题</h5><div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"><button data-theme="default" class="theme-preset-btn">默认白</button><button data-theme="eye" class="theme-preset-btn">护眼绿</button><button data-theme="warm" class="theme-preset-btn">经典黄</button><button data-theme="dark" class="theme-preset-btn">暗夜黑</button><button data-theme="open" class="theme-preset-btn">Open圆润</button></div><h5>网格线</h5><label><input type="checkbox" id="gridLinesCheckboxSlide"> 显示网格线</label><h5>背景图片</h5><input type="file" id="themeBgUploadSlide" accept="image/*"><div id="themeBgPreviewSlide" style="width:100%; height:80px; background:#ddd; border-radius:6px; margin-top:8px;"></div><div><span>透明度: <span id="themeOpacityValSlide">30</span>%</span><input type="range" id="themeOpacitySliderSlide" min="0" max="100" value="30"></div><h5>全局文字颜色</h5><input type="color" id="globalTextColorSlide" value="#333333"></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    var closeBtn = document.querySelector('#themeSlidePanel .right-slide-panel-close');
+    if (closeBtn) closeBtn.onclick = function() { closePanel('themeSlidePanel'); };
+    
+    var presetBtns = document.querySelectorAll('.theme-preset-btn');
+    for (var i = 0; i < presetBtns.length; i++) {
+        presetBtns[i].onclick = function() {
+            var theme = this.getAttribute('data-theme');
+            var link = document.getElementById('themeStyle');
+            if (link) link.href = 'themes/' + theme + '.css';
+            document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark', 'theme-open');
+            document.body.classList.add('theme-' + theme);
+        };
+    }
+    
+    var gridCheck = document.getElementById('gridLinesCheckboxSlide');
+    if (gridCheck) {
+        gridCheck.onchange = function() {
+            var editor = document.getElementById('editor');
+            if (editor) {
+                if (this.checked) editor.classList.add('show-grid');
+                else editor.classList.remove('show-grid');
+            }
+        };
+    }
+    
+    var bgUpload = document.getElementById('themeBgUploadSlide');
+    var bgPreview = document.getElementById('themeBgPreviewSlide');
+    var opacitySlider = document.getElementById('themeOpacitySliderSlide');
+    var opacityVal = document.getElementById('themeOpacityValSlide');
+    if (bgUpload) {
+        bgUpload.onchange = function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var img = ev.target.result;
+                    bgPreview.style.backgroundImage = 'url(' + img + ')';
+                    applyGlobalBg(img, opacitySlider ? parseInt(opacitySlider.value) : 30);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+    }
+    if (opacitySlider) {
+        opacitySlider.oninput = function() {
+            opacityVal.textContent = this.value;
+            var img = bgPreview.style.backgroundImage.slice(5, -2);
+            if (img && img !== 'null') applyGlobalBg(img, parseInt(this.value));
+        };
+    }
+    
+    var colorPicker = document.getElementById('globalTextColorSlide');
+    if (colorPicker) {
+        colorPicker.onchange = function() {
+            var color = this.value;
+            var style = document.getElementById('global-color-style');
+            if (style) style.remove();
+            var newStyle = document.createElement('style');
+            newStyle.id = 'global-color-style';
+            newStyle.textContent = '* { color: ' + color + ' !important; }';
+            document.head.appendChild(newStyle);
+        };
+    }
+    document.getElementById('themeSlidePanel').classList.add('open');
+    document.getElementById('themeSlidePanel').style.display = 'flex';
+}
+
+function openFontPanel() {
+    var panel = document.getElementById('fontSlidePanel');
+    if (panel) {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) {
+            // panel.style.display = 'flex';
+        } else {
+            // panel.style.display = 'none';
+        }
+        return;
+    }
+    var html = '<div id="fontSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>字体设置</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><label>字体：</label><select id="fontFamilySlide"><option value="system-ui">系统默认</option><option value="Georgia, serif">宋体风格</option><option value="PingFang SC, Microsoft YaHei">苹方/雅黑</option><option value="KaiTi, serif">楷体</option><option value="Courier New, monospace">等宽字体</option></select><label>字号：</label><select id="fontSizeSlide"><option value="12">12px</option><option value="14" selected>14px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option><option value="24">24px</option></select><label>行高：</label><select id="lineHeightSlide"><option value="1.5">1.5</option><option value="1.8" selected>1.8</option><option value="2.0">2.0</option><option value="2.5">2.5</option></select></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    var closeBtn = document.querySelector('#fontSlidePanel .right-slide-panel-close');
+    if (closeBtn) closeBtn.onclick = function() { closePanel('fontSlidePanel'); };
+    
+    var fontFamily = document.getElementById('fontFamilySlide');
+    var fontSize = document.getElementById('fontSizeSlide');
+    var lineHeight = document.getElementById('lineHeightSlide');
+    var editor = document.getElementById('editor');
+    if (fontFamily) {
+        fontFamily.onchange = function() { if (editor) editor.style.fontFamily = this.value; localStorage.setItem('editor_font_family', this.value); };
+        var savedFont = localStorage.getItem('editor_font_family');
+        if (savedFont) fontFamily.value = savedFont;
+        if (editor && savedFont) editor.style.fontFamily = savedFont;
+    }
+    if (fontSize) {
+        fontSize.onchange = function() { if (editor) editor.style.fontSize = this.value + 'px'; localStorage.setItem('editor_font_size', this.value); };
+        var savedSize = localStorage.getItem('editor_font_size');
+        if (savedSize) fontSize.value = savedSize;
+        if (editor && savedSize) editor.style.fontSize = savedSize + 'px';
+    }
+    if (lineHeight) {
+        lineHeight.onchange = function() { if (editor) editor.style.lineHeight = this.value; localStorage.setItem('editor_line_height', this.value); };
+        var savedLine = localStorage.getItem('editor_line_height');
+        if (savedLine) lineHeight.value = savedLine;
+        if (editor && savedLine) editor.style.lineHeight = savedLine;
+    }
+    document.getElementById('fontSlidePanel').classList.add('open');
+    document.getElementById('fontSlidePanel').style.display = 'flex';
+}
+
+function openFindReplacePanel() {
+    var panel = document.getElementById('findSlidePanel');
+    if (panel) {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) {
+            // panel.style.display = 'flex';
+        } else {
+            // panel.style.display = 'none';
+        }
+        return;
+    }
+    var html = '<div id="findSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>查找替换</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><input type="text" id="findTextSlide" placeholder="查找内容"><input type="text" id="replaceTextSlide" placeholder="替换为"><div><button id="findNextBtnSlide">查找下一个</button><button id="replaceBtnSlide">替换</button><button id="replaceAllBtnSlide">全部替换</button></div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    var closeBtn = document.querySelector('#findSlidePanel .right-slide-panel-close');
+    if (closeBtn) closeBtn.onclick = function() { closePanel('findSlidePanel'); };
+    
+    document.getElementById('findNextBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; if (!findText) return; var editor = document.getElementById('editor'); if (editor) alert(editor.innerText.indexOf(findText) !== -1 ? '找到' : '未找到'); };
+    document.getElementById('replaceBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; var replaceText = document.getElementById('replaceTextSlide').value; var editor = document.getElementById('editor'); if (editor && findText) { editor.innerHTML = editor.innerHTML.replace(new RegExp(findText, 'g'), replaceText); if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); } };
+    document.getElementById('replaceAllBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; var replaceText = document.getElementById('replaceTextSlide').value; var editor = document.getElementById('editor'); if (editor && findText) { editor.innerHTML = editor.innerHTML.replace(new RegExp(findText, 'g'), replaceText); if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); alert('替换完成'); } };
+    document.getElementById('findSlidePanel').classList.add('open');
+    document.getElementById('findSlidePanel').style.display = 'flex';
+}
+
 function openNamegenWindow() {
     window.open('namegen.html', 'namegen', 'width=1300,height=900,left=100,top=50');
-}
-    var win = window.open('', 'namegen', 'width=600,height=500,left=200,top=100');
-    win.document.write('<!DOCTYPE html><html><head><title>起名助手</title><style>body{font-family:system-ui;padding:20px;background:#f5f5f5;}.container{max-width:500px;margin:0 auto;}select,button{padding:8px 16px;margin:8px 0;}.result{font-size:24px;font-weight:bold;text-align:center;padding:30px;background:white;border-radius:12px;margin:20px 0;}</style></head><body><div class="container"><h2>起名助手</h2><select id="nameType"><option value="person">人物名</option><option value="place">地名</option></select><button id="generateBtn">随机生成</button><div class="result" id="result">点击生成</div><button id="copyBtn">复制</button></div><script>var surnames=["林","陈","李","张","王"];var givenNames=["轩","宇","辰","逸"];var prefixes=["苍","玄","天","云"];var suffixes=["山","峰","岭","谷"];function generateName(type){if(type==="person"){return surnames[Math.floor(Math.random()*surnames.length)]+givenNames[Math.floor(Math.random()*givenNames.length)];}return prefixes[Math.floor(Math.random()*prefixes.length)]+suffixes[Math.floor(Math.random()*suffixes.length)];}document.getElementById("generateBtn").onclick=function(){var type=document.getElementById("nameType").value;var name=generateName(type);document.getElementById("result").innerText=name;};document.getElementById("copyBtn").onclick=function(){var name=document.getElementById("result").innerText;if(name&&name!=="点击生成"){navigator.clipboard.writeText(name);alert("已复制");}};<\/script></body></html>');
 }
 
 function toggleDualMode() {
     var editor = document.getElementById('editor');
     if (!editor) return;
-    var editorContainer = editor.parentElement;
     var existingDual = document.getElementById('dualEditor');
     if (existingDual) {
         existingDual.remove();
@@ -348,33 +242,47 @@ function toggleDualMode() {
     } else {
         var originalContent = editor.innerHTML;
         editor.style.display = 'none';
-        var dualHtml = '<div id="dualEditor" style="display:flex; flex:1; gap:16px; padding:0 16px 16px 16px;">';
-        dualHtml += '<div style="flex:1; display:flex; flex-direction:column; background:#fff; border-radius:8px; overflow:hidden; border:1px solid #ddd;"><div style="padding:8px; background:#f0f0f0; border-bottom:1px solid #ddd;">原模式</div><div id="dualLeft" contenteditable="true" style="flex:1; padding:16px; overflow-y:auto; outline:none;">' + originalContent + '</div></div>';
-        dualHtml += '<div style="flex:1; display:flex; flex-direction:column; background:#fff; border-radius:8px; overflow:hidden; border:1px solid #ddd;"><div style="padding:8px; background:#f0f0f0; border-bottom:1px solid #ddd;">精简模式</div><div id="dualRight" contenteditable="true" style="flex:1; padding:16px; overflow-y:auto; outline:none;">' + originalContent + '</div></div>';
-        dualHtml += '</div><button id="closeDualMode" style="position:fixed; bottom:20px; right:20px; padding:8px 16px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer;">退出双栏</button>';
-        editorContainer.insertAdjacentHTML('beforeend', dualHtml);
+        var dualHtml = '<div id="dualEditor" style="display:flex; gap:16px; padding:16px;"><div style="flex:1; background:#fff; border-radius:12px; padding:16px;"><div style="margin-bottom:8px;">原模式</div><div id="dualLeft" contenteditable="true" style="min-height:300px; outline:none;">' + originalContent + '</div></div><div style="flex:1; background:#fff; border-radius:12px; padding:16px;"><div style="margin-bottom:8px;">精简模式</div><div id="dualRight" contenteditable="true" style="min-height:300px; outline:none;">' + originalContent + '</div></div></div><button id="closeDualMode" style="position:fixed; bottom:20px; right:20px; background:#dc3545; color:white; border:none; border-radius:8px; padding:8px 16px;">退出双栏</button>';
+        editor.parentElement.insertAdjacentHTML('beforeend', dualHtml);
         var leftEditor = document.getElementById('dualLeft');
         var rightEditor = document.getElementById('dualRight');
         var closeBtn = document.getElementById('closeDualMode');
         if (leftEditor && rightEditor) {
-            leftEditor.addEventListener('input', function() { rightEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); });
-            rightEditor.addEventListener('input', function() { leftEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); });
+            leftEditor.oninput = function() { rightEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
+            rightEditor.oninput = function() { leftEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
         }
         if (closeBtn) closeBtn.onclick = function() { document.getElementById('dualEditor').remove(); closeBtn.remove(); editor.style.display = 'block'; };
     }
 }
 
-var seclusionActive = false, seclusionTimer = null, seclusionCheckInterval = null;
-
 function openSeclusionPanel() {
-    var panel = document.getElementById('seclusionPanel');
-    if (panel) panel.style.display = 'block';
+    var panel = document.getElementById('seclusionSlidePanel');
+    if (panel) {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) {
+            // panel.style.display = 'flex';
+        } else {
+            // panel.style.display = 'none';
+        }
+        return;
+    }
+    var html = '<div id="seclusionSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>闭关修炼</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><label>目标字数：</label><input type="number" id="seclusionGoal" value="3000"><label>自动出关时间（小时）：</label><input type="number" id="seclusionTimeout" value="0"><div id="seclusionProgress" style="display:none;"><div>进度：<span id="seclusionCurrent">0</span> / <span id="seclusionGoalDisplay">3000</span></div><div style="height:8px; background:#ddd;"><div id="seclusionProgressFill" style="height:100%; width:0%; background:#007aff;"></div></div></div><button id="startSeclusionBtn">开始闭关</button><button id="stopSeclusionBtn" style="display:none;">结束闭关</button></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    var closeBtn = document.querySelector('#seclusionSlidePanel .right-slide-panel-close');
+    if (closeBtn) closeBtn.onclick = function() { closePanel('seclusionSlidePanel'); };
+    
+    document.getElementById('startSeclusionBtn').onclick = startSeclusion;
+    document.getElementById('stopSeclusionBtn').onclick = function() { endSeclusion(false); alert('闭关已结束'); };
+    document.getElementById('seclusionSlidePanel').classList.add('open');
+    document.getElementById('seclusionSlidePanel').style.display = 'flex';
 }
 
+var seclusionActive = false, seclusionTimer = null, seclusionCheckInterval = null;
 function startSeclusion() {
     var goal = parseInt(document.getElementById('seclusionGoal').value);
     var timeout = parseInt(document.getElementById('seclusionTimeout').value);
-    if (isNaN(goal) || goal <= 0) { alert('请输入有效的目标字数'); return; }
+    if (isNaN(goal) || goal <= 0) { alert('请输入有效目标字数'); return; }
     seclusionActive = true;
     var startWords = getCurrentWordCount();
     document.getElementById('seclusionProgress').style.display = 'block';
@@ -391,20 +299,19 @@ function startSeclusion() {
         document.getElementById('seclusionProgressFill').style.width = progress + '%';
         if (current - startWords >= goal) { endSeclusion(true); alert('恭喜！完成闭关目标！'); clearInterval(seclusionCheckInterval); }
     }, 1000);
-    document.getElementById('seclusionPanel').style.display = 'none';
+    document.getElementById('seclusionSlidePanel').classList.remove('open');
+    document.getElementById('seclusionSlidePanel').style.display = 'none';
 }
-
 function endSeclusion(success) {
     seclusionActive = false;
     if (seclusionTimer) clearTimeout(seclusionTimer);
     var startBtn = document.getElementById('startSeclusionBtn');
     var stopBtn = document.getElementById('stopSeclusionBtn');
-    var progressDiv = document.getElementById('seclusionProgress');
     if (startBtn) startBtn.style.display = 'block';
     if (stopBtn) stopBtn.style.display = 'none';
+    var progressDiv = document.getElementById('seclusionProgress');
     if (progressDiv) progressDiv.style.display = 'none';
 }
-
 function getCurrentWordCount() {
     if (typeof getCurrentChapter === 'function') {
         var ch = getCurrentChapter();
@@ -416,7 +323,30 @@ function getCurrentWordCount() {
 }
 
 function openNotesWindow() {
-    window.open('', 'notes', 'width=800,height=600,left=100,top=50').document.write('<!DOCTYPE html><html><head><title>笔记</title><style>body{font-family:system-ui;margin:0;display:flex;height:100vh;}.sidebar{width:200px;border-right:1px solid #ddd;padding:16px;}.editor{flex:1;display:flex;flex-direction:column;padding:16px;}.editor textarea{flex:1;padding:12px;border:1px solid #ddd;border-radius:8px;}</style></head><body><div class="sidebar"><h3>我的笔记</h3><button id="newNoteBtn">+ 新建</button><div id="noteList"></div></div><div class="editor"><textarea id="noteContent" placeholder="笔记内容..."></textarea><button id="saveNoteBtn" style="margin-top:12px;">保存</button></div><script>var notes=JSON.parse(localStorage.getItem("user_notes")||\'[{"id":1,"content":"在这里记录写作灵感"}]\');var currentId=notes[0]?notes[0].id:null;function render(){var html=\'<ul style="list-style:none;padding:0;">\'+notes.map(function(n){return\'<li style="padding:8px;cursor:pointer;" onclick="loadNote(\'+n.id+\')">\'+escapeHtml(n.content.substring(0,30))+"</li>"}).join("")+"</ul>";document.getElementById("noteList").innerHTML=html;}function loadNote(id){var note=notes.find(function(n){return n.id===id;});if(note){currentId=note.id;document.getElementById("noteContent").value=note.content;}}function saveNote(){var content=document.getElementById("noteContent").value;if(!content)return;var note=notes.find(function(n){return n.id===currentId;});if(note){note.content=content;}else{notes.push({id:Date.now(),content:content});currentId=notes[notes.length-1].id;}localStorage.setItem("user_notes",JSON.stringify(notes));render();alert("已保存");}function newNote(){notes.push({id:Date.now(),content:"新笔记"});currentId=notes[notes.length-1].id;render();loadNote(currentId);}function escapeHtml(str){if(!str)return"";return str.replace(/[&<>]/g,function(m){if(m==="&")return"&amp;";if(m==="<")return"&lt;";if(m===">")return"&gt;";return m;});}document.getElementById("newNoteBtn").onclick=newNote;document.getElementById("saveNoteBtn").onclick=saveNote;render();if(notes.length>0)loadNote(notes[0].id);<\/script></body></html>');
+    window.open('notes.html', 'notes', 'width=900,height=700,left=100,top=50');
+}
+
+function openExportPanel() {
+    var panel = document.getElementById('exportSlidePanel');
+    if (panel) {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) {
+            // panel.style.display = 'flex';
+        } else {
+            // panel.style.display = 'none';
+        }
+        return;
+    }
+    var html = '<div id="exportSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>导出</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><button id="exportChapterBtn">导出本章</button><button id="exportBookBtn">导出全书</button></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    var closeBtn = document.querySelector('#exportSlidePanel .right-slide-panel-close');
+    if (closeBtn) closeBtn.onclick = function() { closePanel('exportSlidePanel'); };
+    
+    document.getElementById('exportChapterBtn').onclick = function() { if (typeof exportChapter === 'function') exportChapter(); closePanel('exportSlidePanel'); };
+    document.getElementById('exportBookBtn').onclick = function() { if (typeof exportBook === 'function') exportBook(); closePanel('exportSlidePanel'); };
+    document.getElementById('exportSlidePanel').classList.add('open');
+    document.getElementById('exportSlidePanel').style.display = 'flex';
 }
 
 function exportChapter() {
@@ -436,131 +366,19 @@ function exportChapter() {
     }
 }
 
-function toggleRightSidebar() {
-    var sidebar = document.getElementById('rightSidebar');
-    if (sidebar) sidebar.classList.toggle('hidden');
-}
-
-function clearCustomBg() {
-    document.body.classList.remove('has-custom-bg');
-}
-
-function applyGlobalBg(imageUrl, opacity) {
-    var oldStyle = document.getElementById('global-bg-style');
-    if (oldStyle) oldStyle.remove();
-    if (imageUrl) {
-        var style = document.createElement('style');
-        style.id = 'global-bg-style';
-        style.textContent = 'body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url(' + JSON.stringify(imageUrl) + '); background-size: cover; background-position: center; opacity: ' + (opacity / 100) + '; z-index: -1; pointer-events: none; } .page, .sidebar-menu, .main-content, .book-detail-page { background: transparent !important; }';
-        document.head.appendChild(style);
-    }
-}
-
-setTimeout(function() {
-    initToolbar();
-    var startBtn = document.getElementById('startSeclusionBtn');
-    var stopBtn = document.getElementById('stopSeclusionBtn');
-    var closePanel = document.getElementById('closeSeclusionPanel');
-    if (startBtn) startBtn.onclick = startSeclusion;
-    if (stopBtn) stopBtn.onclick = function() { endSeclusion(false); alert('闭关已结束'); };
-    if (closePanel) closePanel.onclick = function() { document.getElementById('seclusionPanel').style.display = 'none'; };
-    var savedTheme = localStorage.getItem('app_theme');
-    if (savedTheme) {
-        var link = document.getElementById('themeStyle');
-        if (link) link.href = 'themes/' + savedTheme + '.css';
-        document.body.classList.add('theme-' + savedTheme);
-    }
-}, 500);
-
-// 闭关面板（右侧滑出）
-function openSeclusionPanel() {
-    var panel = document.getElementById('seclusionSlidePanel');
-    if (panel) {
-        panel.classList.toggle('open');
-        return;
-    }
-    var html = `
-        <div id="seclusionSlidePanel" class="right-slide-panel">
-            <div class="right-slide-panel-header">
-                <h3>闭关修炼</h3>
-                <button class="right-slide-panel-close" onclick="document.getElementById('seclusionSlidePanel').classList.remove('open')">✕</button>
-            </div>
-            <div class="right-slide-panel-content">
-                <label>目标字数：</label>
-                <input type="number" id="seclusionGoal" value="3000" style="width:100%; padding:8px; margin:8px 0; border:1px solid #ddd; border-radius:6px;">
-                <label>自动出关时间（小时，0表示不限制）：</label>
-                <input type="number" id="seclusionTimeout" value="0" style="width:100%; padding:8px; margin:8px 0; border:1px solid #ddd; border-radius:6px;">
-                <div id="seclusionProgress" style="margin:16px 0; display:none;">
-                    <div>当前进度：<span id="seclusionCurrent">0</span> / <span id="seclusionGoalDisplay">3000</span> 字</div>
-                    <div style="height:8px; background:#e0e0e0; border-radius:4px; margin-top:8px; overflow:hidden;">
-                        <div id="seclusionProgressFill" style="height:100%; background:#007aff; width:0%; transition:width 0.3s;"></div>
-                    </div>
-                </div>
-                <button id="startSeclusionBtn" class="btn-primary" style="width:100%; padding:10px; margin-top:8px;">开始闭关</button>
-                <button id="stopSeclusionBtn" class="btn-danger" style="width:100%; padding:10px; margin-top:8px; display:none;">结束闭关</button>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    document.getElementById('startSeclusionBtn').onclick = startSeclusion;
-    document.getElementById('stopSeclusionBtn').onclick = function() { endSeclusion(false); alert('闭关已结束'); };
-    document.getElementById('seclusionSlidePanel').classList.add('open');
-}
-
-// 导出面板（右侧滑出）
-function openExportPanel() {
-    var panel = document.getElementById('exportSlidePanel');
-    if (panel) {
-        panel.classList.toggle('open');
-        return;
-    }
-    var html = `
-        <div id="exportSlidePanel" class="right-slide-panel">
-            <div class="right-slide-panel-header">
-                <h3>导出</h3>
-                <button class="right-slide-panel-close" onclick="document.getElementById('exportSlidePanel').classList.remove('open')">✕</button>
-            </div>
-            <div class="right-slide-panel-content">
-                <button id="exportChapterBtn" class="btn-primary" style="width:100%; padding:12px; margin-bottom:12px;">导出本章</button>
-                <button id="exportBookBtn" class="btn-secondary" style="width:100%; padding:12px;">导出全书</button>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    document.getElementById('exportChapterBtn').onclick = function() {
-        exportChapter();
-        document.getElementById('exportSlidePanel').classList.remove('open');
-    };
-    document.getElementById('exportBookBtn').onclick = function() {
-        exportBook();
-        document.getElementById('exportSlidePanel').classList.remove('open');
-    };
-    document.getElementById('exportSlidePanel').classList.add('open');
-}
-
-// 导出全书功能
 function exportBook() {
-    if (typeof getCurrentBook !== 'function') {
-        alert('请先打开一本书籍');
-        return;
-    }
-    var book = getCurrentBook();
-    if (!book) {
-        alert('请先打开一本书籍');
-        return;
-    }
+    var book = typeof getCurrentBook === 'function' ? getCurrentBook() : null;
+    if (!book) { alert('请先打开一本书籍'); return; }
     var content = '';
     if (book.volumes) {
         for (var v = 0; v < book.volumes.length; v++) {
             var vol = book.volumes[v];
-            content += '【' + vol.name + '】\n\n';
+            content += vol.name + '\n\n';
             if (vol.chapters) {
                 for (var c = 0; c < vol.chapters.length; c++) {
                     var ch = vol.chapters[c];
                     content += ch.title + '\n';
-                    content += ch.content.replace(/<[^>]*>/g, '') + '\n\n';
+                    content += (ch.content || '').replace(/<[^>]*>/g, '') + '\n\n';
                 }
             }
         }
@@ -575,226 +393,105 @@ function exportBook() {
     alert('全书导出成功');
 }
 
-// 修改导出按钮的 action
-function updateExportAction() {
-    var exportBtn = document.querySelector('.toolbar-btn[data-action="export"]');
-    if (exportBtn) {
-        exportBtn.onclick = function() {
-            openExportPanel();
-        };
-    }
+function toggleRightSidebar() {
+    var sidebar = document.getElementById('rightSidebar');
+    if (sidebar) sidebar.classList.toggle('hidden');
 }
 
-setTimeout(updateExportAction, 500);
-
-// 透明背景模式
-function setTransparentMode(enable) {
-    var elements = document.querySelectorAll('.tabs-container, .main-toolbar, .detail-editor, .editor-content, .title-input, .status-bar, .chapters-header, .volume-list, .volume-title, .chapter-list, .chapter-item, .right-sidebar, .right-slide-panel');
-    for (var i = 0; i < elements.length; i++) {
-        if (enable) {
-            elements[i].style.setProperty('background', 'transparent', 'important');
-            elements[i].style.setProperty('backdrop-filter', 'none', 'important');
-        } else {
-            elements[i].style.removeProperty('background');
-            elements[i].style.removeProperty('backdrop-filter');
-        }
-    }
-    
-    var btns = document.querySelectorAll('#addVolumeBtn, #addChapterBtn');
-    for (var i = 0; i < btns.length; i++) {
-        if (enable) {
-            btns[i].style.setProperty('background', 'rgba(184, 202, 181, 0.5)', 'important');
-        } else {
-            btns[i].style.removeProperty('background');
-        }
-    }
-    
-    var trashBtn = document.getElementById('trashBtnHeader');
-    if (trashBtn) {
-        if (enable) {
-            trashBtn.style.setProperty('background', 'rgba(220, 53, 69, 0.7)', 'important');
-        } else {
-            trashBtn.style.removeProperty('background');
-        }
-    }
-}
-
-// 修改应用背景的函数
-var originalApplyGlobalBg = applyGlobalBg;
-window.applyGlobalBg = function(imageUrl, opacity) {
-    originalApplyGlobalBg(imageUrl, opacity);
-    setTransparentMode(true);
-    document.body.classList.add('has-custom-bg');
-};
-
-// 修改清除背景的函数
-var originalClearBg = function() {
+function applyGlobalBg(imageUrl, opacity) {
     var oldStyle = document.getElementById('global-bg-style');
     if (oldStyle) oldStyle.remove();
-    setTransparentMode(false);
-    document.body.classList.remove('has-custom-bg');
-};
-
-// 替换清除按钮的功能
-setTimeout(function() {
-    var clearBtn = document.getElementById('themeClearBg');
-    if (clearBtn) {
-        clearBtn.onclick = function() {
-            originalClearBg();
-            var preview = document.getElementById('themeBgPreview');
-            if (preview) preview.style.backgroundImage = '';
-            alert('背景已清除');
-        };
+    if (imageUrl) {
+        var style = document.createElement('style');
+        style.id = 'global-bg-style';
+        style.textContent = 'body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url(' + JSON.stringify(imageUrl) + '); background-size: cover; background-position: center; opacity: ' + (opacity / 100) + '; z-index: -1; pointer-events: none; }';
+        document.head.appendChild(style);
     }
-}, 500);
-
-// 起名窗口 - 使用新的HTML面板
-function openNamegenWindow() {
-    window.open('namegen.html', 'namegen', 'width=1300,height=900,left=100,top=50');
 }
-    var win = window.open('', 'namegen', 'width=1200,height=800,left=100,top=50');
-    var htmlContent = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <title>妙笔·汉字组合生成器</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #f2efe7; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', 'Noto Sans CJK SC', 'PingFang SC', sans-serif; padding: 20px; }
-        .generator { max-width: 1300px; width: 100%; background: #fffef7; border-radius: 32px; box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15); overflow: hidden; }
-        .main-layout { display: flex; flex-wrap: wrap; }
-        .left-panel { flex: 2; min-width: 280px; background: #fdfaf2; padding: 24px 20px 28px 24px; border-right: 1px solid #ede6d8; }
-        .right-panel { flex: 1.2; min-width: 260px; background: #ffffff; padding: 24px 22px 28px 22px; display: flex; flex-direction: column; gap: 24px; }
-        .category-block { margin-bottom: 28px; }
-        .category-title { font-size: 0.85rem; font-weight: 600; color: #b45f2b; background: #f3ecdf; display: inline-block; padding: 4px 12px; border-radius: 30px; margin-bottom: 15px; }
-        .chars-grid { display: flex; flex-wrap: wrap; gap: 10px 12px; }
-        .char-item { background: white; border: 1px solid #e9e2d4; border-radius: 40px; padding: 6px 18px; font-size: 1rem; font-weight: 500; color: #3a2c22; cursor: pointer; transition: all 0.2s ease; }
-        .char-item:hover { background: #f9eedd; border-color: #d1b48c; }
-        .char-item.selected { background: #e8d9c6; border-color: #bc8f6b; color: #4c2e1a; font-weight: 600; }
-        .len-btn { background: white; border: 1px solid #ddd2c0; border-radius: 32px; padding: 5px 22px; cursor: pointer; }
-        .len-btn.active { background: #dac29c; border-color: #aa7e55; color: #2c1c0f; font-weight: 600; }
-        .random-btn { background: #ceb087; border: none; padding: 14px 0; font-size: 1.1rem; font-weight: bold; color: white; border-radius: 48px; cursor: pointer; margin-top: 8px; }
-        .random-btn:hover { background: #b78c62; }
-        .result-card { background: #faf4ea; border-radius: 36px; padding: 18px 20px; text-align: center; border: 1px solid #e2d4c2; }
-        .result-name { font-size: 2.2rem; font-weight: 800; letter-spacing: 2px; color: #4b2c17; }
-        .radio-label { display: inline-flex; align-items: center; gap: 6px; background: #fefcf8; padding: 5px 12px; border-radius: 40px; border: 1px solid #e7dfd1; cursor: pointer; }
-    </style>
-</head>
-<body>
-<div class="generator">
-    <div class="main-layout">
-        <div class="left-panel">
-            <div class="category-block"><div class="category-title">人物名典</div><div class="chars-grid" id="personGrid"></div></div>
-            <div class="category-block"><div class="category-title">势力门派</div><div class="chars-grid" id="forceGrid"></div></div>
-            <div class="category-block"><div class="category-title">地点灵境</div><div class="chars-grid" id="placeGrid"></div></div>
-            <div class="category-block"><div class="category-title">招式装备怪物</div><div class="chars-grid" id="specialGrid"></div></div>
-            <div class="word-length-group"><div class="category-title">字数</div>
-                <div class="length-buttons" id="lengthGroup">
-                    <div data-len="1" class="len-btn">1字</div>
-                    <div data-len="2" class="len-btn active">2字</div>
-                    <div data-len="3" class="len-btn">3字</div>
-                    <div data-len="不限" class="len-btn">不限</div>
-                </div>
-            </div>
-        </div>
-        <div class="right-panel">
-            <div class="param-row"><div class="param-label">姓氏</div>
-                <div><label class="radio-label"><input type="radio" name="surnameMode" value="none" checked>无姓</label>
-                <label class="radio-label"><input type="radio" name="surnameMode" value="single">单姓</label>
-                <label class="radio-label"><input type="radio" name="surnameMode" value="double">复姓</label></div>
-                <div><input type="text" id="customSurname" placeholder="自定义姓氏" style="display:none; margin-top:8px; padding:6px; border-radius:20px; border:1px solid #ddd;"></div>
-            </div>
-            <div class="param-row"><div class="param-label">性别倾向</div>
-                <div><label class="radio-label"><input type="radio" name="genderPref" value="all" checked>不限</label>
-                <label class="radio-label"><input type="radio" name="genderPref" value="男">男</label>
-                <label class="radio-label"><input type="radio" name="genderPref" value="女">女</label>
-                <label class="radio-label"><input type="radio" name="genderPref" value="中性">中性</label></div>
-            </div>
-            <button id="randomGenBtn" class="random-btn">随机取名</button>
-            <div class="result-card"><div class="result-name" id="resultName">妙笔生花</div></div>
-        </div>
-    </div>
-</div>
-<script>
-    const rawNames = ["吕斯","龚湛","周峻峰","庄非凡","宫瑜","乔森","杜敬","史宗裕","刘津卫","游京","朱柯礼","涂湛","邹尚","白凛","殷乔","马奔","冯竣","虞归舟","成然","汪昀","纪云霆"];
-    const forces = ["青云阁","月影楼","玄天宗","凌霄殿","听雨轩","破军府","百花谷","流云渡"];
-    const places = ["沧澜江","断龙崖","落星原","凤凰台","无涯海","青丘山","归墟境","白露洲"];
-    const specials = ["破空斩","霜月刃","星陨","麒麟臂","幻影步","青冥剑","啸月狼","烛龙","赤焰甲","玄冰蛊"];
-    const maleWords = ["锋","刚","毅","辰","豪","渊","烈","铮"];
-    const femaleWords = ["柔","婉","雅","汐","梦","萱","婵","瑶"];
-    let allItems = [];
-    rawNames.forEach(n => allItems.push({display:n, value:n}));
-    forces.forEach(f => allItems.push({display:f, value:f}));
-    places.forEach(p => allItems.push({display:p, value:p}));
-    specials.forEach(s => allItems.push({display:s, value:s}));
-    maleWords.forEach(m => allItems.push({display:m, value:m}));
-    femaleWords.forEach(f => allItems.push({display:f, value:f}));
-    let selected = new Set();
-    function renderGrid() {
-        const container = document.getElementById('personGrid');
-        if(!container) return;
-        container.innerHTML = '';
-        allItems.forEach(item => {
-            let span = document.createElement('span');
-            span.className = 'char-item';
-            if(selected.has(item.value)) span.classList.add('selected');
-            span.textContent = item.display;
-            span.onclick = () => {
-                if(selected.has(item.value)) { selected.delete(item.value); span.classList.remove('selected'); }
-                else { selected.add(item.value); span.classList.add('selected'); }
-            };
-            container.appendChild(span);
-        });
-    }
-    let surnameMode = "none";
-    let genderPref = "all";
-    let nameLen = 2;
-    document.querySelectorAll('.len-btn').forEach(btn => {
-        btn.onclick = function() {
-            document.querySelectorAll('.len-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            nameLen = this.getAttribute('data-len') === "1" ? 1 : (this.getAttribute('data-len') === "2" ? 2 : (this.getAttribute('data-len') === "3" ? 3 : Math.floor(Math.random()*3)+1));
-        };
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
     });
-    document.querySelectorAll('input[name="surnameMode"]').forEach(r => {
-        r.onchange = function(e) {
-            surnameMode = this.value;
-            let input = document.getElementById('customSurname');
-            if(input) input.style.display = (surnameMode === 'single' || surnameMode === 'double') ? 'inline-block' : 'none';
-        };
-    });
-    document.querySelectorAll('input[name="genderPref"]').forEach(r => {
-        r.onchange = function() { if(this.checked) genderPref = this.value; };
-    });
-    function generate() {
-        let pool = selected.size > 0 ? Array.from(selected) : allItems.map(i => i.value);
-        if(genderPref !== "all") {
-            let prefWords = genderPref === "男" ? maleWords : femaleWords;
-            let filtered = pool.filter(v => prefWords.some(p => v.includes(p)));
-            if(filtered.length > 0) pool = filtered;
-        }
-        if(pool.length === 0) pool = ["云","风","逸","远"];
-        let nameBody = "";
-        for(let i=0; i<nameLen; i++) {
-            let word = pool[Math.floor(Math.random() * pool.length)];
-            if(word.length > 1 && nameLen === 1) word = word[0];
-            nameBody += word;
-        }
-        let fullName = nameBody;
-        if(surnameMode === "single") {
-            let surnames = ["李","王","张","刘","陈","赵","周","吴"];
-            fullName = surnames[Math.floor(Math.random() * surnames.length)] + nameBody;
-        } else if(surnameMode === "double") {
-            let surnames = ["欧阳","慕容","上官","诸葛","司徒"];
-            fullName = surnames[Math.floor(Math.random() * surnames.length)] + nameBody;
-        }
-        document.getElementById('resultName').innerText = fullName;
-    }
-    renderGrid();
-    document.getElementById('randomGenBtn').onclick = generate;
-    generate();
-<\/script>
-</body>
-</html>`;
-    win.document.write(htmlContent);
 }
+
+// 绑定工具栏按钮
+function bindToolbarButtons() {
+    var btns = document.querySelectorAll('.toolbar-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        var action = btn.getAttribute('data-action');
+        if (action) {
+            btn.onclick = (function(a) {
+                return function() { handleToolbarAction(a); };
+            })(action);
+        }
+    }
+    console.log('工具栏已绑定，按钮数量:', btns.length);
+}
+
+// 初始化
+setTimeout(bindToolbarButtons, 500);
+
+// 修复 Open 主题下面板的关闭按钮
+function fixOpenThemeCloseButtons() {
+    if (!document.body.classList.contains('theme-open')) return;
+    
+    var panels = ['themeSlidePanel', 'fontSlidePanel', 'findSlidePanel', 'seclusionSlidePanel', 'exportSlidePanel'];
+    for (var i = 0; i < panels.length; i++) {
+        var panel = document.getElementById(panels[i]);
+        if (panel) {
+            var closeBtn = panel.querySelector('.right-slide-panel-close');
+            if (closeBtn) {
+                closeBtn.onclick = (function(panelId) {
+                    return function() {
+                        var p = document.getElementById(panelId);
+                        if (p) {
+                            p.classList.remove('open');
+                        }
+                    };
+                })(panels[i]);
+            }
+        }
+    }
+}
+
+// 在每次打开面板后重新绑定
+var originalOpenThemePanel = openThemePanel;
+if (originalOpenThemePanel) {
+    openThemePanel = function() {
+        originalOpenThemePanel();
+        setTimeout(fixOpenThemeCloseButtons, 50);
+    };
+}
+
+var originalOpenFontPanel = openFontPanel;
+if (originalOpenFontPanel) {
+    openFontPanel = function() {
+        originalOpenFontPanel();
+        setTimeout(fixOpenThemeCloseButtons, 50);
+    };
+}
+
+var originalOpenFindReplacePanel = openFindReplacePanel;
+if (originalOpenFindReplacePanel) {
+    openFindReplacePanel = function() {
+        originalOpenFindReplacePanel();
+        setTimeout(fixOpenThemeCloseButtons, 50);
+    };
+}
+
+// 主题切换时也重新绑定
+var originalApplyTheme = window.applyTheme;
+if (originalApplyTheme) {
+    window.applyTheme = function(theme) {
+        originalApplyTheme(theme);
+        setTimeout(fixOpenThemeCloseButtons, 100);
+    };
+}
+
+setTimeout(fixOpenThemeCloseButtons, 500);

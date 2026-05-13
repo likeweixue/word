@@ -318,7 +318,7 @@ body {
     padding: 12px;
     display: flex;
     gap: 8px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0);
 }
 .chapters-header button {
     padding: 4px 12px;
@@ -359,7 +359,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    margin-right: 60px;
+    margin-right: 0;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(4px);
 }
@@ -369,7 +369,7 @@ body {
     border: none;
     padding: 12px 16px;
     outline: none;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0);
     background: transparent;
 }
 .editor-content {
@@ -394,7 +394,7 @@ body {
     position: fixed;
     right: 0;
     top: 100px;
-    width: 60px;
+    width: 48px;
     height: calc(100vh - 100px);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(8px);
@@ -1000,4 +1000,329 @@ input[type="color"] {
 }
 .toggle-chapters-btn:hover {
     background: rgba(0,0,0,0.08);
+}
+
+/* ========== 滚动条透明样式 ========== */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(136, 136, 136, 0.4);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(136, 136, 136, 0.6);
+}
+
+/* 各个区域的滚动条透明 */
+.detail-chapters::-webkit-scrollbar-track,
+.editor-content::-webkit-scrollbar-track,
+.right-sidebar-content::-webkit-scrollbar-track,
+.right-slide-panel-content::-webkit-scrollbar-track,
+.volume-list::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+/* Firefox 滚动条透明 */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(136, 136, 136, 0.4) transparent;
+}
+
+/* 修复编辑器区域对齐 - 去除多余空白 */
+.detail-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.detail-chapters {
+    width: 260px;
+    min-width: 200px;
+    max-width: 400px;
+    border-right: 1px solid rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.detail-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+/* 收起章节栏时的样式 */
+.detail-chapters.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    overflow: hidden !important;
+    border-right: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 主内容区无间隙 */
+.main-content {
+    margin: 0;
+    padding: 0;
+}
+
+.pages-container {
+    margin: 0;
+    padding: 0;
+}
+
+.page {
+    margin: 0;
+    padding: 0;
+}
+
+/* 书籍详情页无间隙 */
+.book-detail-page {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* 章节栏头部和内容无多余间隙 */
+.chapters-header {
+    margin: 0;
+    padding: 12px;
+}
+
+.volume-list {
+    margin: 0;
+    padding: 8px;
+}
+
+/* 编辑器区域顶部对齐 */
+.detail-editor {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.title-input {
+    margin-top: 0;
+}
+
+/* 左侧菜单栏底部间距 - 全局样式 */
+.sidebar-menu {
+    margin-bottom: 30px !important;
+    margin-top: 15px !important;
+    margin-left: 15px !important;
+    height: calc(100vh - 45px) !important;
+}
+
+/* 主容器增加内边距，让所有元素都有呼吸空间 */
+.main-wrapper {
+    padding: 16px !important;
+    gap: 16px !important;
+}
+
+/* 左侧菜单栏在 Open 主题下样式 */
+body.theme-open .sidebar-menu {
+    margin: 0 !important;
+    height: 100% !important;
+    border-radius: 24px !important;
+}
+
+/* 主内容区在 Open 主题下 */
+body.theme-open .main-content {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+}
+
+/* 默认所有主题无额外边距 */
+.main-wrapper {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+/* 只对 open 主题添加边距 */
+body.theme-open .main-wrapper {
+    padding: 16px !important;
+    gap: 16px !important;
+}
+
+body.theme-open .sidebar-menu {
+    margin: 0 !important;
+    border-radius: 24px !important;
+}
+
+body.theme-open .main-content {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+}
+
+/* 其他主题的菜单栏重置 - 无白边 */
+body.theme-default .sidebar-menu,
+body.theme-eye .sidebar-menu,
+body.theme-warm .sidebar-menu,
+body.theme-dark .sidebar-menu {
+    margin: 0 !important;
+    border-radius: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    position: relative !important;
+}
+
+body.theme-default .main-wrapper,
+body.theme-eye .main-wrapper,
+body.theme-warm .main-wrapper,
+body.theme-dark .main-wrapper {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+/* 确保其他主题的菜单栏紧贴边缘 */
+body.theme-default .sidebar-menu,
+body.theme-eye .sidebar-menu,
+body.theme-warm .sidebar-menu,
+body.theme-dark .sidebar-menu {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+}
+
+/* 右侧滑出面板默认位置 */
+.right-slide-panel {
+    right: 0;
+    transform: translateX(100%);
+}
+
+.right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* Open 主题下的特殊处理 */
+body.theme-open .right-slide-panel {
+    right: 20px;
+    transform: translateX(calc(100% + 20px));
+}
+
+body.theme-open .right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* 右侧滑出面板动画 */
+.right-slide-panel {
+    position: fixed;
+    right: 0;
+    top: 80px;
+    width: 360px;
+    height: calc(100vh - 100px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    box-shadow: -2px 0 12px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    visibility: visible;
+}
+
+.right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* Open 主题下的动画 */
+body.theme-open .right-slide-panel {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    right: 20px;
+    top: 100px;
+    height: calc(100vh - 120px);
+    transform: translateX(calc(100% + 20px));
+}
+
+body.theme-open .right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* 右侧滑出面板 - 基础动画 */
+.right-slide-panel {
+    position: fixed;
+    right: 0;
+    top: 80px;
+    width: 360px;
+    height: calc(100vh - 100px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    box-shadow: -2px 0 12px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
+    z-index: 1000;
+    display: block !important;
+    visibility: visible;
+}
+
+.right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* 确保面板默认隐藏 */
+.right-slide-panel:not(.open) {
+    transform: translateX(100%);
+}
+
+/* Open 主题下的动画 */
+body.theme-open .right-slide-panel {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    right: 20px;
+    top: 100px;
+    height: calc(100vh - 120px);
+    transform: translateX(calc(100% + 20px));
+}
+
+body.theme-open .right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* 其他主题 */
+body.theme-default .right-slide-panel,
+body.theme-eye .right-slide-panel,
+body.theme-warm .right-slide-panel,
+body.theme-dark .right-slide-panel {
+    transform: translateX(100%);
+}
+
+body.theme-default .right-slide-panel.open,
+body.theme-eye .right-slide-panel.open,
+body.theme-warm .right-slide-panel.open,
+body.theme-dark .right-slide-panel.open {
+    transform: translateX(0);
+}
+
+/* 章节栏可调整宽度 */
+.detail-chapters {
+    width: 260px;
+    min-width: 180px;
+    max-width: 500px;
+    position: relative;
+    transition: none !important;
+}
+
+/* 拖动条悬停效果 */
+#resizeHandle:hover {
+    background: #007aff !important;
+    opacity: 0.5;
 }

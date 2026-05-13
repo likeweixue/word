@@ -88,7 +88,7 @@ function renderBooks() {
             card.innerHTML = `
                 <div class="book-menu" data-id="${book.id}">⋯</div>
                 <div class="book-cover" style="background: #e0e0e0;">
-                    <div style="font-size:48px;">📖</div>
+                    <div style="font-size:48px;"></div>
                     <h4>${escapeHtml(book.title)}</h4>
                     <p>${book.volumes ? book.volumes.length : 0}卷 · ${totalChapters}章 · ${totalWords}字</p>
                 </div>
@@ -238,7 +238,7 @@ function showGroupMenu(groupId, btn) {
 }
 
 function openBookTab(bookId) {
-    var book = getBookById(bookId);
+    setTimeout(initChaptersToggle, 200);    var book = getBookById(bookId);
     if (!book) return;
     var tabId = 'book_' + bookId;
     for (var i = 0; i < openTabs.length; i++) {
@@ -259,7 +259,6 @@ function openBookTab(bookId) {
     if (sidebar) sidebar.style.display = 'none';
     var toolbar = document.getElementById('mainToolbar');
     if (toolbar) toolbar.classList.add('visible');
-    setTimeout(initChaptersToggle, 200);
 }
 
 function renderBookEditor(bookId) {
@@ -516,11 +515,11 @@ function initRightSidebar() {
     var sidebarHtml = `
         <div id="rightSidebar" class="right-sidebar hidden">
             <div class="right-sidebar-content">
-                <div class="sidebar-tool-item" data-tool="outline"><div class="sidebar-tool-icon">📋</div><div class="sidebar-tool-label">大纲</div></div>
-                <div class="sidebar-tool-item" data-tool="timeline"><div class="sidebar-tool-icon">⏱️</div><div class="sidebar-tool-label">时间线</div></div>
-                <div class="sidebar-tool-item" data-tool="characters"><div class="sidebar-tool-icon">👥</div><div class="sidebar-tool-label">角色</div></div>
-                <div class="sidebar-tool-item" data-tool="setting"><div class="sidebar-tool-icon">⚙️</div><div class="sidebar-tool-label">设定</div></div>
-                <div class="sidebar-tool-item" data-tool="relation"><div class="sidebar-tool-icon">🔗</div><div class="sidebar-tool-label">关系图</div></div>
+                <div class="sidebar-tool-item" data-tool="outline"><div class="sidebar-tool-icon"></div><div class="sidebar-tool-label">大纲</div></div>
+                <div class="sidebar-tool-item" data-tool="timeline"><div class="sidebar-tool-icon"></div><div class="sidebar-tool-label">时间线</div></div>
+                <div class="sidebar-tool-item" data-tool="characters"><div class="sidebar-tool-icon"></div><div class="sidebar-tool-label">角色</div></div>
+                <div class="sidebar-tool-item" data-tool="setting"><div class="sidebar-tool-icon"></div><div class="sidebar-tool-label">设定</div></div>
+                <div class="sidebar-tool-item" data-tool="relation"><div class="sidebar-tool-icon"></div><div class="sidebar-tool-label">关系图</div></div>
             </div>
         </div>
     `;
@@ -682,3 +681,178 @@ loadChapterTrash();
 
 window.openBookTab = openBookTab;
 window.saveCurrentChapter = saveCurrentChapter;
+
+// 章节栏收起功能
+function initChaptersToggle() {
+    var toggleBtn = document.getElementById('toggleChaptersBtn');
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!toggleBtn || !chaptersPanel) return;
+    
+    // 恢复保存的状态
+    var isCollapsed = localStorage.getItem('chapters_collapsed') === 'true';
+    if (isCollapsed) {
+        chaptersPanel.classList.add('collapsed');
+        toggleBtn.innerHTML = '▶';
+        toggleBtn.title = '展开章节栏';
+    } else {
+        toggleBtn.innerHTML = '◀';
+        toggleBtn.title = '收起章节栏';
+    }
+    
+    toggleBtn.onclick = function() {
+        chaptersPanel.classList.toggle('collapsed');
+        var collapsed = chaptersPanel.classList.contains('collapsed');
+        if (collapsed) {
+            toggleBtn.innerHTML = '▶';
+            toggleBtn.title = '展开章节栏';
+        } else {
+            toggleBtn.innerHTML = '◀';
+            toggleBtn.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
+}
+
+// 在 openBookTab 中调用
+var originalOpenBookTab = window.openBookTab;
+if (originalOpenBookTab) {
+    window.openBookTab = function(bookId) {
+        originalOpenBookTab(bookId);
+        setTimeout(initChaptersToggle, 200);
+    };
+}
+
+// ========== 章节栏收起按钮（永久修复） ==========
+function createChaptersToggleButton() {
+    var toolbar = document.getElementById('mainToolbar');
+    if (!toolbar) return;
+    
+    // 检查是否已存在
+    if (document.getElementById('toggleChaptersBtn')) return;
+    
+    var btn = document.createElement('button');
+    btn.id = 'toggleChaptersBtn';
+    btn.innerHTML = '◀';
+    btn.className = 'toolbar-btn';
+    btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:16px;padding:6px 10px;';
+    btn.title = '收起章节栏';
+    
+    // 插入到最前面
+    toolbar.insertBefore(btn, toolbar.firstChild);
+    
+    // 恢复保存的状态
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (chaptersPanel) {
+        var isCollapsed = localStorage.getItem('chapters_collapsed') === 'true';
+        if (isCollapsed) {
+            chaptersPanel.classList.add('collapsed');
+            btn.innerHTML = '▶';
+            btn.title = '展开章节栏';
+        }
+    }
+    
+    // 绑定点击事件
+    btn.onclick = function() {
+        var panel = document.getElementById('chaptersPanel');
+        if (!panel) return;
+        panel.classList.toggle('collapsed');
+        var collapsed = panel.classList.contains('collapsed');
+        if (collapsed) {
+            this.innerHTML = '▶';
+            this.title = '展开章节栏';
+        } else {
+            this.innerHTML = '◀';
+            this.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
+    
+    console.log('章节栏收起按钮已创建');
+}
+
+// 在打开书籍时调用
+var originalOpenBookTabForBtn = window.openBookTab;
+if (originalOpenBookTabForBtn) {
+    window.openBookTab = function(bookId) {
+        originalOpenBookTabForBtn(bookId);
+        setTimeout(createChaptersToggleButton, 300);
+    };
+}
+
+// 页面加载时也尝试创建
+setTimeout(createChaptersToggleButton, 500);
+
+// ========== 章节栏宽度可拖动调整 ==========
+function initResizeHandle() {
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    var resizeHandle = document.getElementById('resizeHandle');
+    
+    if (!chaptersPanel) return;
+    
+    // 创建拖动条（如果不存在）
+    if (!resizeHandle) {
+        var handle = document.createElement('div');
+        handle.id = 'resizeHandle';
+        handle.style.cssText = 'position: absolute; right: -4px; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: transparent; z-index: 10;';
+        chaptersPanel.style.position = 'relative';
+        chaptersPanel.appendChild(handle);
+        resizeHandle = handle;
+    }
+    
+    var isResizing = false;
+    var startX = 0;
+    var startWidth = 0;
+    
+    function onMouseMove(e) {
+        if (!isResizing) return;
+        var newWidth = startWidth + (e.clientX - startX);
+        // 限制最小宽度 180px，最大宽度 500px
+        if (newWidth < 180) newWidth = 180;
+        if (newWidth > 500) newWidth = 500;
+        chaptersPanel.style.width = newWidth + 'px';
+        // 保存宽度到 localStorage
+        localStorage.setItem('chapters_width', newWidth);
+    }
+    
+    function onMouseUp() {
+        isResizing = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+    }
+    
+    if (resizeHandle) {
+        resizeHandle.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = chaptersPanel.offsetWidth;
+            document.body.style.cursor = 'ew-resize';
+            document.body.style.userSelect = 'none';
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    }
+    
+    // 恢复保存的宽度
+    var savedWidth = localStorage.getItem('chapters_width');
+    if (savedWidth) {
+        var width = parseInt(savedWidth);
+        if (width >= 180 && width <= 500) {
+            chaptersPanel.style.width = width + 'px';
+        }
+    }
+}
+
+// 在打开书籍时初始化
+var originalInitBookEditorForResize = initBookEditor;
+if (originalInitBookEditorForResize) {
+    initBookEditor = function(tabId, bookId) {
+        originalInitBookEditorForResize(tabId, bookId);
+        setTimeout(initResizeHandle, 200);
+    };
+}
+
+// 页面加载时也尝试初始化
+setTimeout(initResizeHandle, 1000);
