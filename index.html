@@ -11,11 +11,6 @@
 <div class="app-container">
     <!-- 顶部标签栏 -->
     <div class="tabs-container" id="tabsContainer">
-        <div class="window-controls">
-            <div class="window-btn close" title="关闭"></div>
-            <div class="window-btn minimize" title="最小化"></div>
-            <div class="window-btn maximize" title="最大化"></div>
-        </div>
         <div class="tab active" data-tab="home">
             <span class="tab-title">首页</span>
         </div>
@@ -96,7 +91,8 @@
                     <div class="about-content">
                         <h2> 写作帮手 OpenWrite</h2>
                         <p>免费，开源，自由的写作软件</p>
-                        <p>版本 0.3.3 测试版&重建版</p>
+                        <p>软件官网openwrite.team</p>
+                        <p>版本 0.3.4 发布前瞻版</p>
                         <p>GitHub: <a href="https://github.com/likeweixue/openwrite" target="_blank">https://github.com/likeweixue/openwrite</a></p>
                     </div>
                 </div>
@@ -170,3 +166,22 @@
 <script src="js/app.js"></script>
 </body>
 </html>
+<script>
+// 在关于页面添加感谢名单和寄语
+setTimeout(function() {
+    var aboutPage = document.querySelector('.page[data-page="about"] .about-content');
+    if (aboutPage && !document.querySelector('.thanks-list')) {
+        var thanksHtml = `
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h3>感谢以下作者</h3>
+                <p style="font-size: 14px; line-height: 1.8;">风吹屁屁凉，泽墨川，【女频写手】长兮常相忆，读者读者读者读者读者读者读者读者作者男生，岚音</p>
+            </div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">
+                <h3>写作帮手寄语</h3>
+                <p style="font-size: 14px; line-height: 1.8; text-align: left;">这里借用马克·扎克伯格（Facebook 创始人）的话，想法一开始并不是完美的，没有人一开始就会，都是在做的过程中不断遇到与解决问题，我们要做的是迈出第一步，所以，开始书写故事吧！</p>
+            </div>
+        `;
+        aboutPage.insertAdjacentHTML('beforeend', thanksHtml);
+    }
+}, 500);
+</script>

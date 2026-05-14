@@ -1326,3 +1326,300 @@ body.theme-dark .right-slide-panel.open {
     background: #007aff !important;
     opacity: 0.5;
 }
+
+/* ========== 标签栏独立样式 ========== */
+.tabs-container {
+    background: var(--tabs-bg, #f2f3f5);
+    backdrop-filter: blur(4px);
+}
+
+.tab {
+    background: var(--tab-bg, #ffffff);
+    color: var(--tab-text, #333);
+}
+
+.tab.active {
+    background: var(--tab-active-bg, #ffffff);
+}
+
+/* ========== 工具栏独立样式 ========== */
+.main-toolbar {
+    background: var(--toolbar-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(4px);
+}
+
+.toolbar-btn {
+    background: transparent;
+}
+
+.toolbar-btn:hover {
+    background: var(--toolbar-btn-hover, rgba(0, 0, 0, 0.08));
+}
+
+/* ========== 黄色主题(warm)下标签栏和工具栏独立 ========== */
+body.theme-warm .tabs-container {
+    background: rgba(207, 197, 173, 0.95) !important;
+}
+
+body.theme-warm .tab {
+    background: rgba(223, 213, 189, 0.9) !important;
+    color: #4a3b2c !important;
+}
+
+body.theme-warm .tab.active {
+    background: #efe5cd !important;
+}
+
+body.theme-warm .main-toolbar {
+    background: rgba(207, 197, 173, 0.9) !important;
+}
+
+body.theme-warm .toolbar-btn:hover {
+    background: rgba(74, 59, 44, 0.1) !important;
+}
+
+/* ========== 绿色主题(eye)下标签栏和工具栏独立 ========== */
+body.theme-eye .tabs-container {
+    background: rgba(184, 201, 181, 0.95) !important;
+}
+
+body.theme-eye .tab {
+    background: rgba(200, 219, 197, 0.9) !important;
+    color: #2c3e2f !important;
+}
+
+body.theme-eye .tab.active {
+    background: #d4e6d1 !important;
+}
+
+body.theme-eye .main-toolbar {
+    background: rgba(184, 201, 181, 0.9) !important;
+}
+
+body.theme-eye .toolbar-btn:hover {
+    background: rgba(44, 62, 47, 0.1) !important;
+}
+
+/* ========== 暗色主题(dark)下标签栏和工具栏独立 ========== */
+body.theme-dark .tabs-container {
+    background: rgba(42, 42, 58, 0.95) !important;
+}
+
+body.theme-dark .tab {
+    background: #1e1e2e !important;
+    color: #e0e0e0 !important;
+}
+
+body.theme-dark .tab.active {
+    background: #2a2a3a !important;
+}
+
+body.theme-dark .main-toolbar {
+    background: rgba(42, 42, 58, 0.9) !important;
+}
+
+body.theme-dark .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ========== 毛玻璃主题(glass)下标签栏和工具栏独立 ========== */
+body.theme-glass .tabs-container {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+body.theme-glass .tab {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-glass .tab.active {
+    background: rgba(255, 255, 255, 0.4) !important;
+}
+
+body.theme-glass .main-toolbar {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+body.theme-glass .toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ========== 默认白色主题下标签栏和工具栏 ========== */
+body.theme-default .tabs-container {
+    background: #f2f3f5 !important;
+}
+
+body.theme-default .tab {
+    background: #ffffff !important;
+}
+
+body.theme-default .tab.active {
+    background: #ffffff !important;
+}
+
+body.theme-default .main-toolbar {
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* ========== 各区域独立背景控制 ========== */
+
+/* 章节栏独立背景 */
+.detail-chapters {
+    background: var(--chapters-bg, rgba(255, 255, 255, 0.95));
+    transition: background 0.2s;
+}
+
+/* 编辑器独立背景 */
+.detail-editor {
+    background: var(--editor-bg, rgba(255, 255, 255, 0.95));
+    transition: background 0.2s;
+}
+
+/* 编辑器内容区独立背景 */
+.editor-content {
+    background: var(--editor-content-bg, rgba(255, 255, 255, 0.8));
+}
+
+/* 状态栏独立背景 */
+.status-bar {
+    background: var(--status-bar-bg, rgba(0, 0, 0, 0.02));
+}
+
+/* 标题输入框独立背景 */
+.title-input {
+    background: var(--title-input-bg, transparent);
+}
+
+/* ========== 黄色主题(warm)下各区域独立设置 ========== */
+body.theme-warm .detail-chapters {
+    background: rgba(223, 213, 189, 0.85) !important;
+}
+
+body.theme-warm .detail-editor {
+    background: rgba(223, 213, 189, 0.7) !important;
+}
+
+body.theme-warm .editor-content {
+    background: rgba(223, 213, 189, 0.5) !important;
+}
+
+body.theme-warm .status-bar {
+    background: rgba(223, 213, 189, 0.6) !important;
+}
+
+body.theme-warm .title-input {
+    background: rgba(223, 213, 189, 0.8) !important;
+}
+
+/* ========== 绿色主题(eye)下各区域独立设置 ========== */
+body.theme-eye .detail-chapters {
+    background: rgba(200, 219, 197, 0.85) !important;
+}
+
+body.theme-eye .detail-editor {
+    background: rgba(200, 219, 197, 0.7) !important;
+}
+
+body.theme-eye .editor-content {
+    background: rgba(200, 219, 197, 0.5) !important;
+}
+
+body.theme-eye .status-bar {
+    background: rgba(200, 219, 197, 0.6) !important;
+}
+
+body.theme-eye .title-input {
+    background: rgba(200, 219, 197, 0.8) !important;
+}
+
+/* ========== 暗色主题(dark)下各区域独立设置 ========== */
+body.theme-dark .detail-chapters {
+    background: rgba(30, 30, 46, 0.9) !important;
+}
+
+body.theme-dark .detail-editor {
+    background: rgba(30, 30, 46, 0.85) !important;
+}
+
+body.theme-dark .editor-content {
+    background: rgba(30, 30, 46, 0.7) !important;
+}
+
+body.theme-dark .status-bar {
+    background: rgba(30, 30, 46, 0.8) !important;
+}
+
+body.theme-dark .title-input {
+    background: rgba(30, 30, 46, 0.9) !important;
+}
+
+/* ========== 毛玻璃主题(glass)下各区域独立设置 ========== */
+body.theme-glass .detail-chapters {
+    background: rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+body.theme-glass .detail-editor {
+    background: rgba(255, 255, 255, 0.25) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+body.theme-glass .editor-content {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-glass .status-bar {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-glass .title-input {
+    background: rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* ========== 移除编辑器周围的空隙 ========== */
+.detail-main {
+    gap: 0 !important;
+    padding: 0 !important;
+}
+
+.detail-chapters {
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.detail-editor {
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+/* 章节栏和编辑器之间的间隔线 */
+.detail-chapters {
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* 移除所有不必要的内边距 */
+.chapters-header {
+    margin: 0 !important;
+}
+
+.volume-list {
+    padding: 8px 4px !important;
+}
+
+.editor-content {
+    margin: 0 !important;
+    padding: 20px !important;
+}
+
+.status-bar {
+    margin: 0 !important;
+}
+
+.title-input {
+    margin: 0 !important;
+}

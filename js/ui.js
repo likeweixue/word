@@ -8,8 +8,6 @@ function renderTabs() {
     container.innerHTML = '';
     var winControls = document.createElement('div');
     winControls.className = 'window-controls';
-    winControls.innerHTML = '<div class="window-btn close" title="关闭"></div><div class="window-btn minimize" title="最小化"></div><div class="window-btn maximize" title="最大化"></div>';
-    container.appendChild(winControls);
     for (var i = 0; i < openTabs.length; i++) {
         var tab = openTabs[i];
         var tabEl = document.createElement('div');
