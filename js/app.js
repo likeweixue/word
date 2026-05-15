@@ -152,7 +152,7 @@ function renderTrashList() {
     var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">';
     for (var i = 0; i < trashBooks.length; i++) {
         var book = trashBooks[i];
-        html += '<div style="background:#fff;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:48px;"></div><div style="font-weight:bold;">' + escapeHtml(book.title) + '</div><div style="font-size:12px;color:#888;">' + new Date(book.deletedTime).toLocaleDateString() + '</div><div style="margin-top:12px;"><button class="restore-book" data-id="' + book.id + '" style="padding:4px 12px;background:#28a745;color:white;border:none;border-radius:4px;">恢复</button><button class="permanent-delete" data-id="' + book.id + '" style="padding:4px 12px;background:#dc3545;color:white;border:none;border-radius:4px;">永久删除</button></div></div>';
+        html += '<div style="background:#fff;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:48px;">📖</div><div style="font-weight:bold;">' + escapeHtml(book.title) + '</div><div style="font-size:12px;color:#888;">' + new Date(book.deletedTime).toLocaleDateString() + '</div><div style="margin-top:12px;"><button class="restore-book" data-id="' + book.id + '" style="padding:4px 12px;background:#28a745;color:white;border:none;border-radius:4px;">恢复</button><button class="permanent-delete" data-id="' + book.id + '" style="padding:4px 12px;background:#dc3545;color:white;border:none;border-radius:4px;">永久删除</button></div></div>';
     }
     html += '</div>';
     container.innerHTML = html;
@@ -177,6 +177,96 @@ function renderTrashList() {
     }
 }
 
+function initEditorToolbar() {}
+
+// 菜单栏显示控制
+function updateToolbarForPage() {
+    var toolbar = document.getElementById('mainToolbar');
+    if (!toolbar) return;
+    var bookPages = document.querySelectorAll('.page[data-page^="book_"]');
+    var hasBookEditor = false;
+    for (var i = 0; i < bookPages.length; i++) {
+        if (bookPages[i].classList.contains('active')) {
+            hasBookEditor = true;
+            break;
+        }
+    }
+    if (hasBookEditor) {
+        toolbar.classList.add('visible');
+    } else {
+        toolbar.classList.remove('visible');
+    }
+}
+
+setTimeout(updateToolbarForPage, 500);
+
+// ========== 江湖渲染函数 ==========
+function renderJianghuContent() {
+    var container = document.getElementById('jianghuContainer');
+    if (!container) return;
+    container.innerHTML = `
+        <div style="padding:20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2>江湖</h2>
+                <div>
+                    <button id="jhGroupBtn" class="btn-secondary">+ 新建分组</button>
+                    <button id="jhLinkBtn" class="btn-primary" style="margin-left:8px;">+ 新建链接</button>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://github.com/likeweixue/OpenWrite', '_blank')">
+                    <div style="font-size:32px;">🐙</div>
+                    <div style="font-weight:600;">GitHub</div>
+                    <div style="font-size:12px; color:#888;">查看源码与反馈</div>
+                </div>
+                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://qm.qq.com/q/69uBoYdjmE', '_blank')">
+                    <div style="font-size:32px;">💬</div>
+                    <div style="font-weight:600;">QQ交流群</div>
+                    <div style="font-size:12px; color:#888;">群号: 1095036654</div>
+                </div>
+                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://openwrite.team', '_blank')">
+                    <div style="font-size:32px;">🌐</div>
+                    <div style="font-weight:600;">写作帮手官网</div>
+                    <div style="font-size:12px; color:#888;">官方网站</div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('jhGroupBtn').onclick = function() { alert('新建分组功能开发中'); };
+    document.getElementById('jhLinkBtn').onclick = function() { alert('新建链接功能开发中'); };
+}
+
+// ========== 学府渲染函数 ==========
+function renderXuefuContent() {
+    var container = document.getElementById('xuefuContainer');
+    if (!container) return;
+    container.innerHTML = `
+        <div style="padding:20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h2>学府</h2>
+                <button id="xfAddBtn" class="btn-primary">+ 添加素材</button>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
+                <div style="background:#fff; border-radius:12px; padding:16px;">
+                    <div style="font-size:32px;">📘</div>
+                    <div style="font-weight:600;">古言写作素材大全</div>
+                    <div style="font-size:12px; color:#888;">古代言情写作必备素材</div>
+                </div>
+                <div style="background:#fff; border-radius:12px; padding:16px;">
+                    <div style="font-size:32px;">📘</div>
+                    <div style="font-weight:600;">男频文写作指南</div>
+                    <div style="font-size:12px; color:#888;">男频小说创作指导</div>
+                </div>
+            </div>
+            <div style="margin-top:20px; padding:12px; background:rgba(0,0,0,0.05); border-radius:8px;">
+                <p style="font-size:12px;">提示：CHM文件在macOS上需要第三方软件打开</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('xfAddBtn').onclick = function() { alert('添加素材功能开发中'); };
+}
+
+// ========== 统计数据渲染 ==========
 function updateStats() {
     var today = 0, week = 0, month = 0, total = 0;
     var now = new Date();
@@ -213,195 +303,50 @@ function updateStats() {
     if (monthEl) monthEl.innerText = month;
     if (totalEl) totalEl.innerText = total;
 }
-
-function initEditorToolbar() {}
-
-window.openBookTab = openBookTab;
-window.saveCurrentChapter = saveCurrentChapter;
-
-// 江湖按钮加载
-setTimeout(function() {
-    var jianghuBtn = document.querySelector('.menu-item[data-page="jianghu"]');
-    if (jianghuBtn) {
-        jianghuBtn.onclick = function(e) {
-            e.stopPropagation();
-            var allPages = document.querySelectorAll('.page');
-            for (var i = 0; i < allPages.length; i++) {
-                allPages[i].classList.remove('active');
-            }
-            var jianghuPage = document.querySelector('.page[data-page="jianghu"]');
-            if (jianghuPage) jianghuPage.classList.add('active');
-            if (typeof loadJianghuPageContent === 'function') {
-                loadJianghuPageContent();
-            }
-            var menuItems = document.querySelectorAll('.menu-item');
-            for (var i = 0; i < menuItems.length; i++) {
-                menuItems[i].classList.remove('active');
-            }
-            this.classList.add('active');
-        };
-    }
-}, 500);
-
 init();
 
-// 切换到数据页面（内部显示）
-function switchToStatsPage() {
-    // 创建或获取 stats 标签页
-    var tabId = 'page_stats';
-    for (var i = 0; i < openTabs.length; i++) {
-        if (openTabs[i].id === tabId) {
-            switchToTab(tabId);
-            return;
-        }
+// 修复菜单栏显示/隐藏
+function fixToolbarVisibility() {
+    var toolbar = document.getElementById('mainToolbar');
+    if (!toolbar) return;
+    
+    // 检查当前激活的页面是否是书籍编辑页面
+    var activePage = document.querySelector('.page.active');
+    var isEditing = activePage && activePage.getAttribute('data-page') && activePage.getAttribute('data-page').indexOf('book_') === 0;
+    
+    if (isEditing) {
+        toolbar.classList.add('visible');
+    } else {
+        toolbar.classList.remove('visible');
     }
-    
-    // 创建新标签页
-    openTabs.push({ id: tabId, title: '数据看板', type: 'page', pageId: 'stats' });
-    renderTabs();
-    
-    // 创建页面容器
-    var pagesContainer = document.getElementById('pagesContainer');
-    var pageDiv = document.createElement('div');
-    pageDiv.className = 'page';
-    pageDiv.setAttribute('data-page', tabId);
-    pageDiv.style.overflow = 'auto';
-    pageDiv.style.padding = '0';
-    pageDiv.style.background = '#e9e3d7';
-    
-    // 加载 stats.html 的内容
-    fetch('stats.html')
-        .then(function(res) { return res.text(); })
-        .then(function(html) {
-            // 提取 body 内的内容
-            var match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-            if (match) {
-                pageDiv.innerHTML = match[1];
-            } else {
-                pageDiv.innerHTML = html;
-            }
-            // 重新执行脚本
-            var scripts = pageDiv.querySelectorAll('script');
-            for (var i = 0; i < scripts.length; i++) {
-                var newScript = document.createElement('script');
-                newScript.textContent = scripts[i].textContent;
-                document.body.appendChild(newScript);
-            }
-        })
-        .catch(function(err) {
-            pageDiv.innerHTML = '<div style="padding:40px;text-align:center;">加载失败，请刷新重试</div>';
-        });
-    
-    pagesContainer.appendChild(pageDiv);
-    switchToTab(tabId);
 }
 
-// 切换到数据页面（内部显示 - 修复版）
-function switchToStatsPage() {
-    var tabId = 'page_stats';
-    
-    // 检查是否已经打开
-    for (var i = 0; i < openTabs.length; i++) {
-        if (openTabs[i].id === tabId) {
-            switchToTab(tabId);
-            // 刷新内容
-            loadStatsContent();
-            return;
-        }
-    }
-    
-    // 创建新标签页
-    openTabs.push({ id: tabId, title: '数据看板', type: 'page', pageId: 'stats' });
-    renderTabs();
-    
-    // 创建页面容器
-    var pagesContainer = document.getElementById('pagesContainer');
-    var pageDiv = document.createElement('div');
-    pageDiv.className = 'page';
-    pageDiv.setAttribute('data-page', tabId);
-    pageDiv.style.overflow = 'auto';
-    pageDiv.style.padding = '0';
-    pageDiv.style.background = '#e9e3d7';
-    pageDiv.id = 'statsPageContent';
-    pagesContainer.appendChild(pageDiv);
-    
-    // 加载内容
-    loadStatsContentViaIframe(pageDiv);
-    switchToTab(tabId);
-}
-
-function loadStatsContent() {
-    var container = document.getElementById('statsPageContent');
-    if (!container) {
-        // 尝试找到 stats 页面
-        var statsPage = document.querySelector('.page[data-page="page_stats"]');
-        if (statsPage) {
-            loadStatsContentViaIframe(statsPage);
-        }
-        return;
-    }
-    loadStatsContentViaIframe(container);
-}
-
-function loadStatsContentViaIframe(element) {
-    element.innerHTML = '<div style="padding:40px;text-align:center;">加载中...</div>';
-    
-    fetch('stats.html')
-        .then(function(res) { return res.text(); })
-        .then(function(html) {
-            // 提取 body 内的内容
-            var match = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-            if (match) {
-                element.innerHTML = match[1];
-            } else {
-                element.innerHTML = html;
-            }
-            // 重新执行脚本（用 eval 或创建新 script 标签）
-            var scripts = element.querySelectorAll('script');
-            for (var i = 0; i < scripts.length; i++) {
-                var newScript = document.createElement('script');
-                newScript.textContent = scripts[i].textContent;
-                document.head.appendChild(newScript);
-            }
-        })
-        .catch(function(err) {
-            element.innerHTML = '<div style="padding:40px;text-align:center;">加载失败，请刷新重试<br>' + err.message + '</div>';
-        });
-}
-
-// 在页面切换时也尝试加载
+// 监听页面切换
 var originalSwitchToTab = window.switchToTab;
 if (originalSwitchToTab) {
     window.switchToTab = function(tabId) {
         originalSwitchToTab(tabId);
-        if (tabId === 'page_stats') {
-            setTimeout(loadStatsContent, 100);
-        }
+        setTimeout(fixToolbarVisibility, 50);
     };
 }
 
-// 直接嵌入 stats 页面内容（不用 fetch）
-function loadStatsContentDirect() {
-    var container = document.getElementById('statsEmbedded');
-    if (!container) {
-        // 尝试找到 stats 页面容器
-        var statsPage = document.querySelector('.page[data-page="page_stats"]');
-        if (statsPage) {
-            container = statsPage;
-            container.id = 'statsEmbedded';
-        } else {
-            var statsDiv = document.querySelector('.page[data-page="stats"]');
-            if (statsDiv) {
-                container = statsDiv;
-            }
-        }
-    }
-    if (!container) return;
-    
-    // 直接显示 stats.html 内容（硬编码）
-    container.innerHTML = '<iframe src="stats.html" style="width:100%; height:100%; border:none;"></iframe>';
+// 监听标签页关闭
+var originalCloseTab = window.closeTab;
+if (originalCloseTab) {
+    window.closeTab = function(tabId) {
+        originalCloseTab(tabId);
+        setTimeout(fixToolbarVisibility, 50);
+    };
 }
 
-function loadStatsContentViaIframe(element) {
-    element.innerHTML = '<iframe src="stats.html" style="width:100%; height:100%; border:none; min-height:600px;"></iframe>';
+// 监听书籍打开
+var originalOpenBookTab = window.openBookTab;
+if (originalOpenBookTab) {
+    window.openBookTab = function(bookId) {
+        originalOpenBookTab(bookId);
+        setTimeout(fixToolbarVisibility, 100);
+    };
 }
+
+// 初始化
+setTimeout(fixToolbarVisibility, 100);

@@ -26,10 +26,10 @@
         <button class="toolbar-btn" data-action="format">排版</button>
         <button class="toolbar-btn" data-action="find">查找替换</button>
         <button class="toolbar-btn" data-action="proofread">校对</button>
-        <button class="toolbar-btn" data-action="namegen">起名</button>
+        
         <button class="toolbar-btn" data-action="dual">双栏</button>
         <button class="toolbar-btn" data-action="seclusion">闭关</button>
-        <button class="toolbar-btn" data-action="notes">笔记</button>
+        
         <button class="toolbar-btn" data-action="memo">备忘录</button>
         <button class="toolbar-btn" data-action="save">保存</button>
         <button class="toolbar-btn" data-action="export">导出</button>
@@ -92,7 +92,7 @@
                         <h2> 写作帮手 OpenWrite</h2>
                         <p>免费，开源，自由的写作软件</p>
                         <p>软件官网openwrite.team</p>
-                        <p>版本 0.3.4 发布前瞻版</p>
+                        <p>版本 0.3.5 发布前瞻版</p>
                         <p>GitHub: <a href="https://github.com/likeweixue/openwrite" target="_blank">https://github.com/likeweixue/openwrite</a></p>
                     </div>
                 </div>
@@ -184,4 +184,121 @@ setTimeout(function() {
         aboutPage.insertAdjacentHTML('beforeend', thanksHtml);
     }
 }, 500);
+</script>
+
+<!-- 新建书籍右侧滑出面板（新版） -->
+<div id="newBookSlidePanelV2" class="right-slide-panel">
+    <div class="right-slide-panel-header">
+        <h3>新建书籍</h3>
+        <button class="right-slide-panel-close" onclick="closeNewBookPanelV2()">✕</button>
+    </div>
+    <div class="right-slide-panel-content">
+        <input type="text" id="newBookNameV2" placeholder="书籍名称" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        <textarea id="newBookDescV2" rows="4" placeholder="书籍简介（可选）" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; resize:vertical; font-size:14px;"></textarea>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; margin-bottom:8px; font-size:13px; color:#666;">书籍封面（可选）</label>
+            <input type="file" id="newBookCoverV2" accept="image/*" style="margin-bottom:8px;">
+            <div id="newBookCoverPreviewV2" style="width:100%; height:120px; background:#f5f5f5; border-radius:8px; background-size:cover; background-position:center; border:1px solid #ddd;"></div>
+        </div>
+        <button id="confirmNewBookBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建书籍</button>
+    </div>
+</div>
+
+<!-- 新建分组右侧滑出面板（新版） -->
+<div id="newGroupSlidePanelV2" class="right-slide-panel">
+    <div class="right-slide-panel-header">
+        <h3>新建分组</h3>
+        <button class="right-slide-panel-close" onclick="closeNewGroupPanelV2()">✕</button>
+    </div>
+    <div class="right-slide-panel-content">
+        <input type="text" id="newGroupNameV2" placeholder="分组名称" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        <button id="confirmNewGroupBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建分组</button>
+    </div>
+</div>
+
+<script>
+// 新建书籍面板函数
+function openNewBookPanelV2() {
+    document.getElementById('newBookSlidePanelV2').classList.add('open');
+    document.getElementById('newBookNameV2').value = '';
+    document.getElementById('newBookDescV2').value = '';
+    document.getElementById('newBookCoverV2').value = '';
+    document.getElementById('newBookCoverPreviewV2').style.backgroundImage = '';
+}
+
+function closeNewBookPanelV2() {
+    document.getElementById('newBookSlidePanelV2').classList.remove('open');
+}
+
+function createNewBookV2() {
+    var name = document.getElementById('newBookNameV2').value.trim();
+    if (!name) { alert('请输入书籍名称'); return; }
+    var desc = document.getElementById('newBookDescV2').value;
+    var coverFile = document.getElementById('newBookCoverV2').files[0];
+    
+    if (coverFile) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            createBookWithData(name, desc, ev.target.result);
+        };
+        reader.readAsDataURL(coverFile);
+    } else {
+        createBookWithData(name, desc, null);
+    }
+}
+
+function createBookWithData(name, desc, cover) {
+    var defaultGroup = groups.find(function(g) { return g.name === '默认分组'; });
+    var groupId = defaultGroup ? defaultGroup.id : 'default';
+    var newChapter = new Chapter(Date.now(), '第一章', '<p></p>');
+    var newVolume = new Volume(Date.now(), '第一卷', [newChapter]);
+    var newBook = new Book(Date.now(), name, [newVolume]);
+    newBook.groupId = groupId;
+    newBook.desc = desc || '';
+    if (cover) newBook.cover = cover;
+    books.push(newBook);
+    saveAllData();
+    renderBooks();
+    closeNewBookPanelV2();
+    openBookTab(newBook.id);
+    alert('书籍《' + name + '》创建成功');
+}
+
+// 新建分组面板函数
+function openNewGroupPanelV2() {
+    document.getElementById('newGroupSlidePanelV2').classList.add('open');
+    document.getElementById('newGroupNameV2').value = '';
+}
+
+function closeNewGroupPanelV2() {
+    document.getElementById('newGroupSlidePanelV2').classList.remove('open');
+}
+
+function createNewGroupV2() {
+    var name = document.getElementById('newGroupNameV2').value.trim();
+    if (!name) { alert('请输入分组名称'); return; }
+    groups.push({ id: Date.now().toString(), name: name });
+    saveGroups();
+    renderBooks();
+    closeNewGroupPanelV2();
+    alert('分组"' + name + '"创建成功');
+}
+
+// 重新绑定新建书籍和新建分组按钮
+document.getElementById('newBookBtn').onclick = openNewBookPanelV2;
+document.getElementById('newGroupBtn').onclick = openNewGroupPanelV2;
+document.getElementById('confirmNewBookBtnV2').onclick = createNewBookV2;
+document.getElementById('confirmNewGroupBtnV2').onclick = createNewGroupV2;
+
+// 封面预览
+document.getElementById('newBookCoverV2').onchange = function(e) {
+    var file = e.target.files[0];
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            document.getElementById('newBookCoverPreviewV2').style.backgroundImage = 'url(' + ev.target.result + ')';
+        };
+        reader.readAsDataURL(file);
+    }
+};
 </script>

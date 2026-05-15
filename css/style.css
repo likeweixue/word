@@ -52,9 +52,9 @@ body {
     display: flex;
     align-items: center;
     background: #fff;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 8px;
+    height: 29px;
+    padding: 0 20px;
+    border-radius: 15px;
     cursor: pointer;
     gap: 6px;
     font-size: 13px;
@@ -202,7 +202,7 @@ body {
 }
 
 .btn-primary {
-    background: #007aff;
+    background: #9b784e;
     color: white;
     border: none;
     padding: 6px 14px;
@@ -1622,4 +1622,24 @@ body.theme-glass .title-input {
 
 .title-input {
     margin: 0 !important;
+}
+
+/* 默认隐藏菜单栏 */
+.main-toolbar {
+    display: none !important;
+}
+
+/* 只在编辑模式显示 */
+.main-toolbar.visible {
+    display: flex !important;
+}
+
+/* 菜单栏默认隐藏 */
+.main-toolbar {
+    display: none !important;
+}
+
+/* 只在编辑模式显示 */
+.main-toolbar.visible {
+    display: flex !important;
 }

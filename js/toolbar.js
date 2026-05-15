@@ -596,3 +596,93 @@ window.toggleMemoMode = function() {
         editor.style.display = 'block';
     };
 };
+
+// 修复双栏功能
+function toggleDualMode() {
+    var editor = document.getElementById('editor');
+    if (!editor) return;
+    var editorContainer = editor.parentElement;
+    var existingDual = document.getElementById('dualEditorContainer');
+    if (existingDual) {
+        existingDual.remove();
+        editor.style.display = 'block';
+        alert('已退出双栏模式');
+        return;
+    }
+    var originalContent = editor.innerHTML;
+    editor.style.display = 'none';
+    var dualHtml = '<div id="dualEditorContainer" style="display:flex; flex:1; height:100%; position:relative;"><div id="dualLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">原模式</div><div id="dualLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + originalContent + '</div></div><div id="dualResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); margin:8px 0;"></div><div id="dualRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">精简模式</div><div id="dualRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + originalContent + '</div></div><button id="exitDualBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer;">退出双栏</button></div>';
+    editorContainer.insertAdjacentHTML('beforeend', dualHtml);
+    
+    var leftArea = document.getElementById('dualLeft');
+    var rightArea = document.getElementById('dualRight');
+    var resizeHandle = document.getElementById('dualResizeHandle');
+    var leftContainer = document.getElementById('dualLeftArea');
+    var rightContainer = document.getElementById('dualRightArea');
+    var exitBtn = document.getElementById('exitDualBtn');
+    var isResizing = false, startX = 0, startLeftWidth = 0, containerWidth = editorContainer.clientWidth;
+    
+    function onMouseMove(e) { if (!isResizing) return; var newLeftWidth = startLeftWidth + (e.clientX - startX); var percent = (newLeftWidth / containerWidth) * 100; if (percent < 20) percent = 20; if (percent > 80) percent = 80; leftContainer.style.flex = percent; rightContainer.style.flex = 100 - percent; }
+    function onMouseUp() { isResizing = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; }
+    if (resizeHandle) {
+        resizeHandle.onmousedown = function(e) { e.preventDefault(); isResizing = true; startX = e.clientX; startLeftWidth = leftContainer.offsetWidth; containerWidth = editorContainer.clientWidth; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); };
+        resizeHandle.onmouseover = function() { this.style.background = '#007aff'; };
+        resizeHandle.onmouseout = function() { this.style.background = 'rgba(0,122,255,0.3)'; };
+    }
+    if (leftArea && rightArea) {
+        leftArea.oninput = function() { rightArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
+        rightArea.oninput = function() { leftArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
+    }
+    if (exitBtn) exitBtn.onclick = function() { document.getElementById('dualEditorContainer').remove(); editor.style.display = 'block'; };
+}
+
+// 修复备忘录功能
+function toggleMemoMode() {
+    var editor = document.getElementById('editor');
+    if (!editor) return;
+    var editorContainer = editor.parentElement;
+    var existingMemo = document.getElementById('memoEditorContainer');
+    if (existingMemo) {
+        existingMemo.remove();
+        editor.style.display = 'block';
+        alert('已退出备忘录模式');
+        return;
+    }
+    var savedMemo = localStorage.getItem('openwrite_memo_content') || '';
+    editor.style.display = 'none';
+    var memoHtml = '<div id="memoEditorContainer" style="display:flex; flex:1; height:100%; position:relative;"><div id="memoLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">写作区</div><div id="memoLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + editor.innerHTML + '</div></div><div id="memoResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); margin:8px 0;"></div><div id="memoRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">备忘录</div><div id="memoRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + savedMemo + '</div></div><button id="exitMemoBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer;">退出备忘录</button></div>';
+    editorContainer.insertAdjacentHTML('beforeend', memoHtml);
+    
+    var leftArea = document.getElementById('memoLeft');
+    var rightArea = document.getElementById('memoRight');
+    var resizeHandle = document.getElementById('memoResizeHandle');
+    var leftContainer = document.getElementById('memoLeftArea');
+    var rightContainer = document.getElementById('memoRightArea');
+    var exitBtn = document.getElementById('exitMemoBtn');
+    var isResizing = false, startX = 0, startLeftWidth = 0, containerWidth = editorContainer.clientWidth;
+    
+    function onMouseMove(e) { if (!isResizing) return; var newLeftWidth = startLeftWidth + (e.clientX - startX); var percent = (newLeftWidth / containerWidth) * 100; if (percent < 20) percent = 20; if (percent > 80) percent = 80; leftContainer.style.flex = percent; rightContainer.style.flex = 100 - percent; }
+    function onMouseUp() { isResizing = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; }
+    if (resizeHandle) {
+        resizeHandle.onmousedown = function(e) { e.preventDefault(); isResizing = true; startX = e.clientX; startLeftWidth = leftContainer.offsetWidth; containerWidth = editorContainer.clientWidth; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); };
+        resizeHandle.onmouseover = function() { this.style.background = '#007aff'; };
+        resizeHandle.onmouseout = function() { this.style.background = 'rgba(0,122,255,0.3)'; };
+    }
+    if (leftArea && rightArea) {
+        leftArea.oninput = function() { editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
+        rightArea.oninput = function() { localStorage.setItem('openwrite_memo_content', this.innerHTML); };
+    }
+    if (exitBtn) exitBtn.onclick = function() { document.getElementById('memoEditorContainer').remove(); editor.style.display = 'block'; };
+}
+
+// 重新绑定工具栏按钮
+function rebindToolbarButtons() {
+    var btns = document.querySelectorAll('.toolbar-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var btn = btns[i];
+        var action = btn.getAttribute('data-action');
+        if (action === 'dual') btn.onclick = toggleDualMode;
+        else if (action === 'memo') btn.onclick = toggleMemoMode;
+    }
+}
+setTimeout(rebindToolbarButtons, 500);

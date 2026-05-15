@@ -3,11 +3,7 @@
 function renderTabs() {
     var container = document.getElementById('tabsContainer');
     if (!container) return;
-    var oldNewBtn = document.getElementById('newTabBtn');
-    var newBtnHTML = oldNewBtn ? oldNewBtn.outerHTML : '<button class="new-tab-btn" id="newTabBtn">+</button>';
     container.innerHTML = '';
-    var winControls = document.createElement('div');
-    winControls.className = 'window-controls';
     for (var i = 0; i < openTabs.length; i++) {
         var tab = openTabs[i];
         var tabEl = document.createElement('div');
@@ -29,6 +25,7 @@ function renderTabs() {
     newBtn.id = 'newTabBtn';
     newBtn.innerHTML = '+';
     container.appendChild(newBtn);
+    
     var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) {
         tabs[i].onclick = function(e) {
@@ -44,22 +41,9 @@ function renderTabs() {
         }
     }
     document.getElementById('newTabBtn').onclick = function() { switchToTab('home'); };
-    var closeWin = document.querySelector('.window-btn.close');
-    if (closeWin) closeWin.onclick = function() { if (confirm('确定要退出吗？')) window.close(); };
 }
 
 function switchToTab(tabId) {
-    var toolbar = document.getElementById('mainToolbar');
-    var sidebar = document.querySelector('.sidebar-menu');
-    if (tabId.indexOf('book_') === 0) {
-        if (toolbar) toolbar.classList.add('visible');
-        if (sidebar) sidebar.style.display = 'none';
-    } else {
-        if (toolbar) toolbar.classList.remove('visible');
-        if (sidebar) sidebar.style.display = 'flex';
-        var rightSidebar = document.getElementById('rightSidebar');
-        if (rightSidebar) rightSidebar.classList.add('hidden');
-    }
     activeTabId = tabId;
     renderTabs();
     var pages = document.querySelectorAll('.page');
@@ -73,12 +57,12 @@ function switchToTab(tabId) {
         var bookPage = document.querySelector('.page[data-page="' + tabId + '"]');
         if (bookPage) bookPage.classList.add('active');
     }
-    // 更新左侧菜单显示状态
     var sidebar = document.querySelector('.sidebar-menu');
-    var isEditing = (tabId.indexOf('book_') === 0);
     if (sidebar) {
-        sidebar.style.display = isEditing ? 'none' : 'flex';
+        sidebar.style.display = (tabId === 'home') ? 'flex' : 'none';
     }
+    // 关闭所有右侧面板
+    closeAllRightPanels();
 }
 
 function closeTab(tabId) {
@@ -93,11 +77,11 @@ function closeTab(tabId) {
     renderTabs();
     var activePage = document.querySelector('.page[data-page="' + activeTabId + '"]');
     if (activePage) activePage.classList.add('active');
-    // 更新左侧菜单显示
     var sidebar = document.querySelector('.sidebar-menu');
     if (sidebar) {
         sidebar.style.display = (activeTabId === 'home') ? 'flex' : 'none';
     }
+    closeAllRightPanels();
 }
 
 function switchPage(pageId) {
@@ -114,18 +98,36 @@ function switchPage(pageId) {
         var clone = pageDiv.cloneNode(true);
         clone.setAttribute('data-page', tabId);
         clone.id = '';
-        clone.classList.add('active');
         document.getElementById('pagesContainer').appendChild(clone);
         switchToTab(tabId);
         if (pageId === 'settings') loadSettingsPage();
-        if (pageId === 'jianghu') loadJianghuPage();
-        if (pageId === 'xuefu') loadXuefuPage();
+        if (pageId === 'jianghu') renderJianghuContent();
+        if (pageId === 'xuefu') renderXuefuContent();
         if (pageId === 'stats') updateStats();
     }
 }
 
-function loadSettingsPage() {
-    if (typeof renderSettingsPage === 'function') {
-        renderSettingsPage();
+function closeAllRightPanels() {
+    var panels = document.querySelectorAll('.right-slide-panel.open, .right-panel.open');
+    for (var i = 0; i < panels.length; i++) {
+        panels[i].classList.remove('open');
     }
+    var rightSidebar = document.getElementById('rightSidebar');
+    if (rightSidebar) {
+        rightSidebar.classList.add('hidden');
+    }
+    var themePanel = document.getElementById('themeSlidePanel');
+    if (themePanel) themePanel.classList.remove('open');
+    var fontPanel = document.getElementById('fontSlidePanel');
+    if (fontPanel) fontPanel.classList.remove('open');
+    var findPanel = document.getElementById('findSlidePanel');
+    if (findPanel) findPanel.classList.remove('open');
+    var exportPanel = document.getElementById('exportSlidePanel');
+    if (exportPanel) exportPanel.classList.remove('open');
+    var seclusionPanel = document.getElementById('seclusionSlidePanel');
+    if (seclusionPanel) seclusionPanel.classList.remove('open');
+}
+
+function loadSettingsPage() {
+    if (typeof renderSettingsPage === 'function') renderSettingsPage();
 }
