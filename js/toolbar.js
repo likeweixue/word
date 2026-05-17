@@ -686,3 +686,166 @@ function rebindToolbarButtons() {
     }
 }
 setTimeout(rebindToolbarButtons, 500);
+
+// ========== 查找替换浮动窗口 ==========
+function openFindReplaceWindow() {
+    // 检查是否已存在
+    var existingWin = document.getElementById('findReplaceFloatingWin');
+    if (existingWin) {
+        existingWin.style.display = 'flex';
+        return;
+    }
+    
+    // 创建浮动窗口
+    var win = document.createElement('div');
+    win.id = 'findReplaceFloatingWin';
+    win.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; cursor: move;';
+    win.innerHTML = `
+        <div class="drag-header" style="padding: 12px 16px; background: #f0f0f0; border-radius: 12px 12px 0 0; cursor: move; display: flex; justify-content: space-between;">
+            <h3 style="margin:0; font-size:16px;">查找替换</h3>
+            <button id="closeFindWin" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+        </div>
+        <div style="padding: 20px;">
+            <input type="text" id="findTextFloat" placeholder="查找内容" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
+            <input type="text" id="replaceTextFloat" placeholder="替换为" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <button id="replaceCurrentBtn" class="btn-primary" style="flex:1; padding:8px;">替换当前</button>
+                <button id="replaceChapterBtn" class="btn-primary" style="flex:1; padding:8px;">替换本章</button>
+                <button id="replaceAllBtn" class="btn-primary" style="flex:1; padding:8px;">替换全书</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(win);
+    
+    // 关闭按钮
+    document.getElementById('closeFindWin').onclick = function() {
+        win.style.display = 'none';
+    };
+    
+    // 拖拽功能
+    var dragHeader = win.querySelector('.drag-header');
+    var isDragging = false;
+    var offsetX, offsetY;
+    
+    dragHeader.onmousedown = function(e) {
+        if (e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        offsetX = e.clientX - win.offsetLeft;
+        offsetY = e.clientY - win.offsetTop;
+        win.style.transform = 'none';
+        win.style.top = win.offsetTop + 'px';
+        win.style.left = win.offsetLeft + 'px';
+    };
+    
+    document.onmousemove = function(e) {
+        if (!isDragging) return;
+        win.style.left = (e.clientX - offsetX) + 'px';
+        win.style.top = (e.clientY - offsetY) + 'px';
+    };
+    
+    document.onmouseup = function() {
+        isDragging = false;
+    };
+    
+    // 替换当前（当前选中或光标处）
+    document.getElementById('replaceCurrentBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        var editor = document.getElementById('editor');
+        if (!editor || !findText) return;
+        
+        var sel = window.getSelection();
+        var range = sel.getRangeAt(0);
+        var selectedText = range.toString();
+        
+        if (selectedText === findText) {
+            range.deleteContents();
+            range.insertNode(document.createTextNode(replaceText));
+            saveCurrentChapter();
+            alert('已替换当前选中');
+        } else {
+            // 查找并替换第一个
+            var content = editor.innerHTML;
+            if (content.indexOf(findText) !== -1) {
+                editor.innerHTML = content.replace(findText, replaceText);
+                saveCurrentChapter();
+                alert('已替换第一个匹配项');
+            } else {
+                alert('未找到 "' + findText + '"');
+            }
+        }
+    };
+    
+    // 替换本章（当前章节所有匹配）
+    document.getElementById('replaceChapterBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        var editor = document.getElementById('editor');
+        if (!editor || !findText) return;
+        
+        var content = editor.innerHTML;
+        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        var newContent = content.replace(regex, replaceText);
+        var count = (content.match(regex) || []).length;
+        
+        if (count > 0) {
+            editor.innerHTML = newContent;
+            saveCurrentChapter();
+            alert('本章已替换 ' + count + ' 处');
+        } else {
+            alert('未找到 "' + findText + '"');
+        }
+    };
+    
+    // 替换全书（所有章节）
+    document.getElementById('replaceAllBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        if (!findText) return;
+        
+        var totalCount = 0;
+        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        
+        for (var i = 0; i < books.length; i++) {
+            var book = books[i];
+            if (book.volumes) {
+                for (var j = 0; j < book.volumes.length; j++) {
+                    var vol = book.volumes[j];
+                    if (vol.chapters) {
+                        for (var k = 0; k < vol.chapters.length; k++) {
+                            var ch = vol.chapters[k];
+                            if (ch.content) {
+                                var matches = (ch.content.match(regex) || []).length;
+                                if (matches > 0) {
+                                    ch.content = ch.content.replace(regex, replaceText);
+                                    totalCount += matches;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (totalCount > 0) {
+            saveAllData();
+            // 刷新当前打开的章节
+            if (typeof renderCurrentChapter === 'function') renderCurrentChapter();
+            alert('全书已替换 ' + totalCount + ' 处');
+        } else {
+            alert('未找到 "' + findText + '"');
+        }
+    };
+}
+
+// 修改原来的查找替换按钮
+var originalHandleAction = handleToolbarAction;
+if (originalHandleAction) {
+    handleToolbarAction = function(action) {
+        if (action === 'find') {
+            openFindReplaceWindow();
+        } else {
+            originalHandleAction(action);
+        }
+    };
+}
