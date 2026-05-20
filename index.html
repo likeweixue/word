@@ -26,10 +26,8 @@
         <button class="toolbar-btn" data-action="format">排版</button>
         <button class="toolbar-btn" data-action="find">查找替换</button>
         <button class="toolbar-btn" data-action="proofread">校对</button>
-        
         <button class="toolbar-btn" data-action="dual">双栏</button>
         <button class="toolbar-btn" data-action="seclusion">闭关</button>
-        
         <button class="toolbar-btn" data-action="memo">备忘录</button>
         <button class="toolbar-btn" data-action="save">保存</button>
         <button class="toolbar-btn" data-action="export">导出</button>
@@ -73,12 +71,7 @@
 
                 <!-- 数据统计页面 -->
                 <div class="page" data-page="stats" style="overflow:auto; padding:0; background:#e9e3d7;">
-                    <iframe src="stats.html" style="width:100%; height:100%; border:none; min-height:600px;"></iframe>
-                </div>                </div>                            <div class="stat-card"><h3>本周</h3><p class="stat-number" id="weekWords">0</p></div>
-                            <div class="stat-card"><h3>本月</h3><p class="stat-number" id="monthWords">0</p></div>
-                            <div class="stat-card"><h3>总计</h3><p class="stat-number" id="totalWords">0</p></div>
-                        </div>
-                    </div>
+                    <iframe src="stats.html" style="width:100%; height:100%; border:none;"></iframe>
                 </div>
 
                 <!-- 设置页面 -->
@@ -89,73 +82,81 @@
                 <!-- 关于页面 -->
                 <div class="page" data-page="about">
                     <div class="about-content">
-                        <h2> 写作帮手 OpenWrite</h2>
+                        <h2>📝 写作帮手 OpenWrite</h2>
                         <p>免费，开源，自由的写作软件</p>
-                        <p>软件官网openwrite.team</p>
-                        <p>版本 0.3.6 发布前瞻版</p>
+                        <p>软件官网 openwrite.team</p>
+                        <p>版本 0.3.7 发布前瞻版</p>
                         <p>GitHub: <a href="https://github.com/likeweixue/openwrite" target="_blank">https://github.com/likeweixue/openwrite</a></p>
                     </div>
                 </div>
 
                 <!-- 江湖页面 -->
-                <div class="page" data-page="jianghu"><div id="jianghuContainer"></div>
-                </div>
+                <div class="page" data-page="jianghu"><div id="jianghuContainer"></div></div>
 
                 <!-- 学府页面 -->
-                <div class="page" data-page="xuefu">
-                    <div id="xuefuContainer"></div>
-                </div>
+                <div class="page" data-page="xuefu"><div id="xuefuContainer"></div></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 新建书籍抽屉 -->
-<div id="newBookDrawer" class="drawer">
-    <div class="drawer-header">
-        <h3>新建书籍</h3>
-        <button class="close-drawer" id="closeBookDrawer">✕</button>
-    </div>
-    <div class="drawer-content">
-        <label>书籍名称</label>
-        <input type="text" id="newBookName" placeholder="请输入书籍名称">
-        <button id="confirmNewBookBtn" class="btn-primary" style="width:100%; margin-top:20px;">创建书籍</button>
-    </div>
-</div>
+<!-- 图片压缩函数 -->
+<script>
+function compressImage(file, maxWidth, maxHeight, quality, callback) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+            var width = img.width;
+            var height = img.height;
+            var ratio = 1;
+            if (width > maxWidth) ratio = maxWidth / width;
+            else if (height > maxHeight) ratio = maxHeight / height;
+            var newWidth = width * ratio;
+            var newHeight = height * ratio;
+            var canvas = document.createElement("canvas");
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+            var compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+            callback(compressedDataUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
-<!-- 新建分组抽屉 -->
-<div id="newGroupDrawer" class="drawer">
-    <div class="drawer-header">
-        <h3>新建分组</h3>
-        <button class="close-drawer" id="closeGroupDrawer">✕</button>
-    </div>
-    <div class="drawer-content">
-        <label>分组名称</label>
-        <input type="text" id="newGroupName" placeholder="请输入分组名称">
-        <button id="confirmNewGroupBtn" class="btn-primary" style="width:100%; margin-top:20px;">创建分组</button>
-    </div>
-</div>
+function compressAndCreateBook(name, desc, file) {
+    if (file && file.size > 1024 * 1024) {
+        compressImage(file, 400, 300, 0.6, function(compressedDataUrl) {
+            createBookWithData(name, desc, compressedDataUrl);
+        });
+    } else if (file) {
+        var reader = new FileReader();
+        reader.onload = function(ev) { createBookWithData(name, desc, ev.target.result); };
+        reader.readAsDataURL(file);
+    } else {
+        createBookWithData(name, desc, null);
+    }
+}
 
-<!-- 闭关面板 -->
-<div id="seclusionPanel" class="seclusion-panel" style="display:none;">
-    <div class="panel-header">
-        <h4>闭关修炼</h4>
-        <button class="close-panel" id="closeSeclusionPanel">✕</button>
-    </div>
-    <div class="panel-content">
-        <label>目标字数：</label>
-        <input type="number" id="seclusionGoal" value="3000" style="width:100%; padding:8px; margin:8px 0;">
-        <label>自动出关时间（小时，0表示不限制）：</label>
-        <input type="number" id="seclusionTimeout" value="0" style="width:100%; padding:8px; margin:8px 0;">
-        <div id="seclusionProgress" class="seclusion-progress" style="display:none;">
-            <div>当前进度：<span id="seclusionCurrent">0</span> / <span id="seclusionGoalDisplay">3000</span> 字</div>
-            <div class="seclusion-progress-bar"><div class="seclusion-progress-fill" id="seclusionProgressFill"></div></div>
-        </div>
-        <button id="startSeclusionBtn" class="btn-primary" style="width:100%; margin-top:12px;">开始闭关</button>
-        <button id="stopSeclusionBtn" class="btn-danger" style="width:100%; margin-top:8px; display:none;">结束闭关</button>
-    </div>
-</div>
+function compressAndSaveBook(bookId, name, desc, file) {
+    if (file && file.size > 1024 * 1024) {
+        compressImage(file, 400, 300, 0.6, function(compressedDataUrl) {
+            saveBookWithCover(bookId, name, desc, compressedDataUrl);
+        });
+    } else if (file) {
+        var reader = new FileReader();
+        reader.onload = function(ev) { saveBookWithCover(bookId, name, desc, ev.target.result); };
+        reader.readAsDataURL(file);
+    } else {
+        saveBookWithCover(bookId, name, desc, null);
+    }
+}
+</script>
 
+<!-- JS 文件 -->
 <script src="js/data.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/books.js"></script>
@@ -164,59 +165,26 @@
 <script src="js/xuefu.js"></script>
 <script src="js/toolbar.js"></script>
 <script src="js/app.js"></script>
-</body>
-</html>
+<script src="js/sidebar.js"></script>
+
+<!-- 内联脚本 -->
 <script>
 // 在关于页面添加感谢名单和寄语
 setTimeout(function() {
     var aboutPage = document.querySelector('.page[data-page="about"] .about-content');
     if (aboutPage && !document.querySelector('.thanks-list')) {
-        var thanksHtml = `
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">
-                <h3>感谢以下作者</h3>
-                <p style="font-size: 14px; line-height: 1.8;">风吹屁屁凉，泽墨川，【女频写手】长兮常相忆，读者读者读者读者读者读者读者读者作者男生，岚音</p>
-            </div>
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">
-                <h3>写作帮手寄语</h3>
-                <p style="font-size: 14px; line-height: 1.8; text-align: left;">这里借用马克·扎克伯格（Facebook 创始人）的话，想法一开始并不是完美的，没有人一开始就会，都是在做的过程中不断遇到与解决问题，我们要做的是迈出第一步，所以，开始书写故事吧！</p>
-            </div>
-        `;
+        var thanksHtml = '<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">' +
+            '<h3>感谢以下作者</h3>' +
+            '<p style="font-size: 14px; line-height: 1.8;">风吹屁屁凉，泽墨川，【女频写手】长兮常相忆，读者读者读者读者读者读者读者读者作者男生，岚音</p>' +
+            '</div>' +
+            '<div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">' +
+            '<h3>写作帮手寄语</h3>' +
+            '<p style="font-size: 14px; line-height: 1.8; text-align: left;">这里借用马克·扎克伯格（Facebook 创始人）的话，想法一开始并不是完美的，没有人一开始就会，都是在做的过程中不断遇到与解决问题，我们要做的是迈出第一步，所以，开始书写故事吧！</p>' +
+            '</div>';
         aboutPage.insertAdjacentHTML('beforeend', thanksHtml);
     }
 }, 500);
-</script>
 
-<!-- 新建书籍右侧滑出面板（新版） -->
-<div id="newBookSlidePanelV2" class="right-slide-panel">
-    <div class="right-slide-panel-header">
-        <h3>新建书籍</h3>
-        <button class="right-slide-panel-close" onclick="closeNewBookPanelV2()">✕</button>
-    </div>
-    <div class="right-slide-panel-content">
-        <input type="text" id="newBookNameV2" placeholder="书籍名称" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
-        <textarea id="newBookDescV2" rows="4" placeholder="书籍简介（可选）" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; resize:vertical; font-size:14px;"></textarea>
-        <div style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:8px; font-size:13px; color:#666;">书籍封面（可选）</label>
-            <input type="file" id="newBookCoverV2" accept="image/*" style="margin-bottom:8px;">
-            <div id="newBookCoverPreviewV2" style="width:100%; height:120px; background:#f5f5f5; border-radius:8px; background-size:cover; background-position:center; border:1px solid #ddd;"></div>
-        </div>
-        <button id="confirmNewBookBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建书籍</button>
-    </div>
-</div>
-
-<!-- 新建分组右侧滑出面板（新版） -->
-<div id="newGroupSlidePanelV2" class="right-slide-panel">
-    <div class="right-slide-panel-header">
-        <h3>新建分组</h3>
-        <button class="right-slide-panel-close" onclick="closeNewGroupPanelV2()">✕</button>
-    </div>
-    <div class="right-slide-panel-content">
-        <input type="text" id="newGroupNameV2" placeholder="分组名称" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
-        <button id="confirmNewGroupBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建分组</button>
-    </div>
-</div>
-
-<script>
 // 新建书籍面板函数
 function openNewBookPanelV2() {
     document.getElementById('newBookSlidePanelV2').classList.add('open');
@@ -235,16 +203,7 @@ function createNewBookV2() {
     if (!name) { alert('请输入书籍名称'); return; }
     var desc = document.getElementById('newBookDescV2').value;
     var coverFile = document.getElementById('newBookCoverV2').files[0];
-    
-    if (coverFile) {
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            createBookWithData(name, desc, ev.target.result);
-        };
-        reader.readAsDataURL(coverFile);
-    } else {
-        createBookWithData(name, desc, null);
-    }
+    compressAndCreateBook(name, desc, coverFile);
 }
 
 function createBookWithData(name, desc, cover) {
@@ -302,3 +261,36 @@ document.getElementById('newBookCoverV2').onchange = function(e) {
     }
 };
 </script>
+
+<!-- 新建书籍右侧滑出面板 -->
+<div id="newBookSlidePanelV2" class="right-slide-panel">
+    <div class="right-slide-panel-header">
+        <h3>新建书籍</h3>
+        <button class="right-slide-panel-close" onclick="closeNewBookPanelV2()">✕</button>
+    </div>
+    <div class="right-slide-panel-content">
+        <input type="text" id="newBookNameV2" placeholder="书籍名称" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        <textarea id="newBookDescV2" rows="4" placeholder="书籍简介（可选）" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; resize:vertical; font-size:14px;"></textarea>
+        <div style="margin-bottom:16px;">
+            <label style="display:block; margin-bottom:8px; font-size:13px; color:#666;">书籍封面（可选）</label>
+            <input type="file" id="newBookCoverV2" accept="image/*" style="margin-bottom:8px;">
+            <div id="newBookCoverPreviewV2" style="width:100%; height:120px; background:#f5f5f5; border-radius:8px; background-size:cover; background-position:center; border:1px solid #ddd;"></div>
+        </div>
+        <button id="confirmNewBookBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建书籍</button>
+    </div>
+</div>
+
+<!-- 新建分组右侧滑出面板 -->
+<div id="newGroupSlidePanelV2" class="right-slide-panel">
+    <div class="right-slide-panel-header">
+        <h3>新建分组</h3>
+        <button class="right-slide-panel-close" onclick="closeNewGroupPanelV2()">✕</button>
+    </div>
+    <div class="right-slide-panel-content">
+        <input type="text" id="newGroupNameV2" placeholder="分组名称" style="width:100%; padding:12px; margin-bottom:20px; border:1px solid #ddd; border-radius:8px; font-size:14px;">
+        <button id="confirmNewGroupBtnV2" class="btn-primary" style="width:100%; padding:12px; font-size:14px;">创建分组</button>
+    </div>
+</div>
+
+</body>
+</html>

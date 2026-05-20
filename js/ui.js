@@ -61,7 +61,6 @@ function switchToTab(tabId) {
     if (sidebar) {
         sidebar.style.display = (tabId === 'home') ? 'flex' : 'none';
     }
-    // 关闭所有右侧面板
     closeAllRightPanels();
 }
 
@@ -88,23 +87,94 @@ function switchPage(pageId) {
     var titles = { stats: '数据', settings: '设置', about: '关于', jianghu: '江湖', xuefu: '学府' };
     var title = titles[pageId] || pageId;
     var tabId = 'page_' + pageId;
+    
+    // 检查是否已经打开
     for (var i = 0; i < openTabs.length; i++) {
-        if (openTabs[i].id === tabId) { switchToTab(tabId); return; }
+        if (openTabs[i].id === tabId) { 
+            switchToTab(tabId); 
+            return; 
+        }
     }
+    
     openTabs.push({ id: tabId, title: title, type: 'page', pageId: pageId });
     renderTabs();
-    var pageDiv = document.querySelector('.page[data-page="' + pageId + '"]');
-    if (pageDiv) {
-        var clone = pageDiv.cloneNode(true);
-        clone.setAttribute('data-page', tabId);
-        clone.id = '';
-        document.getElementById('pagesContainer').appendChild(clone);
+    
+    // 直接使用 index.html 中已存在的页面，而不是重新创建
+    var existingPage = document.querySelector('.page[data-page="' + pageId + '"]');
+    if (existingPage) {
+        // 复制现有的页面并赋予新的 data-page 属性
+        var clonedPage = existingPage.cloneNode(true);
+        clonedPage.setAttribute('data-page', tabId);
+        document.getElementById('pagesContainer').appendChild(clonedPage);
         switchToTab(tabId);
-        if (pageId === 'settings') loadSettingsPage();
-        if (pageId === 'jianghu') renderJianghuContent();
-        if (pageId === 'xuefu') renderXuefuContent();
-        if (pageId === 'stats') updateStats();
+        
+        // 如果是设置页面，重新渲染设置内容
+        if (pageId === 'settings') {
+            setTimeout(function() {
+                if (typeof renderSettingsPage === 'function') {
+                    renderSettingsPage();
+                }
+            }, 100);
+        }
+        // 如果是江湖页面，重新加载
+        else if (pageId === 'jianghu' && typeof loadJianghuPageContent === 'function') {
+            setTimeout(loadJianghuPageContent, 100);
+        }
+        // 如果是学府页面，重新加载
+        else if (pageId === 'xuefu' && typeof loadXuefuPage === 'function') {
+            setTimeout(loadXuefuPage, 100);
+        }
+        return;
     }
+    
+    // 如果没有现有页面，则创建
+    var pagesContainer = document.getElementById('pagesContainer');
+    var pageDiv = document.createElement('div');
+    pageDiv.className = 'page';
+    pageDiv.setAttribute('data-page', tabId);
+    
+    if (pageId === 'stats') {
+        pageDiv.innerHTML = '<iframe src="stats.html" style="width:100%; height:100%; border:none; background:#e9e3d7;"></iframe>';
+    } 
+    else if (pageId === 'settings') {
+        pageDiv.innerHTML = '<div class="settings-container" id="settingsContainer" style="height:100%; overflow:auto;"></div>';
+        setTimeout(function() {
+            if (typeof renderSettingsPage === 'function') {
+                renderSettingsPage();
+            }
+        }, 100);
+    } 
+    else if (pageId === 'about') {
+        pageDiv.innerHTML = '<div class="about-content"></div>';
+        setTimeout(function() {
+            var aboutContent = pageDiv.querySelector('.about-content');
+            if (aboutContent) {
+                aboutContent.innerHTML = '<h2>📝 写作帮手 OpenWrite</h2><p>免费，开源，自由的写作软件</p><p>软件官网 openwrite.team</p><p>版本 0.3.7 发布前瞻版</p><p>GitHub: <a href="https://github.com/likeweixue/openwrite" target="_blank">https://github.com/likeweixue/openwrite</a></p>';
+            }
+        }, 100);
+    } 
+    else if (pageId === 'jianghu') {
+        pageDiv.innerHTML = '<div id="jianghuContainer" style="height:100%; overflow:auto;"></div>';
+        setTimeout(function() {
+            if (typeof loadJianghuPageContent === 'function') {
+                loadJianghuPageContent();
+            }
+        }, 100);
+    } 
+    else if (pageId === 'xuefu') {
+        pageDiv.innerHTML = '<div id="xuefuContainer" style="height:100%; overflow:auto;"></div>';
+        setTimeout(function() {
+            if (typeof loadXuefuPage === 'function') {
+                loadXuefuPage();
+            }
+        }, 100);
+    } 
+    else {
+        pageDiv.innerHTML = '<div style="padding:20px;">页面加载中...</div>';
+    }
+    
+    pagesContainer.appendChild(pageDiv);
+    switchToTab(tabId);
 }
 
 function closeAllRightPanels() {

@@ -152,7 +152,7 @@ function renderTrashList() {
     var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;">';
     for (var i = 0; i < trashBooks.length; i++) {
         var book = trashBooks[i];
-        html += '<div style="background:#fff;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:48px;">📖</div><div style="font-weight:bold;">' + escapeHtml(book.title) + '</div><div style="font-size:12px;color:#888;">' + new Date(book.deletedTime).toLocaleDateString() + '</div><div style="margin-top:12px;"><button class="restore-book" data-id="' + book.id + '" style="padding:4px 12px;background:#28a745;color:white;border:none;border-radius:4px;">恢复</button><button class="permanent-delete" data-id="' + book.id + '" style="padding:4px 12px;background:#dc3545;color:white;border:none;border-radius:4px;">永久删除</button></div></div>';
+        html += '<div style="background:#fff;border-radius:8px;padding:16px;text-align:center;"><div style="font-size:48px;"></div><div style="font-weight:bold;">' + escapeHtml(book.title) + '</div><div style="font-size:12px;color:#888;">' + new Date(book.deletedTime).toLocaleDateString() + '</div><div style="margin-top:12px;"><button class="restore-book" data-id="' + book.id + '" style="padding:4px 12px;background:#28a745;color:white;border:none;border-radius:4px;">恢复</button><button class="permanent-delete" data-id="' + book.id + '" style="padding:4px 12px;background:#dc3545;color:white;border:none;border-radius:4px;">永久删除</button></div></div>';
     }
     html += '</div>';
     container.innerHTML = html;
@@ -179,7 +179,6 @@ function renderTrashList() {
 
 function initEditorToolbar() {}
 
-// 菜单栏显示控制
 function updateToolbarForPage() {
     var toolbar = document.getElementById('mainToolbar');
     if (!toolbar) return;
@@ -200,73 +199,25 @@ function updateToolbarForPage() {
 
 setTimeout(updateToolbarForPage, 500);
 
-// ========== 江湖渲染函数 ==========
 function renderJianghuContent() {
     var container = document.getElementById('jianghuContainer');
     if (!container) return;
-    container.innerHTML = `
-        <div style="padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2>江湖</h2>
-                <div>
-                    <button id="jhGroupBtn" class="btn-secondary">+ 新建分组</button>
-                    <button id="jhLinkBtn" class="btn-primary" style="margin-left:8px;">+ 新建链接</button>
-                </div>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
-                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://github.com/likeweixue/OpenWrite', '_blank')">
-                    <div style="font-size:32px;">🐙</div>
-                    <div style="font-weight:600;">GitHub</div>
-                    <div style="font-size:12px; color:#888;">查看源码与反馈</div>
-                </div>
-                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://qm.qq.com/q/69uBoYdjmE', '_blank')">
-                    <div style="font-size:32px;">💬</div>
-                    <div style="font-weight:600;">QQ交流群</div>
-                    <div style="font-size:12px; color:#888;">群号: 1095036654</div>
-                </div>
-                <div style="background:#fff; border-radius:12px; padding:16px; cursor:pointer;" onclick="window.open('https://openwrite.team', '_blank')">
-                    <div style="font-size:32px;">🌐</div>
-                    <div style="font-weight:600;">写作帮手官网</div>
-                    <div style="font-size:12px; color:#888;">官方网站</div>
-                </div>
-            </div>
-        </div>
-    `;
-    document.getElementById('jhGroupBtn').onclick = function() { alert('新建分组功能开发中'); };
-    document.getElementById('jhLinkBtn').onclick = function() { alert('新建链接功能开发中'); };
+    container.innerHTML = '<div style="padding:20px;"><h2>江湖</h2><p>加载中...</p></div>';
+    if (typeof loadJianghuPageContent === 'function') {
+        loadJianghuPageContent();
+    }
 }
 
-// ========== 学府渲染函数 ==========
 function renderXuefuContent() {
     var container = document.getElementById('xuefuContainer');
     if (!container) return;
-    container.innerHTML = `
-        <div style="padding:20px;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h2>学府</h2>
-                <button id="xfAddBtn" class="btn-primary">+ 添加素材</button>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;">
-                <div style="background:#fff; border-radius:12px; padding:16px;">
-                    <div style="font-size:32px;">📘</div>
-                    <div style="font-weight:600;">古言写作素材大全</div>
-                    <div style="font-size:12px; color:#888;">古代言情写作必备素材</div>
-                </div>
-                <div style="background:#fff; border-radius:12px; padding:16px;">
-                    <div style="font-size:32px;">📘</div>
-                    <div style="font-weight:600;">男频文写作指南</div>
-                    <div style="font-size:12px; color:#888;">男频小说创作指导</div>
-                </div>
-            </div>
-            <div style="margin-top:20px; padding:12px; background:rgba(0,0,0,0.05); border-radius:8px;">
-                <p style="font-size:12px;">提示：CHM文件在macOS上需要第三方软件打开</p>
-            </div>
-        </div>
-    `;
-    document.getElementById('xfAddBtn').onclick = function() { alert('添加素材功能开发中'); };
+    if (typeof loadXuefuPage === 'function') {
+        loadXuefuPage();
+    } else {
+        container.innerHTML = '<div style="padding:20px;"><h2>学府</h2><p>加载中...</p></div>';
+    }
 }
 
-// ========== 统计数据渲染 ==========
 function updateStats() {
     var today = 0, week = 0, month = 0, total = 0;
     var now = new Date();
@@ -303,17 +254,12 @@ function updateStats() {
     if (monthEl) monthEl.innerText = month;
     if (totalEl) totalEl.innerText = total;
 }
-init();
 
-// 修复菜单栏显示/隐藏
 function fixToolbarVisibility() {
     var toolbar = document.getElementById('mainToolbar');
     if (!toolbar) return;
-    
-    // 检查当前激活的页面是否是书籍编辑页面
     var activePage = document.querySelector('.page.active');
     var isEditing = activePage && activePage.getAttribute('data-page') && activePage.getAttribute('data-page').indexOf('book_') === 0;
-    
     if (isEditing) {
         toolbar.classList.add('visible');
     } else {
@@ -321,7 +267,6 @@ function fixToolbarVisibility() {
     }
 }
 
-// 监听页面切换
 var originalSwitchToTab = window.switchToTab;
 if (originalSwitchToTab) {
     window.switchToTab = function(tabId) {
@@ -330,7 +275,6 @@ if (originalSwitchToTab) {
     };
 }
 
-// 监听标签页关闭
 var originalCloseTab = window.closeTab;
 if (originalCloseTab) {
     window.closeTab = function(tabId) {
@@ -339,7 +283,6 @@ if (originalCloseTab) {
     };
 }
 
-// 监听书籍打开
 var originalOpenBookTab = window.openBookTab;
 if (originalOpenBookTab) {
     window.openBookTab = function(bookId) {
@@ -348,5 +291,6 @@ if (originalOpenBookTab) {
     };
 }
 
-// 初始化
 setTimeout(fixToolbarVisibility, 100);
+
+init();

@@ -9,24 +9,20 @@ function handleToolbarAction(action) {
         case 'font': openFontPanel(); break;
         case 'format': autoFormat(); break;
         case 'find': openFindReplacePanel(); break;
-        case 'proofread': alert('校对功能开发中'); break;
-        case 'namegen': openNamegenWindow(); break;
+        case 'proofread': proofread(); break;
         case 'dual': toggleDualMode(); break;
         case 'seclusion': openSeclusionPanel(); break;
-        case 'notes': openNotesWindow(); break;
         case 'memo': toggleMemoMode(); break;
         case 'save': if (typeof saveCurrentChapter === 'function') { saveCurrentChapter(); alert('已保存'); } break;
         case 'export': openExportPanel(); break;
-        case 'sidebar': toggleRightSidebar(); break;
+        case 'sidebar': if (typeof toggleRightSidebar === 'function') toggleRightSidebar(); break;
         default: console.log('未知:', action);
     }
 }
 
 function closePanel(panelId) {
     var panel = document.getElementById(panelId);
-    if (panel) {
-        panel.classList.remove('open');
-    }
+    if (panel) panel.remove();
 }
 
 function importFile() {
@@ -44,6 +40,8 @@ function importFile() {
                     if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
                     if (typeof renderCurrentChapter === 'function') renderCurrentChapter();
                     alert('导入成功');
+                } else {
+                    alert('请先打开一本书籍');
                 }
             };
             reader.readAsText(file, 'UTF-8');
@@ -71,186 +69,359 @@ function autoFormat() {
     alert('排版完成');
 }
 
+function proofread() {
+    var editor = document.getElementById('editor');
+    if (!editor) return;
+    var text = editor.innerText;
+    var commonErrors = [
+        { find: '的的', replace: '的' },
+        { find: '了了', replace: '了' },
+        { find: '，，', replace: '，' },
+        { find: '。。', replace: '。' }
+    ];
+    var changed = false;
+    for (var i = 0; i < commonErrors.length; i++) {
+        if (text.indexOf(commonErrors[i].find) !== -1) {
+            text = text.split(commonErrors[i].find).join(commonErrors[i].replace);
+            changed = true;
+        }
+    }
+    if (changed) {
+        editor.innerText = text;
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+        alert('已修复常见错误');
+    } else {
+        alert('未发现明显错误');
+    }
+}
+
+// ========== 主题面板（从右边栏左侧滑出） ==========
 function openThemePanel() {
     var panel = document.getElementById('themeSlidePanel');
     if (panel) {
-        panel.classList.toggle('open');
+        panel.remove();
         return;
     }
-    var html = '<div id="themeSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>主题设置</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><h5>预设主题</h5><div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;"><button data-theme="default" class="theme-preset-btn">默认白</button><button data-theme="eye" class="theme-preset-btn">护眼绿</button><button data-theme="warm" class="theme-preset-btn">经典黄</button><button data-theme="dark" class="theme-preset-btn">暗夜黑</button><button data-theme="open" class="theme-preset-btn">Open圆润</button></div><h5>网格线</h5><label><input type="checkbox" id="gridLinesCheckboxSlide"> 显示网格线</label><h5>背景图片</h5><input type="file" id="themeBgUploadSlide" accept="image/*"><div id="themeBgPreviewSlide" style="width:100%; height:80px; background:#ddd; border-radius:6px; margin-top:8px;"></div><div><span>透明度: <span id="themeOpacityValSlide">30</span>%</span><input type="range" id="themeOpacitySliderSlide" min="0" max="100" value="30"></div><h5>全局文字颜色</h5><input type="color" id="globalTextColorSlide" value="#333333"></div></div>';
+    
+    var rightSidebar = document.getElementById('rightSidebar');
+    var rightSidebarRect = rightSidebar ? rightSidebar.getBoundingClientRect() : null;
+    var leftPos = rightSidebarRect ? (rightSidebarRect.left - 340) : (window.innerWidth - 380);
+    var topPos = rightSidebarRect ? (rightSidebarRect.top + 50) : 100;
+    
+    // 获取当前背景设置
+    var currentBgImage = localStorage.getItem('custom_bg_image') || '';
+    var currentBgOpacity = localStorage.getItem('custom_bg_opacity') || '30';
+    
+    var html = '<div id="themeSlidePanel" style="position: fixed; left: ' + leftPos + 'px; top: ' + topPos + 'px; width: 340px; background: var(--panel-bg, rgba(255, 255, 255, 0.95)); backdrop-filter: blur(8px); border-radius: 0px; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column; max-height: calc(100vh - 150px);">' +
+        '<div class="right-slide-panel-header" style="padding: 16px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1)); display: flex; justify-content: space-between; align-items: center;">' +
+        '<h3 style="margin:0;">主题设置</h3>' +
+        '<button class="right-slide-panel-close" style="background:none; border:none; font-size:20px; cursor:pointer; color: var(--text-color, #333);">✕</button>' +
+        '</div>' +
+        '<div class="right-slide-panel-content" style="flex:1; overflow-y:auto; padding: 20px;">' +
+        
+        // 预设主题部分
+        '<h5 style="margin-bottom:12px;">🎨 预设主题</h5>' +
+        '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">' +
+        '<button data-theme="default" class="theme-preset-btn" style="padding:8px 16px; border-radius:8px; background:#f0f0f0; border:none; cursor:pointer;">默认白</button>' +
+        '<button data-theme="eye" class="theme-preset-btn" style="padding:8px 16px; border-radius:8px; background:#C8DBC5; border:none; cursor:pointer;">护眼绿</button>' +
+        '<button data-theme="warm" class="theme-preset-btn" style="padding:8px 16px; border-radius:8px; background:#DFD5BD; border:none; cursor:pointer;">经典黄</button>' +
+        '<button data-theme="dark" class="theme-preset-btn" style="padding:8px 16px; border-radius:8px; background:#1e1e2e; color:white; border:none; cursor:pointer;">暗夜黑</button>' +
+        '<button data-theme="open" class="theme-preset-btn" style="padding:8px 16px; border-radius:8px; background:#f5f5f7; border:none; cursor:pointer;">Open圆润</button>' +
+        '</div>' +
+        
+        // 分隔线
+        '<div style="height:1px; background:var(--border-color, #eee); margin:16px 0;"></div>' +
+        
+        // 自定义背景图片
+        '<h5 style="margin-bottom:12px;">🖼️ 自定义背景图片</h5>' +
+        '<input type="file" id="customBgUpload" accept="image/*" style="width:100%; margin-bottom:12px; padding:6px;">' +
+        '<div id="customBgPreview" style="width:100%; height:100px; background:#f0f0f0; border-radius:8px; background-size:cover; background-position:center; margin-bottom:12px; border:1px solid var(--border-color, #ddd);"></div>' +
+        
+        // 透明度滑块
+        '<div style="margin-bottom:16px;">' +
+        '<label style="display:flex; justify-content:space-between; margin-bottom:8px;">' +
+        '<span>🔆 背景透明度</span>' +
+        '<span id="opacityValueDisplay" style="color:var(--text-color, #666);">' + currentBgOpacity + '%</span>' +
+        '</label>' +
+        '<input type="range" id="customBgOpacity" min="0" max="100" value="' + currentBgOpacity + '" style="width:100%; cursor:pointer;">' +
+        '</div>' +
+        
+        // 清除背景按钮
+        '<button id="clearCustomBgBtn" style="width:100%; padding:8px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer; margin-bottom:16px;">🗑️ 清除背景图片</button>' +
+        
+        // 全局文字颜色
+        '<div style="height:1px; background:var(--border-color, #eee); margin:16px 0;"></div>' +
+        '<h5 style="margin-bottom:12px;">✏️ 全局文字颜色</h5>' +
+        '<input type="color" id="globalTextColorSlide" value="#333333" style="width:100%; height:40px; cursor:pointer; border:none;">' +
+        '</div></div>';
+    
     document.body.insertAdjacentHTML('beforeend', html);
     
-    var closeBtn = document.querySelector('#themeSlidePanel .right-slide-panel-close');
-    if (closeBtn) closeBtn.onclick = function() { closePanel('themeSlidePanel'); };
+    var panelEl = document.getElementById('themeSlidePanel');
     
-    var presetBtns = document.querySelectorAll('.theme-preset-btn');
-    for (var i = 0; i < presetBtns.length; i++) {
-        presetBtns[i].onclick = function() {
+    // 关闭按钮
+    panelEl.querySelector('.right-slide-panel-close').onclick = function() { panelEl.remove(); };
+    
+    // 预设主题切换
+    panelEl.querySelectorAll('.theme-preset-btn').forEach(btn => {
+        btn.onclick = function() {
             var theme = this.getAttribute('data-theme');
             var link = document.getElementById('themeStyle');
             if (link) link.href = 'themes/' + theme + '.css';
             document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark', 'theme-open');
             document.body.classList.add('theme-' + theme);
+            localStorage.setItem('app_theme', theme);
+            // 清除自定义背景，恢复主题默认背景
+            clearCustomBackground();
+            panelEl.remove();
         };
+    });
+    
+    // 全局文字颜色
+    panelEl.querySelector('#globalTextColorSlide').onchange = function() {
+        var style = document.getElementById('global-color-style');
+        if (style) style.remove();
+        var newStyle = document.createElement('style');
+        newStyle.id = 'global-color-style';
+        newStyle.textContent = '* { color: ' + this.value + ' !important; }';
+        document.head.appendChild(newStyle);
+        localStorage.setItem('global_text_color', this.value);
+    };
+    
+    // 预览背景图片
+    var bgPreview = panelEl.querySelector('#customBgPreview');
+    var savedBg = localStorage.getItem('custom_bg_image');
+    if (savedBg) {
+        bgPreview.style.backgroundImage = 'url(' + savedBg + ')';
+        bgPreview.style.backgroundSize = 'cover';
+        bgPreview.style.backgroundPosition = 'center';
+        applyCustomBackground(savedBg, currentBgOpacity);
     }
     
-    var gridCheck = document.getElementById('gridLinesCheckboxSlide');
-    if (gridCheck) {
-        gridCheck.onchange = function() {
-            var editor = document.getElementById('editor');
-            if (editor) {
-                if (this.checked) editor.classList.add('show-grid');
-                else editor.classList.remove('show-grid');
-            }
-        };
-    }
+    // 上传背景图片
+    var bgUpload = panelEl.querySelector('#customBgUpload');
+    bgUpload.onchange = function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            // 压缩图片
+            compressImageForBg(file, 1200, 800, 0.7, function(compressedDataUrl) {
+                bgPreview.style.backgroundImage = 'url(' + compressedDataUrl + ')';
+                bgPreview.style.backgroundSize = 'cover';
+                bgPreview.style.backgroundPosition = 'center';
+                localStorage.setItem('custom_bg_image', compressedDataUrl);
+                var opacity = panelEl.querySelector('#customBgOpacity').value;
+                applyCustomBackground(compressedDataUrl, opacity);
+            });
+        }
+    };
     
-    var bgUpload = document.getElementById('themeBgUploadSlide');
-    var bgPreview = document.getElementById('themeBgPreviewSlide');
-    var opacitySlider = document.getElementById('themeOpacitySliderSlide');
-    var opacityVal = document.getElementById('themeOpacityValSlide');
-    if (bgUpload) {
-        bgUpload.onchange = function(e) {
-            var file = e.target.files[0];
-            if (file) {
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    var img = ev.target.result;
-                    bgPreview.style.backgroundImage = 'url(' + img + ')';
-                    applyGlobalBg(img, opacitySlider ? parseInt(opacitySlider.value) : 30);
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-    }
-    if (opacitySlider) {
-        opacitySlider.oninput = function() {
-            opacityVal.textContent = this.value;
-            var img = bgPreview.style.backgroundImage.slice(5, -2);
-            if (img && img !== 'null') applyGlobalBg(img, parseInt(this.value));
-        };
-    }
+    // 透明度滑块
+    var opacitySlider = panelEl.querySelector('#customBgOpacity');
+    var opacityDisplay = panelEl.querySelector('#opacityValueDisplay');
+    opacitySlider.oninput = function() {
+        var val = this.value;
+        opacityDisplay.textContent = val + '%';
+        localStorage.setItem('custom_bg_opacity', val);
+        var savedImage = localStorage.getItem('custom_bg_image');
+        if (savedImage) {
+            applyCustomBackground(savedImage, val);
+        }
+    };
     
-    var colorPicker = document.getElementById('globalTextColorSlide');
-    if (colorPicker) {
-        colorPicker.onchange = function() {
-            var color = this.value;
-            var style = document.getElementById('global-color-style');
-            if (style) style.remove();
-            var newStyle = document.createElement('style');
-            newStyle.id = 'global-color-style';
-            newStyle.textContent = '* { color: ' + color + ' !important; }';
-            document.head.appendChild(newStyle);
-        };
-    }
-    panel = document.getElementById('themeSlidePanel');
-    if (panel) panel.classList.add('open');
+    // 清除背景按钮
+    var clearBtn = panelEl.querySelector('#clearCustomBgBtn');
+    clearBtn.onclick = function() {
+        clearCustomBackground();
+        bgPreview.style.backgroundImage = '';
+        localStorage.removeItem('custom_bg_image');
+        localStorage.removeItem('custom_bg_opacity');
+        opacitySlider.value = '30';
+        opacityDisplay.textContent = '30%';
+    };
 }
 
+// 压缩图片用于背景
+function compressImageForBg(file, maxWidth, maxHeight, quality, callback) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+            var width = img.width;
+            var height = img.height;
+            var ratio = 1;
+            if (width > maxWidth) ratio = maxWidth / width;
+            if (height > maxHeight) {
+                var ratio2 = maxHeight / height;
+                if (ratio2 < ratio) ratio = ratio2;
+            }
+            var newWidth = width * ratio;
+            var newHeight = height * ratio;
+            var canvas = document.createElement('canvas');
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+            var compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+            callback(compressedDataUrl);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// 应用自定义背景
+function applyCustomBackground(imageUrl, opacity) {
+    var oldStyle = document.getElementById('custom-bg-style');
+    if (oldStyle) oldStyle.remove();
+    
+    var actualOpacity = opacity / 100;
+    
+    var style = document.createElement('style');
+    style.id = 'custom-bg-style';
+    style.textContent = 'body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url(' + JSON.stringify(imageUrl) + '); background-size: cover; background-position: center; background-attachment: fixed; opacity: ' + actualOpacity + '; z-index: -1; pointer-events: none; } ' +
+        '.app-container, .main-wrapper, .page, .sidebar-menu, .main-content, .book-detail-page, .detail-chapters, .detail-editor { background: transparent !important; }';
+    document.head.appendChild(style);
+    
+    document.body.classList.add('has-custom-bg');
+}
+
+// 清除自定义背景
+function clearCustomBackground() {
+    var oldStyle = document.getElementById('custom-bg-style');
+    if (oldStyle) oldStyle.remove();
+    document.body.classList.remove('has-custom-bg');
+    
+    // 恢复当前主题的背景色
+    var currentTheme = localStorage.getItem('app_theme') || 'default';
+    var link = document.getElementById('themeStyle');
+    if (link) link.href = 'themes/' + currentTheme + '.css';
+    document.body.classList.remove('theme-default', 'theme-eye', 'theme-warm', 'theme-dark', 'theme-open');
+    document.body.classList.add('theme-' + currentTheme);
+    
+    // 重新应用主题
+    applyTheme(currentTheme);
+}
+
+// ========== 字体面板（从右边栏左侧滑出） ==========
 function openFontPanel() {
     var panel = document.getElementById('fontSlidePanel');
     if (panel) {
-        panel.classList.toggle('open');
+        panel.remove();
         return;
     }
-    var html = '<div id="fontSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>字体设置</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><label>字体：</label><select id="fontFamilySlide" style="width:100%; margin:8px 0 16px; padding:8px;"><option value="system-ui">系统默认</option><option value="Georgia, serif">宋体风格</option><option value="PingFang SC, Microsoft YaHei">苹方/雅黑</option><option value="KaiTi, serif">楷体</option><option value="Courier New, monospace">等宽字体</option></select><label>字号：</label><select id="fontSizeSlide" style="width:100%; margin:8px 0 16px; padding:8px;"><option value="12">12px</option><option value="14" selected>14px</option><option value="16">16px</option><option value="18">18px</option><option value="20">20px</option><option value="24">24px</option></select><label>行高：</label><select id="lineHeightSlide" style="width:100%; margin:8px 0 16px; padding:8px;"><option value="1.5">1.5</option><option value="1.8" selected>1.8</option><option value="2.0">2.0</option><option value="2.5">2.5</option></select></div></div>';
+    
+    var rightSidebar = document.getElementById('rightSidebar');
+    var rightSidebarHeight = rightSidebar ? rightSidebar.offsetHeight : (window.innerHeight - 100);
+    var rightSidebarRect = rightSidebar ? rightSidebar.getBoundingClientRect() : null;
+    var leftPos = rightSidebarRect ? (rightSidebarRect.left - 340) : (window.innerWidth - 380);
+    var topPos = rightSidebarRect ? rightSidebarRect.top : 80;
+    
+    var html = '<div id="fontSlidePanel" style="position: fixed; left: ' + leftPos + 'px; top: ' + topPos + 'px; width: 340px; height: ' + rightSidebarHeight + 'px; background: var(--panel-bg, rgba(255, 255, 255, 0.95)); backdrop-filter: blur(8px); border-radius: 0px; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column;">' +
+        '<div class="right-slide-panel-header" style="padding: 16px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1)); display: flex; justify-content: space-between; align-items: center;"><h3 style="margin:0;">字体设置</h3><button class="right-slide-panel-close" style="background:none; border:none; font-size:20px; cursor:pointer; color: var(--text-color, #333);">✕</button></div>' +
+        '<div class="right-slide-panel-content" style="flex:1; overflow-y:auto; padding: 20px;">' +
+        '<label style="display:block; margin-bottom:8px;">字体：</label><select id="fontFamilySlide" style="width:100%; margin-bottom:16px; padding:8px; border-radius:6px; border:1px solid #ddd;">' +
+        '<option value="system-ui">系统默认</option>' +
+        '<option value="Georgia, serif">宋体风格</option>' +
+        '<option value="PingFang SC, Microsoft YaHei">苹方/雅黑</option>' +
+        '<option value="KaiTi, serif">楷体</option>' +
+        '<option value="Courier New, monospace">等宽字体</option>' +
+        '</select><label style="display:block; margin-bottom:8px;">字号：</label><select id="fontSizeSlide" style="width:100%; margin-bottom:16px; padding:8px; border-radius:6px; border:1px solid #ddd;">' +
+        '<option value="12">12px</option><option value="14" selected>14px</option>' +
+        '<option value="16">16px</option><option value="18">18px</option>' +
+        '<option value="20">20px</option><option value="24">24px</option>' +
+        '</select><label style="display:block; margin-bottom:8px;">行高：</label><select id="lineHeightSlide" style="width:100%; margin-bottom:16px; padding:8px; border-radius:6px; border:1px solid #ddd;">' +
+        '<option value="1.5">1.5</option><option value="1.8" selected>1.8</option>' +
+        '<option value="2.0">2.0</option><option value="2.5">2.5</option>' +
+        '</select></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     
-    var closeBtn = document.querySelector('#fontSlidePanel .right-slide-panel-close');
-    if (closeBtn) closeBtn.onclick = function() { closePanel('fontSlidePanel'); };
+    var panelEl = document.getElementById('fontSlidePanel');
+    panelEl.querySelector('.right-slide-panel-close').onclick = function() { panelEl.remove(); };
     
-    var fontFamily = document.getElementById('fontFamilySlide');
-    var fontSize = document.getElementById('fontSizeSlide');
-    var lineHeight = document.getElementById('lineHeightSlide');
     var editor = document.getElementById('editor');
-    if (fontFamily) {
-        fontFamily.onchange = function() { if (editor) editor.style.fontFamily = this.value; localStorage.setItem('editor_font_family', this.value); };
-        var savedFont = localStorage.getItem('editor_font_family');
-        if (savedFont) fontFamily.value = savedFont;
-        if (editor && savedFont) editor.style.fontFamily = savedFont;
+    document.getElementById('fontFamilySlide').onchange = function() { if (editor) editor.style.fontFamily = this.value; localStorage.setItem('editor_font_family', this.value); };
+    document.getElementById('fontSizeSlide').onchange = function() { if (editor) editor.style.fontSize = this.value + 'px'; localStorage.setItem('editor_font_size', this.value); };
+    document.getElementById('lineHeightSlide').onchange = function() { if (editor) editor.style.lineHeight = this.value; localStorage.setItem('editor_line_height', this.value); };
+    
+    var savedFont = localStorage.getItem('editor_font_family');
+    var savedSize = localStorage.getItem('editor_font_size');
+    var savedLine = localStorage.getItem('editor_line_height');
+    if (savedFont) document.getElementById('fontFamilySlide').value = savedFont;
+    if (savedSize) document.getElementById('fontSizeSlide').value = savedSize;
+    if (savedLine) document.getElementById('lineHeightSlide').value = savedLine;
+    if (editor) {
+        if (savedFont) editor.style.fontFamily = savedFont;
+        if (savedSize) editor.style.fontSize = savedSize + 'px';
+        if (savedLine) editor.style.lineHeight = savedLine;
     }
-    if (fontSize) {
-        fontSize.onchange = function() { if (editor) editor.style.fontSize = this.value + 'px'; localStorage.setItem('editor_font_size', this.value); };
-        var savedSize = localStorage.getItem('editor_font_size');
-        if (savedSize) fontSize.value = savedSize;
-        if (editor && savedSize) editor.style.fontSize = savedSize + 'px';
-    }
-    if (lineHeight) {
-        lineHeight.onchange = function() { if (editor) editor.style.lineHeight = this.value; localStorage.setItem('editor_line_height', this.value); };
-        var savedLine = localStorage.getItem('editor_line_height');
-        if (savedLine) lineHeight.value = savedLine;
-        if (editor && savedLine) editor.style.lineHeight = savedLine;
-    }
-    panel = document.getElementById('fontSlidePanel');
-    if (panel) panel.classList.add('open');
 }
 
-function openFindReplacePanel() {
-    var panel = document.getElementById('findSlidePanel');
+// ========== 导出面板（从右边栏左侧滑出） ==========
+function openExportPanel() {
+    var panel = document.getElementById('exportSlidePanel');
     if (panel) {
-        panel.classList.toggle('open');
+        panel.remove();
         return;
     }
-    var html = '<div id="findSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>查找替换</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><input type="text" id="findTextSlide" placeholder="查找内容" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;"><input type="text" id="replaceTextSlide" placeholder="替换为" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;"><div style="display:flex; gap:12px;"><button id="findNextBtnSlide" class="btn-primary" style="flex:1; padding:8px;">查找下一个</button><button id="replaceBtnSlide" class="btn-primary" style="flex:1; padding:8px;">替换</button><button id="replaceAllBtnSlide" class="btn-primary" style="flex:1; padding:8px;">全部替换</button></div></div></div>';
+    
+    var rightSidebar = document.getElementById('rightSidebar');
+    var rightSidebarHeight = rightSidebar ? rightSidebar.offsetHeight : (window.innerHeight - 100);
+    var rightSidebarRect = rightSidebar ? rightSidebar.getBoundingClientRect() : null;
+    var leftPos = rightSidebarRect ? (rightSidebarRect.left - 340) : (window.innerWidth - 380);
+    var topPos = rightSidebarRect ? rightSidebarRect.top : 80;
+    
+    var html = '<div id="exportSlidePanel" style="position: fixed; left: ' + leftPos + 'px; top: ' + topPos + 'px; width: 340px; height: ' + rightSidebarHeight + 'px; background: var(--panel-bg, rgba(255, 255, 255, 0.95)); backdrop-filter: blur(8px); border-radius: 0px; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column;">' +
+        '<div class="right-slide-panel-header" style="padding: 16px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1)); display: flex; justify-content: space-between; align-items: center;"><h3 style="margin:0;">导出</h3><button class="right-slide-panel-close" style="background:none; border:none; font-size:20px; cursor:pointer; color: var(--text-color, #333);">✕</button></div>' +
+        '<div class="right-slide-panel-content" style="flex:1; overflow-y:auto; padding: 20px;">' +
+        '<button id="exportChapterBtn" class="btn-primary" style="width:100%; padding:12px; margin-bottom:12px; background:#9b784e; color:white; border:none; border-radius:8px; cursor:pointer;">导出本章</button>' +
+        '<button id="exportBookBtn" class="btn-secondary" style="width:100%; padding:12px; background:#6c757d; color:white; border:none; border-radius:8px; cursor:pointer;">导出全书</button>' +
+        '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     
-    var closeBtn = document.querySelector('#findSlidePanel .right-slide-panel-close');
-    if (closeBtn) closeBtn.onclick = function() { closePanel('findSlidePanel'); };
-    
-    document.getElementById('findNextBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; if (!findText) return; var editor = document.getElementById('editor'); if (editor) alert(editor.innerText.indexOf(findText) !== -1 ? '找到' : '未找到'); };
-    document.getElementById('replaceBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; var replaceText = document.getElementById('replaceTextSlide').value; var editor = document.getElementById('editor'); if (editor && findText) { editor.innerHTML = editor.innerHTML.replace(new RegExp(findText, 'g'), replaceText); if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); } };
-    document.getElementById('replaceAllBtnSlide').onclick = function() { var findText = document.getElementById('findTextSlide').value; var replaceText = document.getElementById('replaceTextSlide').value; var editor = document.getElementById('editor'); if (editor && findText) { editor.innerHTML = editor.innerHTML.replace(new RegExp(findText, 'g'), replaceText); if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); alert('替换完成'); } };
-    panel = document.getElementById('findSlidePanel');
-    if (panel) panel.classList.add('open');
+    var panelEl = document.getElementById('exportSlidePanel');
+    panelEl.querySelector('.right-slide-panel-close').onclick = function() { panelEl.remove(); };
+    panelEl.querySelector('#exportChapterBtn').onclick = function() { if (typeof exportChapter === 'function') exportChapter(); panelEl.remove(); };
+    panelEl.querySelector('#exportBookBtn').onclick = function() { if (typeof exportBook === 'function') exportBook(); panelEl.remove(); };
 }
 
-function openNamegenWindow() {
-    window.open('namegen.html', 'namegen', 'width=1300,height=900,left=100,top=50');
-}
-
-function toggleDualMode() {
-    var editor = document.getElementById('editor');
-    if (!editor) return;
-    var existingDual = document.getElementById('dualEditor');
-    if (existingDual) {
-        existingDual.remove();
-        editor.style.display = 'block';
-        alert('已退出双栏模式');
-    } else {
-        var originalContent = editor.innerHTML;
-        editor.style.display = 'none';
-        var dualHtml = '<div id="dualEditor" style="display:flex; gap:16px; padding:16px;"><div style="flex:1; background:#fff; border-radius:12px; padding:16px;"><div style="margin-bottom:8px;">原模式</div><div id="dualLeft" contenteditable="true" style="min-height:300px; outline:none;">' + originalContent + '</div></div><div style="flex:1; background:#fff; border-radius:12px; padding:16px;"><div style="margin-bottom:8px;">精简模式</div><div id="dualRight" contenteditable="true" style="min-height:300px; outline:none;">' + originalContent + '</div></div></div><button id="closeDualMode" style="position:fixed; bottom:20px; right:20px; background:#dc3545; color:white; border:none; border-radius:8px; padding:8px 16px;">退出双栏</button>';
-        editor.parentElement.insertAdjacentHTML('beforeend', dualHtml);
-        var leftEditor = document.getElementById('dualLeft');
-        var rightEditor = document.getElementById('dualRight');
-        var closeBtn = document.getElementById('closeDualMode');
-        if (leftEditor && rightEditor) {
-            leftEditor.oninput = function() { rightEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
-            rightEditor.oninput = function() { leftEditor.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
-        }
-        if (closeBtn) closeBtn.onclick = function() { document.getElementById('dualEditor').remove(); closeBtn.remove(); editor.style.display = 'block'; };
-    }
-}
-
+// ========== 闭关面板（从右边栏左侧滑出） ==========
 function openSeclusionPanel() {
     var panel = document.getElementById('seclusionSlidePanel');
     if (panel) {
-        panel.classList.toggle('open');
+        panel.remove();
         return;
     }
-    var html = '<div id="seclusionSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>闭关修炼</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><label>目标字数：</label><input type="number" id="seclusionGoal" value="3000"><label>自动出关时间（小时）：</label><input type="number" id="seclusionTimeout" value="0"><div id="seclusionProgress" style="display:none;"><div>进度：<span id="seclusionCurrent">0</span> / <span id="seclusionGoalDisplay">3000</span></div><div style="height:8px; background:#ddd;"><div id="seclusionProgressFill" style="height:100%; width:0%; background:#007aff;"></div></div></div><button id="startSeclusionBtn">开始闭关</button><button id="stopSeclusionBtn" style="display:none;">结束闭关</button></div></div>';
+    
+    var rightSidebar = document.getElementById('rightSidebar');
+    var rightSidebarHeight = rightSidebar ? rightSidebar.offsetHeight : (window.innerHeight - 100);
+    var rightSidebarRect = rightSidebar ? rightSidebar.getBoundingClientRect() : null;
+    var leftPos = rightSidebarRect ? (rightSidebarRect.left - 340) : (window.innerWidth - 380);
+    var topPos = rightSidebarRect ? rightSidebarRect.top : 80;
+    
+    var html = '<div id="seclusionSlidePanel" style="position: fixed; left: ' + leftPos + 'px; top: ' + topPos + 'px; width: 340px; height: ' + rightSidebarHeight + 'px; background: var(--panel-bg, rgba(255, 255, 255, 0.95)); backdrop-filter: blur(8px); border-radius: 0px; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column;">' +
+        '<div class="right-slide-panel-header" style="padding: 16px; border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1)); display: flex; justify-content: space-between; align-items: center;"><h3 style="margin:0;">闭关修炼</h3><button class="right-slide-panel-close" style="background:none; border:none; font-size:20px; cursor:pointer; color: var(--text-color, #333);">✕</button></div>' +
+        '<div class="right-slide-panel-content" style="flex:1; overflow-y:auto; padding: 20px;">' +
+        '<label style="display:block; margin-bottom:8px;">目标字数：</label><input type="number" id="seclusionGoal" value="3000" style="width:100%; margin-bottom:16px; padding:8px; border-radius:6px; border:1px solid #ddd;">' +
+        '<label style="display:block; margin-bottom:8px;">自动出关时间（小时）：</label><input type="number" id="seclusionTimeout" value="0" style="width:100%; margin-bottom:16px; padding:8px; border-radius:6px; border:1px solid #ddd;">' +
+        '<div id="seclusionProgress" style="display:none;"><div>进度：<span id="seclusionCurrent">0</span> / <span id="seclusionGoalDisplay">3000</span></div>' +
+        '<div style="height:8px; background:#ddd; margin-top:8px; border-radius:4px;"><div id="seclusionProgressFill" style="height:100%; width:0%; background:#007aff; border-radius:4px;"></div></div></div>' +
+        '<button id="startSeclusionBtn" class="btn-primary" style="width:100%; padding:10px; margin-top:12px; background:#9b784e; color:white; border:none; border-radius:8px; cursor:pointer;">开始闭关</button>' +
+        '<button id="stopSeclusionBtn" class="btn-danger" style="width:100%; padding:10px; margin-top:8px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer; display:none;">结束闭关</button>' +
+        '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     
-    var closeBtn = document.querySelector('#seclusionSlidePanel .right-slide-panel-close');
-    if (closeBtn) closeBtn.onclick = function() { closePanel('seclusionSlidePanel'); };
-    
-    document.getElementById('startSeclusionBtn').onclick = startSeclusion;
-    document.getElementById('stopSeclusionBtn').onclick = function() { endSeclusion(false); alert('闭关已结束'); };
-    panel = document.getElementById('seclusionSlidePanel');
-    if (panel) panel.classList.add('open');
+    var panelEl = document.getElementById('seclusionSlidePanel');
+    panelEl.querySelector('.right-slide-panel-close').onclick = function() { 
+        if (seclusionActive) endSeclusion(false);
+        panelEl.remove(); 
+    };
+    panelEl.querySelector('#startSeclusionBtn').onclick = function() { startSeclusion(); panelEl.remove(); };
+    panelEl.querySelector('#stopSeclusionBtn').onclick = function() { endSeclusion(false); alert('闭关已结束'); panelEl.remove(); };
 }
 
+// 闭关相关变量和函数
 var seclusionActive = false, seclusionTimer = null, seclusionCheckInterval = null;
+
 function startSeclusion() {
     var goal = parseInt(document.getElementById('seclusionGoal').value);
     var timeout = parseInt(document.getElementById('seclusionTimeout').value);
@@ -271,11 +442,8 @@ function startSeclusion() {
         document.getElementById('seclusionProgressFill').style.width = progress + '%';
         if (current - startWords >= goal) { endSeclusion(true); alert('恭喜！完成闭关目标！'); clearInterval(seclusionCheckInterval); }
     }, 1000);
-    var panel = document.getElementById('seclusionSlidePanel');
-    if (panel) {
-        panel.classList.remove('open');
-    }
 }
+
 function endSeclusion(success) {
     seclusionActive = false;
     if (seclusionTimer) clearTimeout(seclusionTimer);
@@ -286,6 +454,7 @@ function endSeclusion(success) {
     var progressDiv = document.getElementById('seclusionProgress');
     if (progressDiv) progressDiv.style.display = 'none';
 }
+
 function getCurrentWordCount() {
     if (typeof getCurrentChapter === 'function') {
         var ch = getCurrentChapter();
@@ -296,28 +465,447 @@ function getCurrentWordCount() {
     return 0;
 }
 
-function openNotesWindow() {
-    window.open('notes.html', 'notes', 'width=900,height=700,left=100,top=50');
-}
-
-function openExportPanel() {
-    var panel = document.getElementById('exportSlidePanel');
-    if (panel) {
-        panel.classList.toggle('open');
+// ========== 查找替换浮动窗口 ==========
+function openFindReplacePanel() {
+    var existingWin = document.getElementById('findReplaceFloatWin');
+    if (existingWin) {
+        existingWin.style.display = 'flex';
+        existingWin.style.zIndex = '10000';
         return;
     }
-    var html = '<div id="exportSlidePanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>导出</h3><button class="right-slide-panel-close">✕</button></div><div class="right-slide-panel-content"><button id="exportChapterBtn" class="btn-primary" style="width:100%; padding:12px; margin-bottom:12px;">导出本章</button><button id="exportBookBtn" class="btn-secondary" style="width:100%; padding:12px;">导出全书</button></div></div>';
-    document.body.insertAdjacentHTML('beforeend', html);
     
-    var closeBtn = document.querySelector('#exportSlidePanel .right-slide-panel-close');
-    if (closeBtn) closeBtn.onclick = function() { closePanel('exportSlidePanel'); };
+    // 获取右边栏的位置，让查找替换面板出现在右边栏左侧
+    var rightSidebar = document.getElementById('rightSidebar');
+    var rightSidebarRect = rightSidebar ? rightSidebar.getBoundingClientRect() : null;
+    var leftPos = rightSidebarRect ? (rightSidebarRect.left - 420) : (window.innerWidth - 440);
+    var topPos = rightSidebarRect ? (rightSidebarRect.top + 50) : 150;
     
-    document.getElementById('exportChapterBtn').onclick = function() { if (typeof exportChapter === 'function') exportChapter(); closePanel('exportSlidePanel'); };
-    document.getElementById('exportBookBtn').onclick = function() { if (typeof exportBook === 'function') exportBook(); closePanel('exportSlidePanel'); };
-    panel = document.getElementById('exportSlidePanel');
-    if (panel) panel.classList.add('open');
+    var win = document.createElement('div');
+    win.id = 'findReplaceFloatWin';
+    win.style.cssText = 'position: fixed; top: ' + topPos + 'px; left: ' + leftPos + 'px; width: 400px; background: var(--panel-bg, rgba(255, 255, 255, 0.95)); backdrop-filter: blur(8px); border-radius: 0px; box-shadow: 0 8px 28px rgba(0,0,0,0.25); z-index: 10000; overflow: hidden; font-family: system-ui, -apple-system, sans-serif;';
+    
+    win.innerHTML = 
+        '<div class="find-header" style="padding: 16px 20px; background: var(--header-bg, rgba(0,0,0,0.03)); border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.1)); display: flex; justify-content: space-between; align-items: center; cursor: move;">' +
+        '<h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-color, #333);">查找替换</h3>' +
+        '<button class="find-close-btn" style="background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-color, #999);">✕</button>' +
+        '</div>' +
+        '<div style="padding: 20px;">' +
+        '<div style="margin-bottom: 20px;">' +
+        '<label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text-color, #333);">查找</label>' +
+        '<input type="text" id="findTextFloat" placeholder="输入查找词" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; background: var(--input-bg, #fff); color: var(--text-color, #333);">' +
+        '<button id="searchBookBtn" style="margin-top: 8px; padding: 6px 12px; background: var(--btn-bg, #f0f0f0); border: 1px solid var(--border-color, #ddd); border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-color, #333);">🔍 搜索全书</button>' +
+        '</div>' +
+        '<div style="margin-bottom: 24px;">' +
+        '<label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--text-color, #333);">替换</label>' +
+        '<input type="text" id="replaceTextFloat" placeholder="输入替换词" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color, #ddd); border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; background: var(--input-bg, #fff); color: var(--text-color, #333);">' +
+        '</div>' +
+        '<div style="display: flex; gap: 12px; flex-wrap: wrap;">' +
+        '<button id="replaceCurrentBtn" class="find-btn" style="flex: 1; padding: 8px 12px; background: var(--btn-bg, #f0f0f0); border: 1px solid var(--border-color, #ddd); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-color, #333);">替换</button>' +
+        '<button id="replaceChapterBtn" class="find-btn" style="flex: 1; padding: 8px 12px; background: var(--btn-bg, #f0f0f0); border: 1px solid var(--border-color, #ddd); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-color, #333);">本章替换</button>' +
+        '<button id="replaceAllBtn" class="find-btn" style="flex: 1; padding: 8px 12px; background: var(--btn-bg, #f0f0f0); border: 1px solid var(--border-color, #ddd); border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-color, #333);">全书替换</button>' +
+        '</div>' +
+        '<div id="searchResultArea" style="margin-top: 16px; padding: 10px; background: var(--result-bg, #f8f8f8); border-radius: 8px; font-size: 12px; color: var(--text-color, #666); display: none;"></div>' +
+        '</div>';
+    
+    document.body.appendChild(win);
+    
+    // 拖拽功能
+    var header = win.querySelector('.find-header');
+    var isDragging = false;
+    var offsetX, offsetY;
+    
+    header.addEventListener('mousedown', function(e) {
+        if (e.target.tagName === 'BUTTON') return;
+        isDragging = true;
+        offsetX = e.clientX - win.offsetLeft;
+        offsetY = e.clientY - win.offsetTop;
+        win.style.transform = 'none';
+        win.style.top = win.offsetTop + 'px';
+        win.style.left = win.offsetLeft + 'px';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        var newLeft = e.clientX - offsetX;
+        var newTop = e.clientY - offsetY;
+        var maxLeft = window.innerWidth - win.offsetWidth;
+        var maxTop = window.innerHeight - win.offsetHeight;
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        win.style.left = newLeft + 'px';
+        win.style.top = newTop + 'px';
+    });
+    
+    document.addEventListener('mouseup', function() {
+        isDragging = false;
+    });
+    
+    // 关闭按钮
+    win.querySelector('.find-close-btn').onclick = function() {
+        win.style.display = 'none';
+    };
+    
+    // 替换当前章节
+    win.querySelector('#replaceCurrentBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        var editor = document.getElementById('editor');
+        if (!editor || !findText) {
+            alert('请输入查找内容');
+            return;
+        }
+        
+        var content = editor.innerHTML;
+        if (content.indexOf(findText) !== -1) {
+            editor.innerHTML = content.replace(findText, replaceText);
+            if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+            alert('已替换当前章节中的 "' + findText + '"');
+        } else {
+            alert('未找到 "' + findText + '"');
+        }
+    };
+    
+    // 替换本章所有匹配
+    win.querySelector('#replaceChapterBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        var editor = document.getElementById('editor');
+        if (!editor || !findText) {
+            alert('请输入查找内容');
+            return;
+        }
+        
+        var content = editor.innerHTML;
+        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        var matches = content.match(regex);
+        var count = matches ? matches.length : 0;
+        
+        if (count > 0) {
+            var newContent = content.replace(regex, replaceText);
+            editor.innerHTML = newContent;
+            if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+            alert('本章已替换 ' + count + ' 处');
+        } else {
+            alert('未找到 "' + findText + '"');
+        }
+    };
+    
+    // 全书替换
+    win.querySelector('#replaceAllBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var replaceText = document.getElementById('replaceTextFloat').value;
+        if (!findText) {
+            alert('请输入查找内容');
+            return;
+        }
+        
+        var totalCount = 0;
+        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+        
+        for (var i = 0; i < books.length; i++) {
+            var book = books[i];
+            if (book.volumes) {
+                for (var j = 0; j < book.volumes.length; j++) {
+                    var vol = book.volumes[j];
+                    if (vol.chapters) {
+                        for (var k = 0; k < vol.chapters.length; k++) {
+                            var ch = vol.chapters[k];
+                            if (ch.content) {
+                                var matches = (ch.content.match(regex) || []).length;
+                                if (matches > 0) {
+                                    ch.content = ch.content.replace(regex, replaceText);
+                                    totalCount += matches;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (totalCount > 0) {
+            if (typeof saveAllData === 'function') saveAllData();
+            if (typeof renderCurrentChapter === 'function') renderCurrentChapter();
+            alert('全书已替换 ' + totalCount + ' 处');
+        } else {
+            alert('未找到 "' + findText + '"');
+        }
+    };
+    
+    // 搜索全书
+    win.querySelector('#searchBookBtn').onclick = function() {
+        var findText = document.getElementById('findTextFloat').value;
+        var resultArea = document.getElementById('searchResultArea');
+        if (!findText) {
+            alert('请输入查找内容');
+            return;
+        }
+        
+        var results = [];
+        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        
+        for (var i = 0; i < books.length; i++) {
+            var book = books[i];
+            if (book.volumes) {
+                for (var j = 0; j < book.volumes.length; j++) {
+                    var vol = book.volumes[j];
+                    if (vol.chapters) {
+                        for (var k = 0; k < vol.chapters.length; k++) {
+                            var ch = vol.chapters[k];
+                            if (ch.content) {
+                                var matches = ch.content.match(regex);
+                                if (matches && matches.length > 0) {
+                                    results.push({
+                                        bookTitle: book.title,
+                                        volName: vol.name,
+                                        chapterTitle: ch.title,
+                                        chapterId: ch.id,
+                                        volId: vol.id,
+                                        bookId: book.id,
+                                        count: matches.length
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (results.length > 0) {
+            var html = '<div style="max-height: 200px; overflow-y: auto;">';
+            for (var r = 0; r < results.length; r++) {
+                var res = results[r];
+                html += '<div style="padding: 8px; border-bottom: 1px solid var(--border-color, #e0e0e0); cursor: pointer;" onclick="jumpToChapter(\'' + res.bookId + '\', \'' + res.volId + '\', \'' + res.chapterId + '\', \'' + findText.replace(/'/g, "\\'") + '\')">' +
+                    '<div style="font-weight: 500; color: var(--text-color, #333);">📖 ' + escapeHtml(res.bookTitle) + '</div>' +
+                    '<div style="font-size: 11px; color: var(--text-muted, #888);">' + escapeHtml(res.volName) + ' / ' + escapeHtml(res.chapterTitle) + '</div>' +
+                    '<div style="font-size: 11px; color: #007aff;">找到 ' + res.count + ' 处</div>' +
+                    '</div>';
+            }
+            html += '</div>';
+            resultArea.innerHTML = html;
+            resultArea.style.display = 'block';
+        } else {
+            resultArea.innerHTML = '<div style="text-align: center; padding: 10px; color: var(--text-color, #666);">未找到 "' + escapeHtml(findText) + '"</div>';
+            resultArea.style.display = 'block';
+        }
+    };
+    
+    win.style.display = 'flex';
 }
 
+// ========== 双栏模式 ==========
+// ========== 简化版双栏模式 ==========
+// ========== 简化版双栏模式（跟随主题） ==========
+function toggleDualMode() {
+    var editor = document.getElementById('editor');
+    if (!editor) {
+        alert('请先打开一本书籍');
+        return;
+    }
+    
+    var editorContainer = editor.parentElement;
+    var existingDual = document.getElementById('dualEditorContainer');
+    
+    if (existingDual) {
+        existingDual.remove();
+        editor.style.display = 'block';
+        alert('已退出双栏模式');
+        return;
+    }
+    
+    var originalContent = editor.innerHTML;
+    editor.style.display = 'none';
+    
+    // 使用 CSS 变量，让背景跟随主题
+    var dualHtml = '<div id="dualEditorContainer" style="display:flex; flex:1; height:100%; width:100%; position:relative;">' +
+        '<div id="dualLeft" contenteditable="true" style="flex:1; overflow:auto; padding:16px; outline:none; line-height:1.8; font-size:15px; background: var(--panel-bg, rgba(255,255,255,0.9)); color: var(--text-color, #333);">' + originalContent + '</div>' +
+        '<div id="dualResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); transition:background 0.2s;"></div>' +
+        '<div id="dualRight" contenteditable="true" style="flex:1; overflow:auto; padding:16px; outline:none; line-height:1.4; font-size:13px; background: var(--panel-bg, rgba(255,255,255,0.9)); color: var(--text-color, #333);">' + originalContent + '</div>' +
+        '<button id="exitDualBtn" style="position:absolute; bottom:16px; right:16px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:16px; cursor:pointer; font-size:12px; z-index:10;">退出</button>' +
+        '</div>';
+    
+    editorContainer.insertAdjacentHTML('beforeend', dualHtml);
+    
+    var leftArea = document.getElementById('dualLeft');
+    var rightArea = document.getElementById('dualRight');
+    var resizeHandle = document.getElementById('dualResizeHandle');
+    var exitBtn = document.getElementById('exitDualBtn');
+    var isResizing = false;
+    var startX = 0;
+    var startLeftWidth = 0;
+    var containerWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        var leftRect = leftArea.getBoundingClientRect();
+        startLeftWidth = leftRect.width;
+        containerWidth = leftArea.parentElement.clientWidth;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        var deltaX = e.clientX - startX;
+        var newLeftWidth = startLeftWidth + deltaX;
+        var percent = (newLeftWidth / containerWidth) * 100;
+        if (percent < 20) percent = 20;
+        if (percent > 80) percent = 80;
+        leftArea.style.flex = percent;
+        rightArea.style.flex = 100 - percent;
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            var leftPercent = leftArea.style.flex;
+            if (leftPercent) localStorage.setItem('dual_width_ratio', leftPercent);
+        }
+    });
+    
+    resizeHandle.addEventListener('mouseover', function() { this.style.background = '#007aff'; });
+    resizeHandle.addEventListener('mouseout', function() { this.style.background = 'rgba(0,122,255,0.3)'; });
+    
+    leftArea.addEventListener('input', function() {
+        rightArea.innerHTML = this.innerHTML;
+        editor.innerHTML = this.innerHTML;
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    });
+    
+    rightArea.addEventListener('input', function() {
+        leftArea.innerHTML = this.innerHTML;
+        editor.innerHTML = this.innerHTML;
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    });
+    
+    exitBtn.onclick = function() {
+        document.getElementById('dualEditorContainer').remove();
+        editor.style.display = 'block';
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    };
+    
+    var savedRatio = localStorage.getItem('dual_width_ratio');
+    if (savedRatio) {
+        leftArea.style.flex = savedRatio;
+        rightArea.style.flex = 100 - parseFloat(savedRatio);
+    }
+}
+
+// ========== 备忘录模式 ==========
+// ========== 简化版备忘录模式 ==========
+// ========== 简化版备忘录模式（跟随主题） ==========
+function toggleMemoMode() {
+    var editor = document.getElementById('editor');
+    if (!editor) {
+        alert('请先打开一本书籍');
+        return;
+    }
+    
+    var editorContainer = editor.parentElement;
+    var existingMemo = document.getElementById('memoEditorContainer');
+    
+    if (existingMemo) {
+        existingMemo.remove();
+        editor.style.display = 'block';
+        alert('已退出备忘录模式');
+        return;
+    }
+    
+    var currentBook = typeof getCurrentBook === 'function' ? getCurrentBook() : null;
+    var memoKey = 'memo_content_' + (currentBook ? currentBook.id : 'global');
+    var savedMemo = localStorage.getItem(memoKey) || '';
+    var originalContent = editor.innerHTML;
+    editor.style.display = 'none';
+    
+    // 使用 CSS 变量，让背景跟随主题
+    var memoHtml = '<div id="memoEditorContainer" style="display:flex; flex:1; height:100%; width:100%; position:relative;">' +
+        '<div id="memoLeft" contenteditable="true" style="flex:1; overflow:auto; padding:16px; outline:none; line-height:1.7; font-size:15px; background: var(--panel-bg, rgba(255,255,255,0.9)); color: var(--text-color, #333);">' + originalContent + '</div>' +
+        '<div id="memoResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); transition:background 0.2s;"></div>' +
+        '<div id="memoRight" contenteditable="true" style="flex:1; overflow:auto; padding:16px; outline:none; line-height:1.5; font-size:14px; background: var(--panel-bg, rgba(255,255,248,0.95)); color: var(--text-color, #333);">' + (savedMemo || '📓 备忘录\n\n在这里记录灵感、待办事项、人物设定等，内容会跨章节保存...') + '</div>' +
+        '<button id="exitMemoBtn" style="position:absolute; bottom:16px; right:16px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:16px; cursor:pointer; font-size:12px; z-index:10;">退出</button>' +
+        '</div>';
+    
+    editorContainer.insertAdjacentHTML('beforeend', memoHtml);
+    
+    var leftArea = document.getElementById('memoLeft');
+    var rightArea = document.getElementById('memoRight');
+    var resizeHandle = document.getElementById('memoResizeHandle');
+    var exitBtn = document.getElementById('exitMemoBtn');
+    var isResizing = false;
+    var startX = 0;
+    var startLeftWidth = 0;
+    var containerWidth = 0;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        var leftRect = leftArea.getBoundingClientRect();
+        startLeftWidth = leftRect.width;
+        containerWidth = leftArea.parentElement.clientWidth;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (!isResizing) return;
+        var deltaX = e.clientX - startX;
+        var newLeftWidth = startLeftWidth + deltaX;
+        var percent = (newLeftWidth / containerWidth) * 100;
+        if (percent < 20) percent = 20;
+        if (percent > 80) percent = 80;
+        leftArea.style.flex = percent;
+        rightArea.style.flex = 100 - percent;
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            var leftPercent = leftArea.style.flex;
+            if (leftPercent) localStorage.setItem('memo_width_ratio', leftPercent);
+        }
+    });
+    
+    resizeHandle.addEventListener('mouseover', function() { this.style.background = '#007aff'; });
+    resizeHandle.addEventListener('mouseout', function() { this.style.background = 'rgba(0,122,255,0.3)'; });
+    
+    leftArea.addEventListener('input', function() {
+        editor.innerHTML = this.innerHTML;
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    });
+    
+    rightArea.addEventListener('input', function() {
+        var book = typeof getCurrentBook === 'function' ? getCurrentBook() : null;
+        var key = 'memo_content_' + (book ? book.id : 'global');
+        localStorage.setItem(key, this.innerHTML);
+    });
+    
+    exitBtn.onclick = function() {
+        if (rightArea) {
+            var book = typeof getCurrentBook === 'function' ? getCurrentBook() : null;
+            var key = 'memo_content_' + (book ? book.id : 'global');
+            localStorage.setItem(key, rightArea.innerHTML);
+        }
+        document.getElementById('memoEditorContainer').remove();
+        editor.style.display = 'block';
+        if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
+    };
+    
+    var savedRatio = localStorage.getItem('memo_width_ratio');
+    if (savedRatio) {
+        leftArea.style.flex = savedRatio;
+        rightArea.style.flex = 100 - parseFloat(savedRatio);
+    }
+}
+
+// 导出功能
 function exportChapter() {
     if (typeof getCurrentChapter === 'function') {
         var ch = getCurrentChapter();
@@ -364,17 +952,20 @@ function exportBook() {
 
 function toggleRightSidebar() {
     var sidebar = document.getElementById('rightSidebar');
-    if (sidebar) sidebar.classList.toggle('hidden');
-}
-
-function applyGlobalBg(imageUrl, opacity) {
-    var oldStyle = document.getElementById('global-bg-style');
-    if (oldStyle) oldStyle.remove();
-    if (imageUrl) {
-        var style = document.createElement('style');
-        style.id = 'global-bg-style';
-        style.textContent = 'body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url(' + JSON.stringify(imageUrl) + '); background-size: cover; background-position: center; opacity: ' + (opacity / 100) + '; z-index: -1; pointer-events: none; }';
-        document.head.appendChild(style);
+    if (!sidebar) {
+        if (typeof createRightSidebar === 'function') sidebar = createRightSidebar();
+        else return;
+    }
+    if (sidebar.classList.contains('collapsed')) {
+        sidebar.classList.remove('collapsed');
+        sidebar.style.width = '280px';
+        sidebar.style.minWidth = '200px';
+        localStorage.setItem('rightSidebar_collapsed', 'false');
+    } else {
+        sidebar.classList.add('collapsed');
+        sidebar.style.width = '0';
+        sidebar.style.minWidth = '0';
+        localStorage.setItem('rightSidebar_collapsed', 'true');
     }
 }
 
@@ -394,458 +985,10 @@ function bindToolbarButtons() {
         var btn = btns[i];
         var action = btn.getAttribute('data-action');
         if (action) {
-            btn.onclick = (function(a) {
-                return function() { handleToolbarAction(a); };
-            })(action);
+            btn.onclick = (function(a) { return function() { handleToolbarAction(a); }; })(action);
         }
     }
     console.log('工具栏已绑定，按钮数量:', btns.length);
 }
 
 setTimeout(bindToolbarButtons, 500);
-
-// 重写双栏模式函数
-window.toggleDualMode = function() {
-    var editor = document.getElementById('editor');
-    if (!editor) return;
-    var editorContainer = editor.parentElement;
-    var existingDual = document.getElementById('dualEditorContainer');
-    if (existingDual) {
-        existingDual.remove();
-        editor.style.display = 'block';
-        alert('已退出双栏模式');
-        return;
-    }
-    var originalContent = editor.innerHTML;
-    editor.style.display = 'none';
-    var dualHtml = `
-<div id="dualEditorContainer" style="display:flex; flex:1; height:100%; position:relative;">
-    <div id="dualLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;">
-        <div style="margin-bottom:8px; font-size:13px; color:#888;">原模式</div>
-        <div id="dualLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">${originalContent}</div>
-    </div>
-    <div id="dualResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); transition:background 0.2s; margin:8px 0;"></div>
-    <div id="dualRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;">
-        <div style="margin-bottom:8px; font-size:13px; color:#888;">精简模式</div>
-        <div id="dualRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">${originalContent}</div>
-    </div>
-    <button id="exitDualBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer; font-size:12px;">退出双栏</button>
-</div>`;
-    editorContainer.insertAdjacentHTML('beforeend', dualHtml);
-    
-    var leftArea = document.getElementById('dualLeft');
-    var rightArea = document.getElementById('dualRight');
-    var resizeHandle = document.getElementById('dualResizeHandle');
-    var leftContainer = document.getElementById('dualLeftArea');
-    var rightContainer = document.getElementById('dualRightArea');
-    var exitBtn = document.getElementById('exitDualBtn');
-    var isResizing = false;
-    var startX = 0;
-    var startLeftWidth = 0;
-    var containerWidth = editorContainer.clientWidth;
-    
-    function onMouseMove(e) {
-        if (!isResizing) return;
-        var newLeftWidth = startLeftWidth + (e.clientX - startX);
-        var percent = (newLeftWidth / containerWidth) * 100;
-        if (percent < 20) percent = 20;
-        if (percent > 80) percent = 80;
-        leftContainer.style.flex = percent;
-        rightContainer.style.flex = 100 - percent;
-    }
-    function onMouseUp() {
-        isResizing = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-    }
-    if (resizeHandle) {
-        resizeHandle.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            isResizing = true;
-            startX = e.clientX;
-            startLeftWidth = leftContainer.offsetWidth;
-            containerWidth = editorContainer.clientWidth;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
-        resizeHandle.addEventListener('mouseover', function() { this.style.background = '#007aff'; });
-        resizeHandle.addEventListener('mouseout', function() { this.style.background = 'rgba(0,122,255,0.3)'; });
-    }
-    if (leftArea && rightArea) {
-        leftArea.addEventListener('input', function() { rightArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); });
-        rightArea.addEventListener('input', function() { leftArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); });
-    }
-    if (exitBtn) exitBtn.onclick = function() { document.getElementById('dualEditorContainer').remove(); editor.style.display = 'block'; };
-};
-
-// ========== 备忘录功能 ==========
-window.toggleMemoMode = function() {
-    var editor = document.getElementById('editor');
-    if (!editor) return;
-    var editorContainer = editor.parentElement;
-    var existingMemo = document.getElementById('memoEditorContainer');
-    if (existingMemo) {
-        existingMemo.remove();
-        editor.style.display = 'block';
-        alert('已退出备忘录模式');
-        return;
-    }
-    
-    // 加载保存的备忘录内容
-    var savedMemo = localStorage.getItem('openwrite_memo_content') || '';
-    
-    editor.style.display = 'none';
-    var memoHtml = `
-<div id="memoEditorContainer" style="display:flex; flex:1; height:100%; position:relative;">
-    <div id="memoLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;">
-        <div style="margin-bottom:8px; font-size:13px; color:#888;">写作区</div>
-        <div id="memoLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">${editor.innerHTML}</div>
-    </div>
-    <div id="memoResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); transition:background 0.2s; margin:8px 0;"></div>
-    <div id="memoRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;">
-        <div style="margin-bottom:8px; font-size:13px; color:#888;">备忘录</div>
-        <div id="memoRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">${savedMemo}</div>
-    </div>
-    <button id="exitMemoBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer; font-size:12px;">退出备忘录</button>
-</div>`;
-    editorContainer.insertAdjacentHTML('beforeend', memoHtml);
-    
-    var leftArea = document.getElementById('memoLeft');
-    var rightArea = document.getElementById('memoRight');
-    var resizeHandle = document.getElementById('memoResizeHandle');
-    var leftContainer = document.getElementById('memoLeftArea');
-    var rightContainer = document.getElementById('memoRightArea');
-    var exitBtn = document.getElementById('exitMemoBtn');
-    var isResizing = false;
-    var startX = 0;
-    var startLeftWidth = 0;
-    var containerWidth = editorContainer.clientWidth;
-    
-    // 自动保存备忘录内容
-    function saveMemoContent() {
-        if (rightArea) {
-            localStorage.setItem('openwrite_memo_content', rightArea.innerHTML);
-        }
-    }
-    
-    // 左侧编辑时，只保存主编辑器内容
-    if (leftArea) {
-        leftArea.addEventListener('input', function() {
-            editor.innerHTML = this.innerHTML;
-            if (typeof saveCurrentChapter === 'function') saveCurrentChapter();
-        });
-    }
-    
-    // 右侧编辑时，保存备忘录
-    if (rightArea) {
-        rightArea.addEventListener('input', function() {
-            saveMemoContent();
-        });
-    }
-    
-    // 拖动调整宽度
-    function onMouseMove(e) {
-        if (!isResizing) return;
-        var newLeftWidth = startLeftWidth + (e.clientX - startX);
-        var percent = (newLeftWidth / containerWidth) * 100;
-        if (percent < 20) percent = 20;
-        if (percent > 80) percent = 80;
-        leftContainer.style.flex = percent;
-        rightContainer.style.flex = 100 - percent;
-    }
-    function onMouseUp() {
-        isResizing = false;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        document.body.style.cursor = '';
-        document.body.style.userSelect = '';
-        // 保存宽度比例
-        var leftPercent = leftContainer.style.flex;
-        if (leftPercent) localStorage.setItem('memo_width_ratio', leftPercent);
-    }
-    if (resizeHandle) {
-        resizeHandle.addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            isResizing = true;
-            startX = e.clientX;
-            startLeftWidth = leftContainer.offsetWidth;
-            containerWidth = editorContainer.clientWidth;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp);
-        });
-        resizeHandle.addEventListener('mouseover', function() { this.style.background = '#007aff'; });
-        resizeHandle.addEventListener('mouseout', function() { this.style.background = 'rgba(0,122,255,0.3)'; });
-    }
-    
-    // 恢复保存的宽度比例
-    var savedRatio = localStorage.getItem('memo_width_ratio');
-    if (savedRatio) {
-        leftContainer.style.flex = savedRatio;
-        rightContainer.style.flex = 100 - parseFloat(savedRatio);
-    }
-    
-    if (exitBtn) exitBtn.onclick = function() {
-        saveMemoContent();
-        document.getElementById('memoEditorContainer').remove();
-        editor.style.display = 'block';
-    };
-};
-
-// 修复双栏功能
-function toggleDualMode() {
-    var editor = document.getElementById('editor');
-    if (!editor) return;
-    var editorContainer = editor.parentElement;
-    var existingDual = document.getElementById('dualEditorContainer');
-    if (existingDual) {
-        existingDual.remove();
-        editor.style.display = 'block';
-        alert('已退出双栏模式');
-        return;
-    }
-    var originalContent = editor.innerHTML;
-    editor.style.display = 'none';
-    var dualHtml = '<div id="dualEditorContainer" style="display:flex; flex:1; height:100%; position:relative;"><div id="dualLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">原模式</div><div id="dualLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + originalContent + '</div></div><div id="dualResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); margin:8px 0;"></div><div id="dualRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">精简模式</div><div id="dualRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + originalContent + '</div></div><button id="exitDualBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer;">退出双栏</button></div>';
-    editorContainer.insertAdjacentHTML('beforeend', dualHtml);
-    
-    var leftArea = document.getElementById('dualLeft');
-    var rightArea = document.getElementById('dualRight');
-    var resizeHandle = document.getElementById('dualResizeHandle');
-    var leftContainer = document.getElementById('dualLeftArea');
-    var rightContainer = document.getElementById('dualRightArea');
-    var exitBtn = document.getElementById('exitDualBtn');
-    var isResizing = false, startX = 0, startLeftWidth = 0, containerWidth = editorContainer.clientWidth;
-    
-    function onMouseMove(e) { if (!isResizing) return; var newLeftWidth = startLeftWidth + (e.clientX - startX); var percent = (newLeftWidth / containerWidth) * 100; if (percent < 20) percent = 20; if (percent > 80) percent = 80; leftContainer.style.flex = percent; rightContainer.style.flex = 100 - percent; }
-    function onMouseUp() { isResizing = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; }
-    if (resizeHandle) {
-        resizeHandle.onmousedown = function(e) { e.preventDefault(); isResizing = true; startX = e.clientX; startLeftWidth = leftContainer.offsetWidth; containerWidth = editorContainer.clientWidth; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); };
-        resizeHandle.onmouseover = function() { this.style.background = '#007aff'; };
-        resizeHandle.onmouseout = function() { this.style.background = 'rgba(0,122,255,0.3)'; };
-    }
-    if (leftArea && rightArea) {
-        leftArea.oninput = function() { rightArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
-        rightArea.oninput = function() { leftArea.innerHTML = this.innerHTML; editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
-    }
-    if (exitBtn) exitBtn.onclick = function() { document.getElementById('dualEditorContainer').remove(); editor.style.display = 'block'; };
-}
-
-// 修复备忘录功能
-function toggleMemoMode() {
-    var editor = document.getElementById('editor');
-    if (!editor) return;
-    var editorContainer = editor.parentElement;
-    var existingMemo = document.getElementById('memoEditorContainer');
-    if (existingMemo) {
-        existingMemo.remove();
-        editor.style.display = 'block';
-        alert('已退出备忘录模式');
-        return;
-    }
-    var savedMemo = localStorage.getItem('openwrite_memo_content') || '';
-    editor.style.display = 'none';
-    var memoHtml = '<div id="memoEditorContainer" style="display:flex; flex:1; height:100%; position:relative;"><div id="memoLeftArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">写作区</div><div id="memoLeft" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + editor.innerHTML + '</div></div><div id="memoResizeHandle" style="width:4px; cursor:col-resize; background:rgba(0,122,255,0.3); margin:8px 0;"></div><div id="memoRightArea" style="flex:1; overflow:auto; padding:16px; background:rgba(255,255,255,0.05); border-radius:12px; margin:8px;"><div style="margin-bottom:8px; font-size:13px; color:#888;">备忘录</div><div id="memoRight" contenteditable="true" style="min-height:300px; outline:none; line-height:1.7;">' + savedMemo + '</div></div><button id="exitMemoBtn" style="position:absolute; bottom:20px; right:20px; padding:6px 12px; background:#dc3545; color:white; border:none; border-radius:20px; cursor:pointer;">退出备忘录</button></div>';
-    editorContainer.insertAdjacentHTML('beforeend', memoHtml);
-    
-    var leftArea = document.getElementById('memoLeft');
-    var rightArea = document.getElementById('memoRight');
-    var resizeHandle = document.getElementById('memoResizeHandle');
-    var leftContainer = document.getElementById('memoLeftArea');
-    var rightContainer = document.getElementById('memoRightArea');
-    var exitBtn = document.getElementById('exitMemoBtn');
-    var isResizing = false, startX = 0, startLeftWidth = 0, containerWidth = editorContainer.clientWidth;
-    
-    function onMouseMove(e) { if (!isResizing) return; var newLeftWidth = startLeftWidth + (e.clientX - startX); var percent = (newLeftWidth / containerWidth) * 100; if (percent < 20) percent = 20; if (percent > 80) percent = 80; leftContainer.style.flex = percent; rightContainer.style.flex = 100 - percent; }
-    function onMouseUp() { isResizing = false; document.removeEventListener('mousemove', onMouseMove); document.removeEventListener('mouseup', onMouseUp); document.body.style.cursor = ''; document.body.style.userSelect = ''; }
-    if (resizeHandle) {
-        resizeHandle.onmousedown = function(e) { e.preventDefault(); isResizing = true; startX = e.clientX; startLeftWidth = leftContainer.offsetWidth; containerWidth = editorContainer.clientWidth; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; document.addEventListener('mousemove', onMouseMove); document.addEventListener('mouseup', onMouseUp); };
-        resizeHandle.onmouseover = function() { this.style.background = '#007aff'; };
-        resizeHandle.onmouseout = function() { this.style.background = 'rgba(0,122,255,0.3)'; };
-    }
-    if (leftArea && rightArea) {
-        leftArea.oninput = function() { editor.innerHTML = this.innerHTML; if (typeof saveCurrentChapter === 'function') saveCurrentChapter(); };
-        rightArea.oninput = function() { localStorage.setItem('openwrite_memo_content', this.innerHTML); };
-    }
-    if (exitBtn) exitBtn.onclick = function() { document.getElementById('memoEditorContainer').remove(); editor.style.display = 'block'; };
-}
-
-// 重新绑定工具栏按钮
-function rebindToolbarButtons() {
-    var btns = document.querySelectorAll('.toolbar-btn');
-    for (var i = 0; i < btns.length; i++) {
-        var btn = btns[i];
-        var action = btn.getAttribute('data-action');
-        if (action === 'dual') btn.onclick = toggleDualMode;
-        else if (action === 'memo') btn.onclick = toggleMemoMode;
-    }
-}
-setTimeout(rebindToolbarButtons, 500);
-
-// ========== 查找替换浮动窗口 ==========
-function openFindReplaceWindow() {
-    // 检查是否已存在
-    var existingWin = document.getElementById('findReplaceFloatingWin');
-    if (existingWin) {
-        existingWin.style.display = 'flex';
-        return;
-    }
-    
-    // 创建浮动窗口
-    var win = document.createElement('div');
-    win.id = 'findReplaceFloatingWin';
-    win.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); z-index: 10000; cursor: move;';
-    win.innerHTML = `
-        <div class="drag-header" style="padding: 12px 16px; background: #f0f0f0; border-radius: 12px 12px 0 0; cursor: move; display: flex; justify-content: space-between;">
-            <h3 style="margin:0; font-size:16px;">查找替换</h3>
-            <button id="closeFindWin" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
-        </div>
-        <div style="padding: 20px;">
-            <input type="text" id="findTextFloat" placeholder="查找内容" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
-            <input type="text" id="replaceTextFloat" placeholder="替换为" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid #ddd; border-radius:6px;">
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                <button id="replaceCurrentBtn" class="btn-primary" style="flex:1; padding:8px;">替换当前</button>
-                <button id="replaceChapterBtn" class="btn-primary" style="flex:1; padding:8px;">替换本章</button>
-                <button id="replaceAllBtn" class="btn-primary" style="flex:1; padding:8px;">替换全书</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(win);
-    
-    // 关闭按钮
-    document.getElementById('closeFindWin').onclick = function() {
-        win.style.display = 'none';
-    };
-    
-    // 拖拽功能
-    var dragHeader = win.querySelector('.drag-header');
-    var isDragging = false;
-    var offsetX, offsetY;
-    
-    dragHeader.onmousedown = function(e) {
-        if (e.target.tagName === 'BUTTON') return;
-        isDragging = true;
-        offsetX = e.clientX - win.offsetLeft;
-        offsetY = e.clientY - win.offsetTop;
-        win.style.transform = 'none';
-        win.style.top = win.offsetTop + 'px';
-        win.style.left = win.offsetLeft + 'px';
-    };
-    
-    document.onmousemove = function(e) {
-        if (!isDragging) return;
-        win.style.left = (e.clientX - offsetX) + 'px';
-        win.style.top = (e.clientY - offsetY) + 'px';
-    };
-    
-    document.onmouseup = function() {
-        isDragging = false;
-    };
-    
-    // 替换当前（当前选中或光标处）
-    document.getElementById('replaceCurrentBtn').onclick = function() {
-        var findText = document.getElementById('findTextFloat').value;
-        var replaceText = document.getElementById('replaceTextFloat').value;
-        var editor = document.getElementById('editor');
-        if (!editor || !findText) return;
-        
-        var sel = window.getSelection();
-        var range = sel.getRangeAt(0);
-        var selectedText = range.toString();
-        
-        if (selectedText === findText) {
-            range.deleteContents();
-            range.insertNode(document.createTextNode(replaceText));
-            saveCurrentChapter();
-            alert('已替换当前选中');
-        } else {
-            // 查找并替换第一个
-            var content = editor.innerHTML;
-            if (content.indexOf(findText) !== -1) {
-                editor.innerHTML = content.replace(findText, replaceText);
-                saveCurrentChapter();
-                alert('已替换第一个匹配项');
-            } else {
-                alert('未找到 "' + findText + '"');
-            }
-        }
-    };
-    
-    // 替换本章（当前章节所有匹配）
-    document.getElementById('replaceChapterBtn').onclick = function() {
-        var findText = document.getElementById('findTextFloat').value;
-        var replaceText = document.getElementById('replaceTextFloat').value;
-        var editor = document.getElementById('editor');
-        if (!editor || !findText) return;
-        
-        var content = editor.innerHTML;
-        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-        var newContent = content.replace(regex, replaceText);
-        var count = (content.match(regex) || []).length;
-        
-        if (count > 0) {
-            editor.innerHTML = newContent;
-            saveCurrentChapter();
-            alert('本章已替换 ' + count + ' 处');
-        } else {
-            alert('未找到 "' + findText + '"');
-        }
-    };
-    
-    // 替换全书（所有章节）
-    document.getElementById('replaceAllBtn').onclick = function() {
-        var findText = document.getElementById('findTextFloat').value;
-        var replaceText = document.getElementById('replaceTextFloat').value;
-        if (!findText) return;
-        
-        var totalCount = 0;
-        var regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-        
-        for (var i = 0; i < books.length; i++) {
-            var book = books[i];
-            if (book.volumes) {
-                for (var j = 0; j < book.volumes.length; j++) {
-                    var vol = book.volumes[j];
-                    if (vol.chapters) {
-                        for (var k = 0; k < vol.chapters.length; k++) {
-                            var ch = vol.chapters[k];
-                            if (ch.content) {
-                                var matches = (ch.content.match(regex) || []).length;
-                                if (matches > 0) {
-                                    ch.content = ch.content.replace(regex, replaceText);
-                                    totalCount += matches;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        if (totalCount > 0) {
-            saveAllData();
-            // 刷新当前打开的章节
-            if (typeof renderCurrentChapter === 'function') renderCurrentChapter();
-            alert('全书已替换 ' + totalCount + ' 处');
-        } else {
-            alert('未找到 "' + findText + '"');
-        }
-    };
-}
-
-// 修改原来的查找替换按钮
-var originalHandleAction = handleToolbarAction;
-if (originalHandleAction) {
-    handleToolbarAction = function(action) {
-        if (action === 'find') {
-            openFindReplaceWindow();
-        } else {
-            originalHandleAction(action);
-        }
-    };
-}

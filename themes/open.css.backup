@@ -99,10 +99,6 @@ body {
 .detail-main {
     gap: 12px !important;
     padding: 12px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: stretch !important;
-    overflow: visible !important;
 }
 
 /* 章节栏 - 浮动毛玻璃 */
@@ -113,10 +109,6 @@ body {
     border: none !important;
     margin: 0 !important;
     width: 260px !important;
-    flex-shrink: 0 !important;
-    position: relative !important;
-    top: auto !important;
-    left: auto !important;
 }
 
 /* 编辑器区域 - 毛玻璃 */
@@ -126,8 +118,6 @@ body {
     border-radius: 20px !important;
     margin: 0 !important;
     padding: 0 !important;
-    flex: 1 !important;
-    min-width: 200px !important;
 }
 
 /* 章节标题输入框 */
@@ -190,21 +180,15 @@ body {
     margin: 2px 8px !important;
 }
 
-/* ========== 右边栏 - 修复定位问题 ========== */
+/* 右侧边栏 */
 .right-sidebar {
     background: rgba(255, 255, 255, 0.2) !important;
     backdrop-filter: blur(20px) !important;
     border-radius: 20px !important;
+    top: 80px !important;
+    height: calc(100vh - 100px) !important;
+    margin-right: 12px !important;
     border: none !important;
-    width: 280px !important;
-    flex-shrink: 0 !important;
-    position: relative !important;
-    top: auto !important;
-    right: auto !important;
-    left: auto !important;
-    bottom: auto !important;
-    margin: 0 !important;
-    height: auto !important;
 }
 
 /* 右侧滑出面板 */
@@ -325,6 +309,11 @@ body.theme-dark .page {
 .status-bar {
     background: rgba(255, 255, 255, 0.2) !important;
     border-radius: 16px !important;
+}
+
+/* 移除右侧露出的半截面板（重复的 Open 按钮） */
+.theme-preset-btn[data-theme="open"]:not(:first-of-type) {
+    display: none !important;
 }
 
 /* 章节栏悬浮效果增强 */
@@ -473,20 +462,58 @@ body.theme-open .main-content {
     border-radius: 24px !important;
 }
 
-/* 修复 Open 主题下右侧面板位置 - 滑出面板 */
+/* 修复 Open 主题下右侧面板位置 */
 body.theme-open .right-slide-panel {
     right: 20px !important;
     top: 100px !important;
+    transform: translateX(0) !important;
 }
 
 body.theme-open .right-slide-panel.open {
     right: 20px !important;
 }
 
-/* 右边栏在 Open 主题下的样式 - 移除固定定位 */
+/* 确保右侧面板不露出半截 */
+body.theme-open .right-slide-panel {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 右侧边栏在 Open 主题下的位置 */
 body.theme-open .right-sidebar {
-    position: relative !important;
-    right: auto !important;
-    top: auto !important;
-    margin: 0 !important;
+    right: 20px !important;
+    top: 100px !important;
+}
+
+body.theme-open .right-sidebar.hidden {
+    right: -60px !important;
+}
+
+/* 强制修复 Open 主题下面板关闭 */
+body.theme-open .right-slide-panel {
+    transition: transform 0.3s ease !important;
+}
+
+body.theme-open .right-slide-panel:not(.open) {
+    display: none !important;
+    transform: translateX(calc(100% + 20px)) !important;
+}
+
+body.theme-open .right-slide-panel.open {
+    display: flex !important;
+    transform: translateX(0) !important;
+}
+
+/* Open 主题下面板滑出动画 */
+body.theme-open .right-slide-panel {
+    transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1) !important;
+    transform: translateX(calc(100% + 20px)) !important;
+}
+
+body.theme-open .right-slide-panel.open {
+    transform: translateX(0) !important;
+}
+
+body.theme-open .right-slide-panel:not(.open) {
+    transform: translateX(calc(100% + 20px)) !important;
 }

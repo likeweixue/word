@@ -44,35 +44,27 @@ function numberToChinese(num) {
 function renderBooks() {
     var container = document.getElementById('booksContainer');
     if (!container) return;
-    
-    // 确保加载最新的 groups
     loadGroups();
-    
     if (!books || books.length === 0) {
         container.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">暂无书籍，点击"新建书籍"开始创作</div>';
         return;
     }
     container.innerHTML = '';
-    
-    // 确保至少有一个默认分组
-    if (!groups || groups.length === 0) {
-        groups = [{ id: 'default', name: '默认分组' }];
-        saveGroups();
-    }
-    
     for (var g = 0; g < groups.length; g++) {
         var group = groups[g];
-        var groupBooks = books.filter(function(b) { 
-            return b.groupId === group.id || (!b.groupId && group.id === 'default'); 
-        });
-        
-        // 即使没有书籍也显示分组（可选）
+        var groupBooks = books.filter(function(b) { return b.groupId === group.id || (!b.groupId && group.id === 'default'); });
+        if (groupBooks.length === 0 && groups.length > 1) continue;
         var groupDiv = document.createElement('div');
         groupDiv.className = 'group-section';
         groupDiv.setAttribute('data-group-id', group.id);
-        groupDiv.innerHTML = '<div class="group-header"><h3>' + escapeHtml(group.name) + ' <span style="font-size:12px;opacity:0.6;">(' + groupBooks.length + '本)</span></h3><button class="group-menu-btn" data-id="' + group.id + '" style="background:none;border:none;font-size:18px;cursor:pointer;">⋯</button></div><div class="books-grid" data-group="' + group.id + '"></div>';
+        groupDiv.innerHTML = `
+            <div class="group-header">
+                <h3>${escapeHtml(group.name)} <span style="font-size:12px;opacity:0.6;">(${groupBooks.length}本)</span></h3>
+                <button class="group-menu-btn" data-id="${group.id}" style="background:none;border:none;font-size:18px;cursor:pointer;">⋯</button>
+            </div>
+            <div class="books-grid" data-group="${group.id}"></div>
+        `;
         var grid = groupDiv.querySelector('.books-grid');
-        
         for (var i = 0; i < groupBooks.length; i++) {
             var book = groupBooks[i];
             var totalWords = 0, totalChapters = 0;
@@ -89,33 +81,24 @@ function renderBooks() {
                     }
                 }
             }
-            
             var card = document.createElement('div');
             card.className = 'book-card';
             card.setAttribute('data-id', book.id);
             card.setAttribute('draggable', 'true');
-            
-            // 如果有封面图片就显示封面，否则显示默认图标
-            var coverHtml = '';
-            if (book.cover) {
-                coverHtml = '<img src="' + book.cover + '" style="width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0; border-radius:8px;">';
-            }
-            
-            card.innerHTML = '<div class="book-menu" data-id="' + book.id + '" style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; z-index:10;">⋯</div>' +
-                '<div class="book-cover" style="background: #e0e0e0; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; position:relative;">' +
-                coverHtml +
-                '<div style="font-size:48px; position:relative; z-index:1;"></div>' +
-                '<h4 style="position:relative; z-index:1;">' + escapeHtml(book.title) + '</h4>' +
-                '<p style="position:relative; z-index:1;">' + (book.volumes ? book.volumes.length : 0) + '卷 · ' + totalChapters + '章 · ' + totalWords + '字</p>' +
-                '</div>';
-            
+            card.innerHTML = `
+                <div class="book-menu" data-id="${book.id}">⋯</div>
+                <div class="book-cover" style="background: #e0e0e0;">
+                    <div style="font-size:48px;">📖</div>
+                    <h4>${escapeHtml(book.title)}</h4>
+                    <p>${book.volumes ? book.volumes.length : 0}卷 · ${totalChapters}章 · ${totalWords}字</p>
+                </div>
+            `;
             card.onclick = (function(id) {
                 return function(e) {
                     if (e.target.classList && e.target.classList.contains('book-menu')) return;
                     openBookTab(id);
                 };
             })(book.id);
-            
             card.ondragstart = function(e) {
                 e.dataTransfer.setData('text/plain', this.getAttribute('data-id'));
                 e.dataTransfer.effectAllowed = 'move';
@@ -185,55 +168,29 @@ function showBookMenu(bookId, btn) {
     if (!book) return;
     var menu = document.createElement('div');
     menu.style.cssText = 'position:fixed;background:#fff;border-radius:8px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;min-width:120px;';
-    menu.innerHTML = '<button class="edit-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">✏️ 编辑</button><button class="rename-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">📝 重命名</button><button class="delete-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">🗑 删除</button>';
+    menu.innerHTML = '<button class="rename-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button><button class="delete-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除</button>';
     var rect = btn.getBoundingClientRect();
     menu.style.top = rect.bottom + 'px';
     menu.style.left = rect.left + 'px';
     document.body.appendChild(menu);
-    
-    // 编辑按钮
-    menu.querySelector('.edit-book').onclick = function() {
-        openBookEditPanel(bookId);
-        menu.remove();
-    };
-    
-    // 重命名按钮
     menu.querySelector('.rename-book').onclick = function() {
         var newName = prompt('请输入新名称', book.title);
         if (newName && newName.trim()) {
             book.title = newName.trim();
             saveAllData();
             renderBooks();
-            var tabId = 'book_' + bookId;
-            for (var i = 0; i < openTabs.length; i++) {
-                if (openTabs[i].id === tabId) {
-                    openTabs[i].title = newName;
-                    renderTabs();
-                    break;
-                }
-            }
         }
         menu.remove();
     };
-    
-    // 删除按钮
     menu.querySelector('.delete-book').onclick = function() {
         if (confirm('确定要删除这本书吗？')) {
             moveToTrash(book);
             books = books.filter(function(b) { return b.id !== bookId; });
             saveAllData();
             renderBooks();
-            var tabId = 'book_' + bookId;
-            for (var i = 0; i < openTabs.length; i++) {
-                if (openTabs[i].id === tabId) {
-                    closeTab(tabId);
-                    break;
-                }
-            }
         }
         menu.remove();
     };
-    
     setTimeout(function() {
         document.addEventListener('click', function closeMenu(e) {
             if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
@@ -304,60 +261,28 @@ function openBookTab(bookId) {
 }
 
 function renderBookEditor(bookId) {
-    return '<div class="book-detail-page" data-book-id="' + bookId + '">' +
-        '<div class="detail-main">' +
-        '<div class="icon-sidebar" id="iconSidebar">' +
-        '<div class="icon-sidebar-content">' +
-        '<div class="icon-sidebar-item" data-target="chapters" title="章节">' +
-        '<div class="icon-sidebar-icon">📖</div>' +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="left-sidebar" id="leftSidebar">' +
-        '<div class="left-sidebar-header">' +
-        '<span> 章节</span>' +
-        '<button class="toggle-left-sidebar-btn" id="toggleLeftSidebarBtn" title="收起">◀</button>' +
-        '</div>' +
-        '<div class="left-sidebar-content" id="leftSidebarContent">' +
-        '<div class="chapters-header">' +
-        '<button id="addVolumeBtn">+ 分卷</button>' +
-        '<button id="addChapterBtn">+ 章节</button>' +
-        '<button id="trashBtnHeader" class="trash-btn">回收站</button>' +
-        '</div>' +
-        '<div id="volumeList" class="volume-list"></div>' +
-        '</div>' +
-        '</div>' +
-        '<div class="detail-editor">' +
-        '<input type="text" id="chapterTitle" placeholder="章节标题" class="title-input">' +
-        '<div id="editor" contenteditable="true" class="editor-content"><p>开始写作...</p></div>' +
-        // 在 renderBookEditor 函数中，找到 status-bar 部分，替换为：
-'<div class="status-bar">' +
-'<div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">' +
-'<span>📝 <span id="wordCount">0</span> 字</span>' +
-'<span>💾 <span id="saveStatus">已保存</span></span>' +
-'<span>⏰ <span id="currentTime">--:--:--</span></span>' +
-'<span>📦 <span id="backupStatus">备份待命</span></span>' +
-'</div>' +
-'</div>'
-        '</div>' +
-        '<div class="right-sidebar" id="rightSidebar">' +
-        '<div class="right-sidebar-header">' +
-        '<span>🛠️ 工具</span>' +
-        '<button class="toggle-right-sidebar-btn" id="toggleRightSidebarBtn" title="收起">▶</button>' +
-        '</div>' +
-        '<div class="right-sidebar-content">' +
-        '<div class="sidebar-tool-item" data-tool="outline"><div class="sidebar-tool-icon">📋</div><div class="sidebar-tool-label">大纲</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="timeline"><div class="sidebar-tool-icon">⏱️</div><div class="sidebar-tool-label">时间线</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="characters"><div class="sidebar-tool-icon">👥</div><div class="sidebar-tool-label">角色</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="setting"><div class="sidebar-tool-icon">⚙️</div><div class="sidebar-tool-label">设定</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="relation"><div class="sidebar-tool-icon">🔗</div><div class="sidebar-tool-label">关系图</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="whiteboard"><div class="sidebar-tool-icon">📝</div><div class="sidebar-tool-label">无边记</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="namegen"><div class="sidebar-tool-icon">✏️</div><div class="sidebar-tool-label">起名</div></div>' +
-        '<div class="sidebar-tool-item" data-tool="notes"><div class="sidebar-tool-icon">📓</div><div class="sidebar-tool-label">笔记</div></div>' +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '</div>';
+    return `
+        <div class="book-detail-page" data-book-id="${bookId}">
+            <div class="detail-main">
+                <div class="detail-chapters" id="chaptersPanel">
+                    <div class="chapters-header">
+                        <button id="addVolumeBtn">+ 分卷</button>
+                        <button id="addChapterBtn">+ 章节</button>
+                        <button id="trashBtnHeader" class="trash-btn">回收站</button>
+                    </div>
+                    <div id="volumeList" class="volume-list"></div>
+                </div>
+                <div class="detail-editor">
+                    <input type="text" id="chapterTitle" placeholder="章节标题" class="title-input">
+                    <div id="editor" contenteditable="true" class="editor-content"><p>开始写作...</p></div>
+                    <div class="status-bar">
+                        <span><span id="wordCount">0</span> 字</span>
+                        <span id="saveStatus">已保存</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function initBookEditor(tabId, bookId) {
@@ -374,112 +299,9 @@ function initBookEditor(tabId, bookId) {
     bindEditorEvents();
     loadEditorSettings();
     initRightSidebar();
-    setTimeout(ensureRightSidebarPosition, 200);
     
     var trashBtn = document.getElementById('trashBtnHeader');
     if (trashBtn) trashBtn.onclick = function() { openTrashPanel(); };
-
-    // 在 initBookEditor 函数末尾添加以下代码
-
-// 左面板切换功能
-var leftSidebar = document.getElementById('leftSidebar');
-var toggleLeftBtn = document.getElementById('toggleLeftSidebarBtn');
-if (leftSidebar && toggleLeftBtn) {
-    var leftCollapsed = localStorage.getItem('leftSidebar_collapsed') === 'true';
-    if (leftCollapsed) {
-        leftSidebar.classList.add('collapsed');
-        toggleLeftBtn.innerHTML = '▶';
-        toggleLeftBtn.title = '展开章节栏';
-    }
-    toggleLeftBtn.onclick = function() {
-        leftSidebar.classList.toggle('collapsed');
-        var isCollapsed = leftSidebar.classList.contains('collapsed');
-        if (isCollapsed) {
-            toggleLeftBtn.innerHTML = '▶';
-            toggleLeftBtn.title = '展开章节栏';
-        } else {
-            toggleLeftBtn.innerHTML = '◀';
-            toggleLeftBtn.title = '收起章节栏';
-        }
-        localStorage.setItem('leftSidebar_collapsed', isCollapsed);
-    };
-        // 图标边栏功能
-    setTimeout(function() {
-        var iconItems = document.querySelectorAll('.icon-sidebar-item');
-        var leftSidebar = document.getElementById('leftSidebar');
-        
-        for (var i = 0; i < iconItems.length; i++) {
-            iconItems[i].onclick = function() {
-                var target = this.getAttribute('data-target');
-                if (target === 'chapters' && leftSidebar) {
-                    leftSidebar.classList.toggle('collapsed');
-                    var isCollapsed = leftSidebar.classList.contains('collapsed');
-                    localStorage.setItem('leftSidebar_collapsed', isCollapsed);
-                    
-                    var toggleLeftBtn = document.getElementById('toggleLeftSidebarBtn');
-                    if (toggleLeftBtn) {
-                        toggleLeftBtn.innerHTML = isCollapsed ? '▶' : '◀';
-                        toggleLeftBtn.title = isCollapsed ? '展开章节栏' : '收起章节栏';
-                    }
-                }
-            };
-        }
-        
-        // 恢复左面板状态
-        var leftCollapsed = localStorage.getItem('leftSidebar_collapsed') === 'true';
-        if (leftSidebar && leftCollapsed) {
-            leftSidebar.classList.add('collapsed');
-            var toggleLeftBtn = document.getElementById('toggleLeftSidebarBtn');
-            if (toggleLeftBtn) toggleLeftBtn.innerHTML = '▶';
-        }
-        
-        // 恢复右面板状态
-        var rightSidebar = document.getElementById('rightSidebar');
-        var rightCollapsed = localStorage.getItem('rightSidebar_collapsed') === 'true';
-        if (rightSidebar && rightCollapsed) {
-            rightSidebar.classList.add('collapsed');
-            var toggleRightBtn = document.getElementById('toggleRightSidebarBtn');
-            if (toggleRightBtn) toggleRightBtn.innerHTML = '◀';
-        }
-    }, 100);
-}
-
-// 右面板切换功能
-var rightSidebar = document.getElementById('rightSidebar');
-var toggleRightBtn = document.getElementById('toggleRightSidebarBtn');
-if (rightSidebar && toggleRightBtn) {
-    var rightCollapsed = localStorage.getItem('rightSidebar_collapsed') === 'true';
-    if (rightCollapsed) {
-        rightSidebar.classList.add('collapsed');
-        toggleRightBtn.innerHTML = '◀';
-        toggleRightBtn.title = '展开工具';
-    } else {
-        toggleRightBtn.innerHTML = '▶';
-    }
-    toggleRightBtn.onclick = function() {
-        rightSidebar.classList.toggle('collapsed');
-        var isCollapsed = rightSidebar.classList.contains('collapsed');
-        if (isCollapsed) {
-            toggleRightBtn.innerHTML = '◀';
-            toggleRightBtn.title = '展开工具';
-        } else {
-            toggleRightBtn.innerHTML = '▶';
-            toggleRightBtn.title = '收起工具';
-        }
-        localStorage.setItem('rightSidebar_collapsed', isCollapsed);
-    };
-}
-
-// 绑定工具点击事件
-var tools = document.querySelectorAll('.sidebar-tool-item');
-for (var i = 0; i < tools.length; i++) {
-    tools[i].onclick = function() {
-        var tool = this.getAttribute('data-tool');
-        openSecondaryWindow(tool);
-    };
-}
-    // 启动状态栏定时器
-    startStatusBarTimers();
 }
 
 function loadEditorSettings() {
@@ -507,14 +329,20 @@ function renderVolumeList() {
         var vol = book.volumes[v];
         var volDiv = document.createElement('div');
         volDiv.className = 'volume-item';
-        volDiv.innerHTML = '<div class="volume-title" data-id="' + vol.id + '"><span>' + escapeHtml(vol.name) + ' <span style="font-size:11px;">(' + (vol.chapters ? vol.chapters.length : 0) + '章)</span></span><button class="volume-more" data-id="' + vol.id + '">⋯</button></div><div class="chapter-list" data-volume="' + vol.id + '"></div>';
+        volDiv.innerHTML = `
+            <div class="volume-title" data-id="${vol.id}">
+                <span>${escapeHtml(vol.name)} <span style="font-size:11px;">(${vol.chapters ? vol.chapters.length : 0}章)</span></span>
+                <button class="volume-more" data-id="${vol.id}">⋯</button>
+            </div>
+            <div class="chapter-list" data-volume="${vol.id}"></div>
+        `;
         var chapterContainer = volDiv.querySelector('.chapter-list');
         if (vol.chapters && vol.chapters.length > 0) {
             for (var c = 0; c < vol.chapters.length; c++) {
                 var ch = vol.chapters[c];
                 var chDiv = document.createElement('div');
                 chDiv.className = 'chapter-item' + (ch.id === currentChapterId && vol.id === currentVolumeId ? ' active' : '');
-                chDiv.innerHTML = '<span>' + escapeHtml(ch.title) + '</span><button class="delete-chapter" data-chapter-id="' + ch.id + '" data-vol-id="' + vol.id + '">✖</button>';
+                chDiv.innerHTML = `<span>${escapeHtml(ch.title)}</span><button class="delete-chapter" data-chapter-id="${ch.id}" data-vol-id="${vol.id}">✖</button>`;
                 chDiv.querySelector('span').onclick = (function(volId, chId) {
                     return function() { currentVolumeId = volId; currentChapterId = chId; renderVolumeList(); renderCurrentChapter(); };
                 })(vol.id, ch.id);
@@ -682,16 +510,14 @@ function bindEditorEvents() {
 }
 
 function initRightSidebar() {
-    if (document.getElementById('rightSidebar')) return;
-    var sidebarHtml = '<div id="rightSidebar" class="right-sidebar"><div class="right-sidebar-content"><div class="sidebar-tool-item" data-tool="outline"><div class="sidebar-tool-icon">📋</div><div class="sidebar-tool-label">大纲</div></div><div class="sidebar-tool-item" data-tool="timeline"><div class="sidebar-tool-icon">⏱️</div><div class="sidebar-tool-label">时间线</div></div><div class="sidebar-tool-item" data-tool="characters"><div class="sidebar-tool-icon">👥</div><div class="sidebar-tool-label">角色</div></div><div class="sidebar-tool-item" data-tool="setting"><div class="sidebar-tool-icon">⚙️</div><div class="sidebar-tool-label">设定</div></div><div class="sidebar-tool-item" data-tool="relation"><div class="sidebar-tool-icon">🔗</div><div class="sidebar-tool-label">关系图</div></div><div class="sidebar-tool-item" data-tool="whiteboard"><div class="sidebar-tool-icon">📝</div><div class="sidebar-tool-label">无边记</div></div><div class="sidebar-tool-item" data-tool="namegen"><div class="sidebar-tool-icon">✏️</div><div class="sidebar-tool-label">起名</div></div><div class="sidebar-tool-item" data-tool="notes"><div class="sidebar-tool-icon">📓</div><div class="sidebar-tool-label">笔记</div></div></div></div>';
-    document.body.insertAdjacentHTML('beforeend', sidebarHtml);
-    
-    var tools = document.querySelectorAll('.sidebar-tool-item');
-    for (var i = 0; i < tools.length; i++) {
-        tools[i].onclick = function() {
-            var tool = this.getAttribute('data-tool');
-            openSecondaryWindow(tool);
-        };
+    // 如果右侧边栏不存在，创建它
+    if (!document.getElementById('rightSidebar')) {
+        if (typeof createRightSidebar === 'function') {
+            createRightSidebar();
+        }
+    } else {
+        // 确保工具事件已绑定
+        bindSidebarTools();
     }
 }
 
@@ -714,6 +540,7 @@ function openSecondaryWindow(tool) {
     }
 }
 
+// 章节回收站
 var chapterTrash = [];
 
 function loadChapterTrash() {
@@ -765,7 +592,17 @@ function openTrashPanel() {
         if (panel.classList.contains('open')) renderTrashPanel();
         return;
     }
-    var html = '<div id="chapterTrashPanel" class="right-slide-panel"><div class="right-slide-panel-header"><h3>章节回收站</h3><button class="right-slide-panel-close" onclick="document.getElementById(\'chapterTrashPanel\').classList.remove(\'open\')">✕</button></div><div class="right-slide-panel-content" id="trashContentList"><div style="text-align:center; color:#888; padding:20px;">暂无删除的章节</div></div></div>';
+    var html = `
+        <div id="chapterTrashPanel" class="right-slide-panel">
+            <div class="right-slide-panel-header">
+                <h3>章节回收站</h3>
+                <button class="right-slide-panel-close" onclick="document.getElementById('chapterTrashPanel').classList.remove('open')">✕</button>
+            </div>
+            <div class="right-slide-panel-content" id="trashContentList">
+                <div style="text-align:center; color:#888; padding:20px;">暂无删除的章节</div>
+            </div>
+        </div>
+    `;
     document.body.insertAdjacentHTML('beforeend', html);
     renderTrashPanel();
     document.getElementById('chapterTrashPanel').classList.add('open');
@@ -804,145 +641,261 @@ function renderTrashPanel() {
     }
 }
 
+function initChaptersToggle() {
+    var toggleBtn = document.getElementById('toggleChaptersBtn');
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!toggleBtn || !chaptersPanel) return;
+    var isCollapsed = localStorage.getItem('chapters_collapsed') === 'true';
+    if (isCollapsed) {
+        chaptersPanel.classList.add('collapsed');
+        toggleBtn.innerHTML = '▶';
+        toggleBtn.title = '展开章节栏';
+    } else {
+        toggleBtn.innerHTML = '◀';
+        toggleBtn.title = '收起章节栏';
+    }
+    toggleBtn.onclick = function() {
+        chaptersPanel.classList.toggle('collapsed');
+        var collapsed = chaptersPanel.classList.contains('collapsed');
+        if (collapsed) {
+            toggleBtn.innerHTML = '▶';
+            toggleBtn.title = '展开章节栏';
+        } else {
+            toggleBtn.innerHTML = '◀';
+            toggleBtn.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
+}
+
 loadChapterTrash();
+
+
 window.saveCurrentChapter = saveCurrentChapter;
-window.openBookTab = openBookTab;
 
-// 确保右侧边栏只在书籍编辑页面显示，并且和编辑器拼接
-function ensureRightSidebarPosition() {
-    var rightSidebar = document.getElementById('rightSidebar');
-    var detailEditor = document.querySelector('.detail-editor');
-    var detailMain = document.querySelector('.detail-main');
+// 添加收起按钮到工具栏
+function addChaptersToggleButton() {
+    var toolbar = document.getElementById('mainToolbar');
+    if (!toolbar) return;
     
-    if (!rightSidebar || !detailMain) return;
+    if (document.getElementById('toggleChaptersBtn')) return;
     
-    // 检查右侧边栏是否已经在 detail-main 内部
-    if (rightSidebar.parentElement !== detailMain) {
-        // 将右侧边栏移动到 detail-main 内部，放在 detail-editor 后面
-        detailMain.appendChild(rightSidebar);
+    var btn = document.createElement('button');
+    btn.id = 'toggleChaptersBtn';
+    btn.innerHTML = '◀';
+    btn.className = 'toolbar-btn';
+    btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:16px;padding:6px 10px;';
+    btn.title = '收起章节栏';
+    
+    toolbar.insertBefore(btn, toolbar.firstChild);
+    
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (chaptersPanel) {
+        var isCollapsed = localStorage.getItem('chapters_collapsed') === 'true';
+        if (isCollapsed) {
+            chaptersPanel.classList.add('collapsed');
+            btn.innerHTML = '▶';
+            btn.title = '展开章节栏';
+        }
     }
     
-    // 确保样式正确
-    rightSidebar.style.display = 'flex';
+    btn.onclick = function() {
+        var panel = document.getElementById('chaptersPanel');
+        if (!panel) return;
+        panel.classList.toggle('collapsed');
+        var collapsed = panel.classList.contains('collapsed');
+        if (collapsed) {
+            this.innerHTML = '▶';
+            this.title = '展开章节栏';
+        } else {
+            this.innerHTML = '◀';
+            this.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
 }
 
-// 重写 initRightSidebar 函数
-var originalInitRightSidebar = initRightSidebar;
-initRightSidebar = function() {
-    if (document.getElementById('rightSidebar')) return;
-    originalInitRightSidebar();
-    setTimeout(ensureRightSidebarPosition, 100);
-};
-// ========== 状态栏功能 ==========
-
-// 更新时间显示
-function updateTimeDisplay() {
-    var timeSpan = document.getElementById('currentTime');
-    if (timeSpan) {
-        var now = new Date();
-        var year = now.getFullYear();
-        var month = now.getMonth() + 1;
-        var day = now.getDate();
-        var hours = now.getHours().toString().padStart(2, '0');
-        var minutes = now.getMinutes().toString().padStart(2, '0');
-        var seconds = now.getSeconds().toString().padStart(2, '0');
-        var timeStr = year + '年 ' + month + '月 ' + day + '日  ' + hours + ':' + minutes + ':' + seconds;
-        timeSpan.textContent = timeStr;
-    }
-}
-
-// 更新备份状态显示
-function updateBackupStatus(message, isSuccess) {
-    var backupSpan = document.getElementById('backupStatus');
-    if (backupSpan) {
-        backupSpan.textContent = message || (isSuccess ? '✅ 备份成功' : '⚠️ 备份失败');
-        backupSpan.style.color = isSuccess ? '#28a745' : '#dc3545';
-        setTimeout(function() {
-            if (backupSpan) {
-                backupSpan.textContent = '📦 备份待命';
-                backupSpan.style.color = '';
-            }
-        }, 3000);
-    }
-}
-
-// 更新保存状态显示
-function updateSaveStatus(message, isAuto) {
-    var saveSpan = document.getElementById('saveStatus');
-    if (saveSpan) {
-        saveSpan.textContent = message || (isAuto ? '⏳ 自动保存中...' : '✅ 已保存');
-        if (!isAuto) {
-            setTimeout(function() {
-                if (saveSpan && saveSpan.textContent === '✅ 已保存') {
-                    saveSpan.textContent = '已同步';
-                }
-            }, 2000);
+// 添加拖动条
+function addResizeHandle() {
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!chaptersPanel) return;
+    
+    if (document.getElementById('resizeHandle')) return;
+    
+    var handle = document.createElement('div');
+    handle.id = 'resizeHandle';
+    handle.style.cssText = 'position: absolute; right: -4px; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: transparent; z-index: 10;';
+    chaptersPanel.style.position = 'relative';
+    chaptersPanel.appendChild(handle);
+    
+    var isResizing = false;
+    var startX = 0;
+    var startWidth = 0;
+    
+    handle.addEventListener('mouseover', function() { this.style.background = '#007aff'; this.style.opacity = '0.3'; });
+    handle.addEventListener('mouseout', function() { this.style.background = 'transparent'; });
+    
+    handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = chaptersPanel.offsetWidth;
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+        
+        function onMouseMove(e) {
+            if (!isResizing) return;
+            var newWidth = startWidth + (e.clientX - startX);
+            if (newWidth < 180) newWidth = 180;
+            if (newWidth > 500) newWidth = 500;
+            chaptersPanel.style.width = newWidth + 'px';
+        }
+        
+        function onMouseUp() {
+            isResizing = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            localStorage.setItem('chapters_width', chaptersPanel.style.width);
+        }
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+    
+    var savedWidth = localStorage.getItem('chapters_width');
+    if (savedWidth) {
+        var width = parseInt(savedWidth);
+        if (width >= 180 && width <= 500) {
+            chaptersPanel.style.width = width + 'px';
         }
     }
 }
 
-// 模拟自动备份（每30秒检查一次）
-var lastBackupTime = Date.now();
-function checkAutoBackup() {
-    var now = Date.now();
-    var backupSpan = document.getElementById('backupStatus');
-    if (backupSpan && (now - lastBackupTime) >= 30000) { // 30秒
-        lastBackupTime = now;
-        // 模拟备份
-        updateBackupStatus('📦 自动备份中...', true);
-        // 实际备份逻辑可以在这里添加
+// 在打开书籍时添加按钮和拖动条
+var originalInitBookEditor = initBookEditor;
+if (originalInitBookEditor) {
+    initBookEditor = function(tabId, bookId) {
+        originalInitBookEditor(tabId, bookId);
         setTimeout(function() {
-            updateBackupStatus('✅ 自动备份成功', true);
-        }, 500);
-    }
-}
-
-// 未保存提示
-var hasUnsavedChanges = false;
-function markUnsaved() {
-    hasUnsavedChanges = true;
-    var saveSpan = document.getElementById('saveStatus');
-    if (saveSpan) {
-        saveSpan.textContent = '✏️ 未保存';
-        saveSpan.style.color = '#ff9800';
-    }
-}
-
-function clearUnsavedMark() {
-    hasUnsavedChanges = false;
-    var saveSpan = document.getElementById('saveStatus');
-    if (saveSpan) {
-        saveSpan.textContent = '已保存';
-        saveSpan.style.color = '';
-    }
-}
-
-// 修改 saveCurrentChapter 函数，添加标记清除
-var originalSaveCurrentChapter = saveCurrentChapter;
-if (originalSaveCurrentChapter) {
-    saveCurrentChapter = function() {
-        originalSaveCurrentChapter();
-        clearUnsavedMark();
-        updateSaveStatus('✅ 已保存', false);
+            addChaptersToggleButton();
+            addResizeHandle();
+        }, 200);
     };
 }
 
-// 启动定时器
-function startStatusBarTimers() {
-    // 每秒更新时间
-    setInterval(updateTimeDisplay, 1000);
-    // 每10秒检查自动备份
-    setInterval(checkAutoBackup, 10000);
+// 确保章节栏有正确的样式
+var style = document.createElement('style');
+style.textContent = `
+    .detail-chapters.collapsed {
+        width: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        padding: 0 !important;
+        border-right: none !important;
+    }
+    #resizeHandle {
+        transition: background 0.2s;
+    }
+`;
+document.head.appendChild(style);
+window.openBookTab = openBookTab;
+
+// 修复收起按钮
+function fixChaptersToggle() {
+    var toggleBtn = document.getElementById('toggleChaptersBtn');
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!toggleBtn || !chaptersPanel) return;
     
-    // 监听编辑器输入事件，标记未保存
-    var editor = document.getElementById('editor');
-    if (editor) {
-        editor.addEventListener('input', function() {
-            markUnsaved();
-        });
+    toggleBtn.onclick = function() {
+        chaptersPanel.classList.toggle('collapsed');
+        var collapsed = chaptersPanel.classList.contains('collapsed');
+        if (collapsed) {
+            toggleBtn.innerHTML = '▶';
+            toggleBtn.title = '展开章节栏';
+        } else {
+            toggleBtn.innerHTML = '◀';
+            toggleBtn.title = '收起章节栏';
+        }
+        localStorage.setItem('chapters_collapsed', collapsed);
+    };
+    
+    var saved = localStorage.getItem('chapters_collapsed');
+    if (saved === 'true') {
+        chaptersPanel.classList.add('collapsed');
+        toggleBtn.innerHTML = '▶';
     }
 }
-// ========== 书籍编辑面板 ==========
+
+// 修复拖动条
+function fixResizeHandle() {
+    var chaptersPanel = document.getElementById('chaptersPanel');
+    if (!chaptersPanel) return;
+    
+    if (document.getElementById('resizeHandle')) return;
+    
+    var handle = document.createElement('div');
+    handle.id = 'resizeHandle';
+    handle.style.cssText = 'position: absolute; right: -4px; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: transparent; z-index: 10;';
+    chaptersPanel.style.position = 'relative';
+    chaptersPanel.appendChild(handle);
+    
+    var isResizing = false;
+    var startX = 0;
+    var startWidth = 0;
+    
+    handle.onmouseover = function() { this.style.background = '#007aff'; this.style.opacity = '0.3'; };
+    handle.onmouseout = function() { this.style.background = 'transparent'; };
+    
+    handle.onmousedown = function(e) {
+        e.preventDefault();
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = chaptersPanel.offsetWidth;
+        document.body.style.cursor = 'ew-resize';
+        document.body.style.userSelect = 'none';
+        
+        document.onmousemove = function(e) {
+            if (!isResizing) return;
+            var newWidth = startWidth + (e.clientX - startX);
+            if (newWidth < 180) newWidth = 180;
+            if (newWidth > 500) newWidth = 500;
+            chaptersPanel.style.width = newWidth + 'px';
+        };
+        
+        document.onmouseup = function() {
+            isResizing = false;
+            document.onmousemove = null;
+            document.onmouseup = null;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            localStorage.setItem('chapters_width', chaptersPanel.style.width);
+        };
+    };
+    
+    var savedWidth = localStorage.getItem('chapters_width');
+    if (savedWidth) {
+        var width = parseInt(savedWidth);
+        if (width >= 180 && width <= 500) {
+            chaptersPanel.style.width = width + 'px';
+        }
+    }
+}
+
+// 在 initBookEditor 中调用
+var oldInitBookEditor = initBookEditor;
+if (oldInitBookEditor) {
+    initBookEditor = function(tabId, bookId) {
+        oldInitBookEditor(tabId, bookId);
+        setTimeout(function() {
+            fixChaptersToggle();
+            fixResizeHandle();
+        }, 200);
+    };
+}
+
+// 书籍编辑右侧滑出面板
 var currentEditBookId = null;
 
 function openBookEditPanel(bookId) {
@@ -952,27 +905,30 @@ function openBookEditPanel(bookId) {
     
     var panel = document.getElementById('bookEditSlidePanel');
     if (!panel) {
-        var html = '<div id="bookEditSlidePanel" class="right-slide-panel" style="position:fixed; right:0; top:80px; width:360px; height:calc(100vh - 100px); background:rgba(255,255,255,0.95); backdrop-filter:blur(8px); box-shadow:-2px 0 12px rgba(0,0,0,0.15); transform:translateX(100%); transition:transform 0.3s ease; z-index:1000; display:flex; flex-direction:column;">' +
-            '<div class="right-slide-panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid rgba(0,0,0,0.1);">' +
-            '<h3 style="margin:0;">编辑书籍</h3>' +
-            '<button class="right-slide-panel-close" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>' +
-            '</div>' +
-            '<div class="right-slide-panel-content" style="flex:1; overflow-y:auto; padding:20px;">' +
-            '<input type="text" id="editBookName" placeholder="书籍名称" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; box-sizing:border-box;">' +
-            '<textarea id="editBookDesc" rows="4" placeholder="书籍简介" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; resize:vertical; box-sizing:border-box;"></textarea>' +
-            '<div style="margin-bottom:16px;">' +
-            '<label style="display:block; margin-bottom:8px;">书籍封面</label>' +
-            '<input type="file" id="editBookCover" accept="image/*" style="margin-bottom:8px;">' +
-            '<div id="editBookCoverPreview" style="width:100%; height:120px; background:#f5f5f5; border-radius:8px; background-size:cover; background-position:center; border:1px solid #ddd;"></div>' +
-            '</div>' +
-            '<button id="saveBookEditBtn" class="btn-primary" style="width:100%; padding:12px; margin-bottom:12px; background:#9b784e; color:white; border:none; border-radius:8px; cursor:pointer;">保存修改</button>' +
-            '<button id="deleteBookEditBtn" class="btn-danger" style="width:100%; padding:12px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer;">删除书籍</button>' +
-            '</div>' +
-            '</div>';
+        // 创建面板
+        var html = `
+            <div id="bookEditSlidePanel" class="right-slide-panel">
+                <div class="right-slide-panel-header">
+                    <h3>编辑书籍</h3>
+                    <button class="right-slide-panel-close" onclick="closeBookEditPanel()">✕</button>
+                </div>
+                <div class="right-slide-panel-content">
+                    <input type="text" id="editBookName" placeholder="书籍名称" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px;">
+                    <textarea id="editBookDesc" rows="4" placeholder="书籍简介" style="width:100%; padding:12px; margin-bottom:16px; border:1px solid #ddd; border-radius:8px; resize:vertical;"></textarea>
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block; margin-bottom:8px;">书籍封面</label>
+                        <input type="file" id="editBookCover" accept="image/*" style="margin-bottom:8px;">
+                        <div id="editBookCoverPreview" style="width:100%; height:120px; background:#f5f5f5; border-radius:8px; background-size:cover; background-position:center; border:1px solid #ddd;"></div>
+                    </div>
+                    <button id="saveBookEditBtn" class="btn-primary" style="width:100%; padding:12px; margin-bottom:12px;">保存修改</button>
+                    <button id="deleteBookEditBtn" class="btn-danger" style="width:100%; padding:12px;">删除书籍</button>
+                </div>
+            </div>
+        `;
         document.body.insertAdjacentHTML('beforeend', html);
         panel = document.getElementById('bookEditSlidePanel');
         
-        document.querySelector('#bookEditSlidePanel .right-slide-panel-close').onclick = function() { closeBookEditPanel(); };
+        // 绑定事件
         document.getElementById('saveBookEditBtn').onclick = saveBookEdit;
         document.getElementById('deleteBookEditBtn').onclick = deleteBookFromEdit;
         document.getElementById('editBookCover').onchange = function(e) {
@@ -998,17 +954,11 @@ function openBookEditPanel(bookId) {
     document.getElementById('editBookCover').value = '';
     
     panel.classList.add('open');
-    panel.style.transform = 'translateX(0)';
 }
 
 function closeBookEditPanel() {
     var panel = document.getElementById('bookEditSlidePanel');
-    if (panel) {
-        panel.style.transform = 'translateX(100%)';
-        setTimeout(function() {
-            panel.classList.remove('open');
-        }, 300);
-    }
+    if (panel) panel.classList.remove('open');
     currentEditBookId = null;
 }
 
@@ -1021,35 +971,42 @@ function saveBookEdit() {
     var newDesc = document.getElementById('editBookDesc').value;
     var coverFile = document.getElementById('editBookCover').files[0];
     
-    // 使用压缩函数
-    compressAndSaveBook(currentEditBookId, newName, newDesc, coverFile);
-}
-
-function saveBookWithCover(bookId, name, desc, coverDataUrl) {
-    var book = getBookById(bookId);
-    if (!book) return;
+    book.title = newName;
+    book.desc = newDesc;
     
-    book.title = name;
-    book.desc = desc;
-    if (coverDataUrl) {
-        book.cover = coverDataUrl;
-    }
-    
-    saveAllData();
-    renderBooks();
-    
-    // 更新标签页标题
-    var tabId = 'book_' + bookId;
-    for (var i = 0; i < openTabs.length; i++) {
-        if (openTabs[i].id === tabId) {
-            openTabs[i].title = name;
-            renderTabs();
-            break;
+    if (coverFile) {
+        var reader = new FileReader();
+        reader.onload = function(ev) {
+            book.cover = ev.target.result;
+            saveAllData();
+            renderBooks();
+            // 更新标签页标题
+            var tabId = 'book_' + currentEditBookId;
+            for (var i = 0; i < openTabs.length; i++) {
+                if (openTabs[i].id === tabId) {
+                    openTabs[i].title = newName;
+                    renderTabs();
+                    break;
+                }
+            }
+            closeBookEditPanel();
+            alert('书籍已更新');
+        };
+        reader.readAsDataURL(coverFile);
+    } else {
+        saveAllData();
+        renderBooks();
+        var tabId = 'book_' + currentEditBookId;
+        for (var i = 0; i < openTabs.length; i++) {
+            if (openTabs[i].id === tabId) {
+                openTabs[i].title = newName;
+                renderTabs();
+                break;
+            }
         }
+        closeBookEditPanel();
+        alert('书籍已更新');
     }
-    
-    closeBookEditPanel();
-    alert('书籍已更新');
 }
 
 function deleteBookFromEdit() {
@@ -1071,4 +1028,64 @@ function deleteBookFromEdit() {
             alert('书籍已移入回收站');
         }
     }
+}
+
+// 修改 showBookMenu 函数，添加编辑按钮
+var originalShowBookMenu = window.showBookMenu;
+if (originalShowBookMenu) {
+    window.showBookMenu = function(bookId, btn) {
+        var book = getBookById(bookId);
+        if (!book) return;
+        var menu = document.createElement('div');
+        menu.style.cssText = 'position:fixed;background:#fff;border-radius:8px;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:1000;min-width:120px;';
+        menu.innerHTML = '<button class="edit-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">编辑</button><button class="rename-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">重命名</button><button class="delete-book" style="display:block;width:100%;padding:8px 16px;border:none;background:none;cursor:pointer;">删除</button>';
+        var rect = btn.getBoundingClientRect();
+        menu.style.top = rect.bottom + 'px';
+        menu.style.left = rect.left + 'px';
+        document.body.appendChild(menu);
+        
+        menu.querySelector('.edit-book').onclick = function() {
+            openBookEditPanel(bookId);
+            menu.remove();
+        };
+        menu.querySelector('.rename-book').onclick = function() {
+            var newName = prompt('请输入新名称', book.title);
+            if (newName && newName.trim()) {
+                book.title = newName.trim();
+                saveAllData();
+                renderBooks();
+                var tabId = 'book_' + bookId;
+                for (var i = 0; i < openTabs.length; i++) {
+                    if (openTabs[i].id === tabId) {
+                        openTabs[i].title = newName;
+                        renderTabs();
+                        break;
+                    }
+                }
+            }
+            menu.remove();
+        };
+        menu.querySelector('.delete-book').onclick = function() {
+            if (confirm('确定要删除这本书吗？')) {
+                moveToTrash(book);
+                books = books.filter(function(b) { return b.id !== bookId; });
+                saveAllData();
+                renderBooks();
+                var tabId = 'book_' + bookId;
+                for (var i = 0; i < openTabs.length; i++) {
+                    if (openTabs[i].id === tabId) {
+                        closeTab(tabId);
+                        break;
+                    }
+                }
+            }
+            menu.remove();
+        };
+        
+        setTimeout(function() {
+            document.addEventListener('click', function closeMenu(e) {
+                if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', closeMenu); }
+            });
+        }, 100);
+    };
 }
